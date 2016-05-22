@@ -36,7 +36,7 @@ static LinuxSemaphore  i2cSemaphore0;
 static LinuxI2CDriver  i2cDriver0(&i2cSemaphore0, "/dev/i2c-2");
 #else
 static LinuxSemaphore  i2cSemaphore0;
-static LinuxI2CDriver  i2cDriver0(&i2cSemaphore0, "/dev/i2c-1");
+static LinuxI2CDriver  i2cDriver0(&i2cSemaphore0, "/dev/i2c-2");
 #endif
 static LinuxSPIDeviceManager spiDeviceManager;
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NAVIO
