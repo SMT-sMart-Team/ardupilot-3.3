@@ -82,13 +82,11 @@ public:
       will be used to convert channel writes into a percentage
      */
     virtual void     set_esc_scaling(uint16_t min_pwm, uint16_t max_pwm) {}
-#ifdef  SET_MAGIC_SYNC
     /*
        setup magic number to ensure all PWM sync of each channel
        added by Yangmi 2016-4-6 
     */
     virtual void     set_magic_sync(void) {}
-#endif
     virtual void     rcout_keep_alive(void) {}
 };
 

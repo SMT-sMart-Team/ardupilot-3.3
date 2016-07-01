@@ -57,9 +57,7 @@ void LinuxRCOutput_PRU::set_freq(uint32_t chmask, uint16_t freq_hz)            /
             sharedMem_cmd->periodhi[chan_pru_map[i]][0]=tick;
         }
     }
-#ifdef  SET_MAGIC_SYNC
     set_magic_sync();
-#endif
 }
 
 uint16_t LinuxRCOutput_PRU::get_freq(uint8_t ch)
@@ -75,9 +73,7 @@ void LinuxRCOutput_PRU::enable_ch(uint8_t ch)
 void LinuxRCOutput_PRU::disable_ch(uint8_t ch)
 {
     sharedMem_cmd->enmask &= !(1U<<chan_pru_map[ch]);
-#ifdef  SET_MAGIC_SYNC
     set_magic_sync();
-#endif
 }
 
 void LinuxRCOutput_PRU::write(uint8_t ch, uint16_t period_us)
@@ -94,9 +90,7 @@ void LinuxRCOutput_PRU::write(uint8_t ch, uint16_t* period_us, uint8_t len)
     for(i=0;i<len;i++){
         write(ch+i,period_us[i]);
     }
-#ifdef  SET_MAGIC_SYNC
     set_magic_sync();
-#endif
 }
 
 uint16_t LinuxRCOutput_PRU::read(uint8_t ch)

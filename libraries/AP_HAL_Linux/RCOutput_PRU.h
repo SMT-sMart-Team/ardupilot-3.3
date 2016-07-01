@@ -29,9 +29,7 @@ class Linux::LinuxRCOutput_PRU : public AP_HAL::RCOutput {
     void     write(uint8_t ch, uint16_t* period_us, uint8_t len);
     uint16_t read(uint8_t ch);
     void     read(uint16_t* period_us, uint8_t len);
-#ifdef  SET_MAGIC_SYNC
     void     set_magic_sync(void);
-#endif
     void     rcout_keep_alive(void);
 private:
     static const int TICK_PER_US=200;
