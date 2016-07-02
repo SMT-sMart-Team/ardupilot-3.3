@@ -42,7 +42,12 @@ static LinuxSPIDeviceManager spiDeviceManager;
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NAVIO
 static NavioAnalogIn analogIn;
 #else
+#ifdef SMT_BATT_MONITOR_ANIN_IIO
+static AnalogIn_IIO analogIn;
+// static LinuxAnalogIn analogIn;
+#else
 static LinuxAnalogIn analogIn;
+#endif
 #endif
 
 /*

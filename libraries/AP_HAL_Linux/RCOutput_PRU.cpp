@@ -36,6 +36,10 @@ void LinuxRCOutput_PRU::init(void* machtnicht)
     mem_fd = open("/dev/mem", O_RDWR|O_SYNC);
     sharedMem_cmd = (struct pwm_cmd *) mmap(0, 0x1000, PROT_READ|PROT_WRITE, 
                                             MAP_SHARED, mem_fd, RCOUT_PRUSS_SHAREDRAM_BASE);
+    if(MAP_FAILED == sharedMem_cmd)
+    {
+        hal.scheduler->panic("Failed to mmap PRU1 SHM\n");
+    }
     close(mem_fd);
 
     // all outputs default to 50Hz, the top level vehicle code
@@ -53,6 +57,9 @@ void LinuxRCOutput_PRU::set_freq(uint32_t chmask, uint16_t freq_hz)            /
             sharedMem_cmd->periodhi[chan_pru_map[i]][0]=tick;
         }
     }
+#ifdef  SET_MAGIC_SYNC
+    set_magic_sync();
+#endif
 }
 
 uint16_t LinuxRCOutput_PRU::get_freq(uint8_t ch)
@@ -68,6 +75,9 @@ void LinuxRCOutput_PRU::enable_ch(uint8_t ch)
 void LinuxRCOutput_PRU::disable_ch(uint8_t ch)
 {
     sharedMem_cmd->enmask &= !(1U<<chan_pru_map[ch]);
+#ifdef  SET_MAGIC_SYNC
+    set_magic_sync();
+#endif
 }
 
 void LinuxRCOutput_PRU::write(uint8_t ch, uint16_t period_us)
@@ -84,6 +94,9 @@ void LinuxRCOutput_PRU::write(uint8_t ch, uint16_t* period_us, uint8_t len)
     for(i=0;i<len;i++){
         write(ch+i,period_us[i]);
     }
+#ifdef  SET_MAGIC_SYNC
+    set_magic_sync();
+#endif
 }
 
 uint16_t LinuxRCOutput_PRU::read(uint8_t ch)
@@ -100,6 +113,90 @@ void LinuxRCOutput_PRU::read(uint16_t* period_us, uint8_t len)
     for(i=0;i<len;i++){
         period_us[i] = sharedMem_cmd->hilo_read[chan_pru_map[i]][1]/TICK_PER_US;
     }
+}
+
+#ifdef  SET_MAGIC_SYNC
+void LinuxRCOutput_PRU::set_magic_sync(void)
+{
+#if 0
+	static char first_time = 1;
+	if (first_time == 1)
+	{
+       sharedMem_cmd->magic = PWM_CMD_MAGIC;
+       first_time = 0;
+	}
+	else
+	{
+		if (sharedMem_cmd->magic != PWM_REPLY_MAGIC )
+			printf("11111\n");
+	}
+#endif
+    sharedMem_cmd->magic = PWM_CMD_MAGIC;
+}
+#endif
+
+// will be invoked 50Hz, meanwhile PRU will check alive 1Hz
+void LinuxRCOutput_PRU::rcout_keep_alive(void)
+{
+#ifdef KEEP_ALIVE_WITH_PRU
+    static unsigned int time_out = 0;
+    static unsigned int wait_pru_time = 0;
+    // check keep alive with PRU (first time: config timeout to PRU)
+    if(time_out > 1)
+    {
+        // reply alive
+        if(PWM_REPLY_KEEP_ALIVE == (sharedMem_cmd->keep_alive & 0xFFFF))
+        {
+            // cmd alive
+            sharedMem_cmd->keep_alive = PWM_CMD_KEEP_ALIVE; 
+            time_out = 2;
+        }
+        else if(PWM_CMD_KEEP_ALIVE == (sharedMem_cmd->keep_alive & 0xFFFF))
+        {
+            time_out++;
+            // PRU should be dead
+            if(time_out > (KEEP_ALIVE_TIME_OUT_HOST*50))
+            {
+                ::printf("Warning: PRU didn't reply for more than %d seconds (50Hz: %d), should be dead!\n", KEEP_ALIVE_TIME_OUT_HOST, time_out);
+                time_out = 2;
+            }
+        }
+        else
+        {
+            ::printf("Error: unknown PRU keep alive code 0x%08x!\n", sharedMem_cmd->keep_alive & 0xFFFF);
+        }
+    }
+    else if(1 == time_out) // wait for 1st PRU reply (PRU wake up)
+    {
+        // reply alive
+        if(PWM_REPLY_KEEP_ALIVE == (sharedMem_cmd->keep_alive & 0xFFFF))
+        {
+            // cmd alive
+            sharedMem_cmd->keep_alive = PWM_CMD_KEEP_ALIVE; 
+            time_out = 2;
+        }
+        else if(PWM_CMD_KEEP_ALIVE == (sharedMem_cmd->keep_alive & 0xFFFF))
+        {
+            sharedMem_cmd->time_out = KEEP_ALIVE_TIME_OUT_PRU; 
+            wait_pru_time++; 
+            if(wait_pru_time > (PRU_POWER_UP_TIME*50))
+            {
+                wait_pru_time = 0;
+                ::printf("Warning: PRU still not wakeup...\n");
+            }
+        }
+        else
+        {
+            ::printf("Warning: unknown PRU keep alive code!\n");
+        }
+    }
+    else // time_out == 0
+    {
+        sharedMem_cmd->time_out = KEEP_ALIVE_TIME_OUT_PRU; 
+        sharedMem_cmd->keep_alive = PWM_CMD_KEEP_ALIVE; 
+        time_out = 1;
+    }
+#endif
 }
 
 #endif

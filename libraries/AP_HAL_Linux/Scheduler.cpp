@@ -386,6 +386,8 @@ void *LinuxScheduler::_io_thread(void* arg)
 
         // run registered IO procepsses
         sched->_run_io();
+        // AB ZhaoYJ for keep alive with PRU-pwm
+        hal.rcout->rcout_keep_alive();
     }
     return NULL;
 }

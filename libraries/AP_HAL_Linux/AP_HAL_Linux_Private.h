@@ -12,6 +12,7 @@
 #include "SPIDriver.h"
 #include "AnalogIn.h"
 #include "AnalogIn_Navio.h"
+#include "AnalogIn_IIO.h"
 #include "Storage.h"
 #include "GPIO.h"
 #include "RCInput.h"

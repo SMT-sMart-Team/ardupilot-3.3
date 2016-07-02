@@ -216,11 +216,13 @@
 #endif
 
 #ifndef BOARD_VOLTAGE_MIN
- # define BOARD_VOLTAGE_MIN             4.3f        // min board voltage in volts for pre-arm checks
+ // # define BOARD_VOLTAGE_MIN             4.3f        // min board voltage in volts for pre-arm checks
+ # define BOARD_VOLTAGE_MIN             2.8f        // min board voltage in volts for pre-arm checks
 #endif
 
 #ifndef BOARD_VOLTAGE_MAX
- # define BOARD_VOLTAGE_MAX             5.8f        // max board voltage in volts for pre-arm checks
+ // # define BOARD_VOLTAGE_MAX             5.8f        // max board voltage in volts for pre-arm checks
+ # define BOARD_VOLTAGE_MAX             3.8f        // max board voltage in volts for pre-arm checks
 #endif
 
 // prearm GPS hdop check

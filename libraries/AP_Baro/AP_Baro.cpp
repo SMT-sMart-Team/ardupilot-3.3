@@ -295,6 +295,14 @@ void AP_Baro::init(void)
                                         true);
         _num_drivers = 1;
     }
+#elif HAL_BARO_DEFAULT == HAL_BARO_MS5803_SPI
+    {
+        drivers[0] = new AP_Baro_MS5803(*this,
+                                        new AP_SerialBus_SPI_MS5803(AP_HAL::SPIDevice_MS5803,
+                                                             AP_HAL::SPIDeviceDriver::SPI_SPEED_HIGH),
+                                        true);
+        _num_drivers = 1;
+    }
 #elif HAL_BARO_DEFAULT == HAL_BARO_MS5607 && HAL_BARO_MS5607_I2C_BUS == 1
     {
         drivers[0] = new AP_Baro_MS5607(*this, new AP_SerialBus_I2C(hal.i2c1, HAL_BARO_MS5607_I2C_ADDR), true);

@@ -76,6 +76,7 @@
 #define HAL_BARO_PX4        5
 #define HAL_BARO_HIL        6
 #define HAL_BARO_VRBRAIN    7
+#define HAL_BARO_MS5803_SPI 8
 
 // compass driver types
 #define HAL_COMPASS_HMC5843   1
@@ -209,8 +210,51 @@
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF || CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLE
 #define HAL_BOARD_LOG_DIRECTORY "/var/APM/logs"
 #define HAL_BOARD_TERRAIN_DIRECTORY "/var/APM/terrain"
+// for enable UART multiplex
+// add by ZhaoYJ@2015-11-16
+#define ENABLE_MUX 1
+
+// to fix PWM CH un-sync issue, try to make sure APM output is synced with PRU-PWM
+#define SET_MAGIC_SYNC
+// Control Macro: merge new battery monitor of PXF from erle v1.1
+// 1. new battery monitor from PXF
+// 2. new features of common battery monitor
+// add by ZhaoYJ @2015-11-30
+#define NEW_BATT_MONITOR_PXF 1
+
+// add by ZhaoYJ for merging APM 3.3.2 analogin_iio @2016-01-25
+#define SMT_BATT_MONITOR_ANIN_IIO
+
+// add by ZhaoYJ for monitoring PRU & HOST alive each other @2016-04-21
+#define KEEP_ALIVE_WITH_PRU 
+#define PRU_POWER_UP_TIME  30 // second
+#define KEEP_ALIVE_TIME_OUT_HOST 50 // second 
+#define KEEP_ALIVE_TIME_OUT_PRU 75 // 75*20ms
+
+// add by ZhaoYJ for test SMT new board @2016-05-09
+#define SMT_NEW_SENSORS_BOARD 
+
+// add by ZhaoYJ for test alarm on SMT new board @2016-05-18
+#ifdef SMT_NEW_SENSORS_BOARD
+// #define SMT_GPIO_ALARM
+#endif
+
+// add by ZhaoYJ for hopping on SMT new board @2016-05-19
+// #define SMT_NEW_RCIN
+// #define PRU_SHM_NEW_BASE
+// #define PRU_SHM_NEW_SIZE
+
+// AB ZhaoYJ for eliminating error pulse in PPM
+// #define KILL_ERROR_PULSE
+
+// AB ZhaoYJ for trying to add PPMSUM decoding in PRU @2016-05-21
+// #define PPMSUM_DECODE_IN_PRU
+
+// #define HAL_INS_DEFAULT HAL_INS_MPU9255
+// #define HAL_BARO_DEFAULT HAL_BARO_MS5611_SPI
+// #define HAL_COMPASS_DEFAULT HAL_COMPASS_HMC5843
 #define HAL_INS_DEFAULT HAL_INS_MPU9250
-#define HAL_BARO_DEFAULT HAL_BARO_MS5611_SPI
+#define HAL_BARO_DEFAULT HAL_BARO_MS5803_SPI
 #define SMT_NEW_BOARD
 // #define HAL_COMPASS_DEFAULT HAL_COMPASS_AK8963_MPU9250
 #define HAL_COMPASS_DEFAULT HAL_COMPASS_HMC5843

@@ -15,6 +15,10 @@
 #define PWM_CMD_CLR	         5	/* clr a pwm output explicitly */
 #define PWM_CMD_TEST	         6	/* various crap */
 
+// add By ZhaoYJ for keep alive with PRU
+#define PWM_CMD_KEEP_ALIVE 0xbeef
+#define PWM_REPLY_KEEP_ALIVE 0x2152 // ~0xdead
+
 class Linux::LinuxRCOutput_PRU : public AP_HAL::RCOutput {
     void     init(void* machtnichts);
     void     set_freq(uint32_t chmask, uint16_t freq_hz);
@@ -25,18 +29,28 @@ class Linux::LinuxRCOutput_PRU : public AP_HAL::RCOutput {
     void     write(uint8_t ch, uint16_t* period_us, uint8_t len);
     uint16_t read(uint8_t ch);
     void     read(uint16_t* period_us, uint8_t len);
-
+#ifdef  SET_MAGIC_SYNC
+    void     set_magic_sync(void);
+#endif
+    void     rcout_keep_alive(void);
 private:
     static const int TICK_PER_US=200;
     static const int TICK_PER_S=200000000;
     struct pwm_cmd {
         uint32_t magic;
-        uint32_t enmask;     /* enable mask */
-        uint32_t offmsk;     /* state when pwm is off */
-        uint32_t periodhi[MAX_PWMS][2];
+	    uint16_t enmask;	/* enable mask */
+	    uint32_t periodhi[MAX_PWMS][2];
         uint32_t hilo_read[MAX_PWMS][2];
-        uint32_t enmask_read;
+        uint16_t keep_alive; // flag, add By ZhaoYJ 
+        uint16_t time_out; // second, add By ZhaoYJ 
+        // uint32_t magic;
+        // uint32_t enmask;     /* enable mask */
+        // uint32_t offmsk;     /* state when pwm is off */
+        // uint32_t periodhi[MAX_PWMS][2];
+        // uint32_t hilo_read[MAX_PWMS][2];
+        // uint32_t enmask_read;
     };
+
     volatile struct pwm_cmd *sharedMem_cmd;
 
 };
