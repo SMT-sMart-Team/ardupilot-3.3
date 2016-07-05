@@ -121,6 +121,7 @@ void AP_MotorsSingle::output_min()
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_3]), _servo3.radio_trim);
 	hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_4]), _servo4.radio_trim);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_7]), _throttle_radio_min);
+    hal.rcout->set_magic_sync();
 }
 
 // get_motor_mask - returns a bitmask of which outputs are being used for motors or servos (1 means being used)
@@ -177,6 +178,7 @@ void AP_MotorsSingle::output_armed_not_stabilizing()
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_3]), _servo3.radio_out);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_4]), _servo4.radio_out);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_7]), throttle_radio_output);
+    hal.rcout->set_magic_sync();
 }
 
 // sends commands to the motors
@@ -234,6 +236,7 @@ void AP_MotorsSingle::output_armed_stabilizing()
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_3]), _servo3.radio_out);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_4]), _servo4.radio_out);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_7]), throttle_radio_output);
+    hal.rcout->set_magic_sync();
 }
 
 // output_disarmed - sends commands to the motors
@@ -279,4 +282,5 @@ void AP_MotorsSingle::output_test(uint8_t motor_seq, int16_t pwm)
             // do nothing
             break;
     }
+    hal.rcout->set_magic_sync();
 }

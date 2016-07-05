@@ -115,7 +115,7 @@ void LinuxRCOutput_PRU::read(uint16_t* period_us, uint8_t len)
     }
 }
 
-#ifdef  SET_MAGIC_SYNC
+
 void LinuxRCOutput_PRU::set_magic_sync(void)
 {
 #if 0
@@ -131,9 +131,11 @@ void LinuxRCOutput_PRU::set_magic_sync(void)
 			printf("11111\n");
 	}
 #endif
+#ifdef  SET_MAGIC_SYNC
     sharedMem_cmd->magic = PWM_CMD_MAGIC;
-}
 #endif
+}
+
 
 // will be invoked 50Hz, meanwhile PRU will check alive 1Hz
 void LinuxRCOutput_PRU::rcout_keep_alive(void)

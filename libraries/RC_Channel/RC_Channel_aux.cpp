@@ -36,6 +36,7 @@ RC_Channel_aux::output_ch(void)
         break;
     }
     hal.rcout->write(_ch_out, radio_out);
+	hal.rcout->set_magic_sync();
 }
 
 /*

@@ -38,6 +38,7 @@ bool AP_ServoRelayEvents::do_set_servo(uint8_t _channel, uint16_t pwm)
     }
     hal.rcout->enable_ch(_channel-1);
     hal.rcout->write(_channel-1, pwm);
+    hal.rcout->set_magic_sync();
     return true;
 }
 
@@ -113,6 +114,7 @@ void AP_ServoRelayEvents::update_events(void)
         } else {
             hal.rcout->write(channel-1, servo_value);
         }
+		hal.rcout->set_magic_sync();
         break;
         
     case EVENT_TYPE_RELAY:

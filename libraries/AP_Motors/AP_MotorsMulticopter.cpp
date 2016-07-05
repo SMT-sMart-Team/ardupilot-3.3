@@ -383,5 +383,7 @@ void AP_MotorsMulticopter::throttle_pass_through(int16_t pwm)
                 hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[i]), pwm);
             }
         }
+
+        hal.rcout->set_magic_sync();
     }
 }

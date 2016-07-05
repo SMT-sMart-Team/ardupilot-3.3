@@ -194,6 +194,7 @@ void AP_MotorsHeli_Single::output_test(uint8_t motor_seq, int16_t pwm)
             // do nothing
             break;
     }
+    hal.rcout->set_magic_sync();
 }
 
 // allow_arming - check if it's safe to arm
@@ -434,7 +435,7 @@ void AP_MotorsHeli_Single::move_actuators(int16_t roll_out, int16_t pitch_out, i
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_1]), _swash_servo_1.radio_out);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_2]), _swash_servo_2.radio_out);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_3]), _swash_servo_3.radio_out);
- 
+    hal.rcout->set_magic_sync();
     // update the yaw rate using the tail rotor/servo
     move_yaw(yaw_out + yaw_offset);
 }
@@ -451,7 +452,7 @@ void AP_MotorsHeli_Single::move_yaw(int16_t yaw_out)
     _yaw_servo.calc_pwm();
 
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_4]), _yaw_servo.radio_out);
-
+    hal.rcout->set_magic_sync();
     if (_tail_type == AP_MOTORS_HELI_SINGLE_TAILTYPE_SERVO_EXTGYRO) {
         // output gain to exernal gyro
         write_aux(_ext_gyro_gain);
@@ -468,6 +469,7 @@ void AP_MotorsHeli_Single::write_aux(int16_t servo_out)
     _servo_aux.servo_out = servo_out;
     _servo_aux.calc_pwm();
     hal.rcout->write(AP_MOTORS_HELI_SINGLE_AUX, _servo_aux.radio_out);
+    hal.rcout->set_magic_sync();
 }
 
 // servo_test - move servos through full range of movement

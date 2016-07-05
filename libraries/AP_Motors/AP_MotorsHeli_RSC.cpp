@@ -174,5 +174,6 @@ void AP_MotorsHeli_RSC::write_rsc(int16_t servo_out)
         _servo_output.calc_pwm();
 
         hal.rcout->write(_servo_output_channel, _servo_output.radio_out);
+        hal.rcout->set_magic_sync();
     }
 }

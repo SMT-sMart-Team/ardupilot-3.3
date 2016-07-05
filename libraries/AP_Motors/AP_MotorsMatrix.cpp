@@ -100,6 +100,7 @@ void AP_MotorsMatrix::output_min()
             hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[i]), _throttle_radio_min);
         }
     }
+    hal.rcout->set_magic_sync();
 }
 
 // get_motor_mask - returns a bitmask of which outputs are being used for motors (1 means being used)
@@ -164,6 +165,7 @@ void AP_MotorsMatrix::output_armed_not_stabilizing()
             hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[i]), motor_out[i]);
         }
     }
+    hal.rcout->set_magic_sync();
 }
 
 // output_armed - sends commands to the motors
@@ -360,6 +362,7 @@ void AP_MotorsMatrix::output_armed_stabilizing()
             hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[i]), motor_out[i]);
         }
     }
+    hal.rcout->set_magic_sync();
 }
 
 // output_disarmed - sends commands to the motors
@@ -386,6 +389,7 @@ void AP_MotorsMatrix::output_test(uint8_t motor_seq, int16_t pwm)
             hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[i]), pwm);
         }
     }
+    hal.rcout->set_magic_sync();
 }
 
 // add_motor

@@ -121,6 +121,7 @@ void AP_MotorsTri::output_min()
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_2]), _throttle_radio_min);
     hal.rcout->write(pgm_read_byte(&_motor_to_channel_map[AP_MOTORS_MOT_4]), _throttle_radio_min);
     hal.rcout->write(AP_MOTORS_CH_TRI_YAW, _yaw_servo_trim);
+    hal.rcout->set_magic_sync();
 }
 
 // get_motor_mask - returns a bitmask of which outputs are being used for motors or servos (1 means being used)
@@ -178,6 +179,7 @@ void AP_MotorsTri::output_armed_not_stabilizing()
 
     // send centering signal to yaw servo
     hal.rcout->write(AP_MOTORS_CH_TRI_YAW, _yaw_servo_trim);
+    hal.rcout->set_magic_sync();
 }
 
 // sends commands to the motors
@@ -291,6 +293,7 @@ void AP_MotorsTri::output_armed_stabilizing()
 
     // send out to yaw command to tail servo
     hal.rcout->write(AP_MOTORS_CH_TRI_YAW, yaw_radio_output);
+    hal.rcout->set_magic_sync();
 }
 
 // output_disarmed - sends commands to the motors
@@ -332,6 +335,7 @@ void AP_MotorsTri::output_test(uint8_t motor_seq, int16_t pwm)
             // do nothing
             break;
     }
+    hal.rcout->set_magic_sync();
 }
 
 // calc_yaw_radio_output - calculate final radio output for yaw channel
