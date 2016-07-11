@@ -5,6 +5,7 @@
 #include "AP_HAL_Linux.h"
 
 #include "SerialDevice.h"
+#include "PTSDevice.h"
 
 class Linux::LinuxUARTDriver : public AP_HAL::UARTDriver {
 public:
@@ -41,7 +42,7 @@ public:
     virtual int setup_mux(void);
 private:
     SerialDevice *_device = nullptr;
-    SerialDevice *_device_pts = nullptr;
+    PTSDevice *_device_pts = nullptr;
     bool _nonblocking_writes;
     bool _console;
     volatile bool _in_timer;

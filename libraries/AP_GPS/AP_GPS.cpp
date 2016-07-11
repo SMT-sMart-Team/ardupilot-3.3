@@ -399,13 +399,13 @@ AP_GPS::update(void)
 #if ENABLE_MUX
             _port[0]->setup_mux(); // mutiplex primary GPS UART port
 #endif
-    	    ::printf("!!OK!! GPS has fixed 3D, so UART port will be multiplexed\n");
+    	    // hal.console->print_P("!!OK!! GPS has fixed 3D, so UART port will be multiplexed\n");
         }
         else
         {
             if(!((++prt_cnt)%1000))
             {
-        	    ::printf("... For now, GPS still not fixed 3D, so UART port will not be multiplexed\n");
+        	    // printf("... For now, GPS still not fixed 3D, so UART port will not be multiplexed\n");
             }
         }
     }
