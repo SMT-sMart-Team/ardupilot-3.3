@@ -34,8 +34,14 @@ public:
 
     enum flow_control get_flow_control(void) { return _flow_control; }
 
+    char mux;
+    int fdm;
+    int fds;
+    char pts_name[50];
+    virtual int setup_mux(void);
 private:
     SerialDevice *_device = nullptr;
+    SerialDevice *_device_pts = nullptr;
     bool _nonblocking_writes;
     bool _console;
     volatile bool _in_timer;

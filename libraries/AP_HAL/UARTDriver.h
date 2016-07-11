@@ -57,6 +57,11 @@ public:
             __attribute__ ((format(__printf__, 2, 3)));
 
     void vprintf(const char *s, va_list ap);
+	char mux;
+	int fdm;
+	char pts_name[50];
+	virtual int setup_mux(void) { return 0; };
+	
     void vprintf_P(const prog_char *s, va_list ap);
 };
 

@@ -387,6 +387,28 @@ AP_GPS::update_instance(uint8_t instance)
 void
 AP_GPS::update(void)
 {
+    // try to enable GPS UART port mux for 3rd-party APP via pty in linux, such as GPSD
+    // add by ZhaoYJ@2015-10-25 
+    static uint8_t first_time = 1;
+    static uint8_t prt_cnt = 0;
+    if(first_time)
+    {
+        if(status() >= AP_GPS::GPS_OK_FIX_3D) 
+        {
+            first_time = 0;
+#if ENABLE_MUX
+            _port[0]->setup_mux(); // mutiplex primary GPS UART port
+#endif
+    	    ::printf("!!OK!! GPS has fixed 3D, so UART port will be multiplexed\n");
+        }
+        else
+        {
+            if(!((++prt_cnt)%1000))
+            {
+        	    ::printf("... For now, GPS still not fixed 3D, so UART port will not be multiplexed\n");
+            }
+        }
+    }
     for (uint8_t i=0; i<GPS_MAX_INSTANCES; i++) {
         update_instance(i);
     }

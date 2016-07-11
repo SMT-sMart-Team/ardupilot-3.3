@@ -365,6 +365,39 @@ int16_t LinuxUARTDriver::read()
     }
     c = _readbuf[_readbuf_head];
     BUF_ADVANCEHEAD(_readbuf, 1);
+    static int cnt = 0;
+    static unsigned int cnt2 = 0;
+    if(1 == this->mux)
+    {
+		_device_pts->write(&c, 1);
+#ifdef TEST_PTS_MUX
+    	cnt ++;
+    	if((10003 >= cnt) && (cnt >= 10000))
+    	{
+    		if(10000 == cnt)
+    		{
+    			::printf("------------------<");
+    		}else if(10003 == cnt)
+    		{
+    			::printf(">------------------\n");
+    			cnt = 0;
+    		}
+    		else
+    		{
+    			::printf("%s",&c);
+    		}
+    	}
+    	if(cnt2 < 0xFFFF)
+		{
+			cnt2++;
+		}
+		else
+		{
+			_device_pts->write(&c, 1);
+			cnt2 = 0xFFFFFF;
+		}
+#endif
+    }
     return c;
 }
 
@@ -584,5 +617,20 @@ void LinuxUARTDriver::_timer_tick(void)
 
     _in_timer = false;
 }
+int LinuxUARTDriver::setup_mux(void)
+{
+	int rc = 0;
 
+	this->mux = 1;
+
+    this->_device_pts = new PTSDevice();
+
+    if(false == this->_device_pts->open())
+    {
+        return 1;
+    }
+
+	return rc;
+
+}
 #endif // CONFIG_HAL_BOARD
