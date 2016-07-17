@@ -109,7 +109,27 @@
 #define     TONE_PARACHUTE_RELEASE_TUNE         10
 
 #define TONE_NUMBER_OF_TUNES 11
+#ifdef SMT_GPIO_ALARM
+class Linux::ToneAlarm{
+public:
+	ToneAlarm();
+	void set_tune(uint8_t tone);
+	bool init();
+	bool is_tune_comp();
+	void stop();
+	bool play();
+	bool set_note();
+	bool init_tune();
 
+private:
+	bool tune_comp;
+	static uint16_t tunes[TONE_NUMBER_OF_TUNES];
+	uint16_t first_time;
+	uint16_t duration;
+	uint32_t prev_time;
+	int8_t tune_num;
+};
+#else
 class Linux::ToneAlarm{
 public:
 	ToneAlarm();
@@ -140,5 +160,6 @@ private:
 	int8_t tune_num;
 	uint8_t tune_pos;
 };
+#endif
 
 #endif

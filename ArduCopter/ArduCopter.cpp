@@ -155,15 +155,32 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] PROGMEM = {
 
 void Copter::setup() 
 {
+    printf("main setup start\n");
     cliSerial = hal.console;
-
+#ifdef SMT_HASHLET_USE
+    int sn;  
+    char buf[BUFSIZE]; 
+    memset(buf,0,BUFSIZE); 
+    char* targetStr = "encrypt success\n";
+    sn=execute("zypkp mac",buf,BUFSIZE);   
+   
+    printf("%s\n",buf);   
+    if(0 !=strcmp(buf,targetStr))
+    {
+       printf("encrypt error\n");
+       execute("init 0",buf,BUFSIZE);   
+       exit(1);
+    }
+#endif
     // Load the default values of variables listed in var_info[]s
     AP_Param::setup_sketch_defaults();
 
     // setup storage layout for copter
     StorageManager::set_layout_copter();
+    printf("init_ardupilot init start \n");
 
     init_ardupilot();
+    printf("init_ardupilot init end \n");
 
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], ARRAY_SIZE(scheduler_tasks));

@@ -10,6 +10,120 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <iostream>
+#ifdef SMT_GPIO_ALARM
+#include "GPIO.h"
+
+#define TIME16_SUB(x, y) ((x >=y)?(x - y):(0xFFFF - y + x))
+
+#define ALARM_GPIO BBB_P8_36
+#define ALARM_ON  1
+#define ALARM_OFF 0 
+
+using namespace Linux;
+
+extern const AP_HAL::HAL& hal;
+
+//List of RTTTL tones 
+uint16_t ToneAlarm::tunes[TONE_NUMBER_OF_TUNES] = { 
+                                3, // "Startup:d=8,o=6,b=480:a,d7,c7,a,d7,c7,a,d7,16d7,16c7,16d7,16c7,16d7,16c7,16d7,16c7",
+                                2, // "Error:d=4,o=6,b=400:8a,8a,8a,p,a,a,a,p",
+                                1, // "notify_pos:d=4,o=6,b=400:8e,8e,a",
+                                4, // "notify_neut:d=4,o=6,b=400:8e,e",
+                                5, // "notify_neg:d=4,o=6,b=400:8e,8c,8e,8c,8e,8c",
+                                6, // "arming_warn:d=1,o=4,b=75:g",
+                                7, // "batt_war_slow:d=4,o=6,b=200:8a",
+                                8, // "batt_war_fast:d=4,o=6,b=512:8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a",
+                                9, //"GPS_war:d=4,o=6,b=512:a,a,a,1f#",
+                                10, // "Arm_fail:d=4,o=4,b=512:b,a,p",
+                                11, // "para_rel:d=16,o=6,b=512:a,g,a,g,a,g,a,g"
+                                };
+
+ToneAlarm::ToneAlarm()
+{
+    tune_num = -1;                    //initialy no tune to play
+    tune_comp = true;
+    first_time = true;
+    prev_time = 0;
+    duration = 0;
+}
+
+bool ToneAlarm::init()
+{
+    tune_num = 0;                    //play startup tune
+    // setup GPIO
+    hal.gpio->pinMode(ALARM_GPIO, HAL_GPIO_OUTPUT);
+    hal.gpio->write(ALARM_GPIO, ALARM_OFF);
+    //printf("***************init alarm\n");
+    return true;
+}
+
+void ToneAlarm::set_tune(uint8_t tone)
+{
+    if(tone < TONE_NUMBER_OF_TUNES)
+    {
+        tune_num = tone;
+    }
+    //printf("set alarm\n");
+}
+
+bool ToneAlarm::is_tune_comp()
+{
+    return tune_comp;
+}
+
+void ToneAlarm::stop()
+{
+    hal.gpio->write(ALARM_GPIO, ALARM_OFF);
+    //printf("stop alarm\n");
+}
+
+bool ToneAlarm::play()
+{
+    uint16_t cur_time = hal.scheduler->millis();
+
+    if(first_time){
+        first_time = false;
+        prev_time = cur_time;
+        hal.gpio->write(ALARM_GPIO, ALARM_ON);
+        //printf("********    \n ********%d ms: start alarm\n", cur_time);
+    }
+    if(TIME16_SUB(cur_time, prev_time) > (duration*1000)){
+        // printf("********    \n ********%d ms: stop alarm, duration:%d\n", cur_time, duration);
+        stop();
+        tune_comp = true;
+        tune_num = -1;
+        return true;
+    }
+    return false;
+}
+
+bool ToneAlarm::set_note(){
+    if(tune_num <0 || tune_num > TONE_NUMBER_OF_TUNES){
+        return false;
+    }
+    if(tune_num < TONE_NUMBER_OF_TUNES)
+    {
+        // first, get note duration, if available
+        duration = tunes[tune_num];
+        //printf("set note, tune_num: %d, duration: %d\n", tune_num, duration);
+        return true;
+    }
+
+    return false;
+
+}
+
+bool ToneAlarm::init_tune(){
+
+    if(tune_num <0 || tune_num > TONE_NUMBER_OF_TUNES){
+        return false;
+    }
+    tune_comp = false;
+    first_time = true;
+    //printf("init tune\n");
+    return true;
+}
+#else
 
 using namespace Linux;
 
@@ -255,5 +369,6 @@ bool ToneAlarm::init_tune(){
     return true;
 }
 
+#endif
 
 #endif
