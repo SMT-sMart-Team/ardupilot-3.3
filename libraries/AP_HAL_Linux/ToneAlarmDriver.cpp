@@ -26,17 +26,17 @@ extern const AP_HAL::HAL& hal;
 
 //List of RTTTL tones 
 uint16_t ToneAlarm::tunes[TONE_NUMBER_OF_TUNES] = { 
-                                3, // "Startup:d=8,o=6,b=480:a,d7,c7,a,d7,c7,a,d7,16d7,16c7,16d7,16c7,16d7,16c7,16d7,16c7",
-                                2, // "Error:d=4,o=6,b=400:8a,8a,8a,p,a,a,a,p",
-                                1, // "notify_pos:d=4,o=6,b=400:8e,8e,a",
-                                4, // "notify_neut:d=4,o=6,b=400:8e,e",
-                                5, // "notify_neg:d=4,o=6,b=400:8e,8c,8e,8c,8e,8c",
-                                6, // "arming_warn:d=1,o=4,b=75:g",
-                                7, // "batt_war_slow:d=4,o=6,b=200:8a",
-                                8, // "batt_war_fast:d=4,o=6,b=512:8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a",
-                                9, //"GPS_war:d=4,o=6,b=512:a,a,a,1f#",
-                                10, // "Arm_fail:d=4,o=4,b=512:b,a,p",
-                                11, // "para_rel:d=16,o=6,b=512:a,g,a,g,a,g,a,g"
+                                1000, // "Startup:d=8,o=6,b=480:a,d7,c7,a,d7,c7,a,d7,16d7,16c7,16d7,16c7,16d7,16c7,16d7,16c7",
+                                4000, // "Error:d=4,o=6,b=400:8a,8a,8a,p,a,a,a,p",
+                                1500, // "notify_pos:d=4,o=6,b=400:8e,8e,a",
+                                2000, // "notify_neut:d=4,o=6,b=400:8e,e",
+                                3000, // "notify_neg:d=4,o=6,b=400:8e,8c,8e,8c,8e,8c",
+                                1000, // "arming_warn:d=1,o=4,b=75:g",
+                                5000, // "batt_war_slow:d=4,o=6,b=200:8a",
+                                500, // "batt_war_fast:d=4,o=6,b=512:8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a,8a",
+                                4000, //"GPS_war:d=4,o=6,b=512:a,a,a,1f#",
+                                4500, // "Arm_fail:d=4,o=4,b=512:b,a,p",
+                                5800 // "para_rel:d=16,o=6,b=512:a,g,a,g,a,g,a,g"
                                 };
 
 ToneAlarm::ToneAlarm()
@@ -88,7 +88,7 @@ bool ToneAlarm::play()
         hal.gpio->write(ALARM_GPIO, ALARM_ON);
         //printf("********    \n ********%d ms: start alarm\n", cur_time);
     }
-    if(TIME16_SUB(cur_time, prev_time) > (duration*1000)){
+    if(TIME16_SUB(cur_time, prev_time) > (duration)){
         // printf("********    \n ********%d ms: stop alarm, duration:%d\n", cur_time, duration);
         stop();
         tune_comp = true;
