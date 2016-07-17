@@ -151,13 +151,33 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] PROGMEM = {
     { SCHED_TASK(userhook_SuperSlowLoop),400,   75 },
 #endif
 };
-
+ 
+#ifdef SMT_HASHLET_USE 
+int execute(char* command,char* buf,int bufmax)  
+{  
+        FILE* fp;  
+        int i;  
+              
+        if((fp=popen(command,"r"))==NULL){  
+            i=sprintf(buf,"error command line:%s \n",command);  
+        }
+        else {  
+            i=0;  
+            while((buf[i]=fgetc(fp))!=EOF && i<bufmax-1)  
+                i++;  
+            pclose(fp);  
+        }  
+        buf[i]='\0';  
+        return i;  
+}
+#endif
 
 void Copter::setup() 
 {
     printf("main setup start\n");
     cliSerial = hal.console;
 #ifdef SMT_HASHLET_USE
+#define BUFSIZE 256
     int sn;  
     char buf[BUFSIZE]; 
     memset(buf,0,BUFSIZE); 
