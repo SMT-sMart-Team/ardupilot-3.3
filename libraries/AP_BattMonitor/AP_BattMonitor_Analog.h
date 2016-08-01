@@ -72,7 +72,7 @@
  # define AP_BATT_CURR_PIN                  6
  #if NEW_BATT_MONITOR_PXF
  // # define AP_BATT_VOLTDIVIDER_DEFAULT       10.1
- # define AP_BATT_VOLTDIVIDER_DEFAULT       22.96
+ # define AP_BATT_VOLTDIVIDER_DEFAULT       23.05845626072041 // 22.96
  #else
  # define AP_BATT_VOLTDIVIDER_DEFAULT       11.54
  #endif
