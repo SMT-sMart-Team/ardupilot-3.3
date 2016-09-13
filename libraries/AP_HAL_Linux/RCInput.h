@@ -18,6 +18,10 @@ public:
     bool set_overrides(int16_t *overrides, uint8_t len);
     bool set_override(uint8_t channel, int16_t override);
     void clear_overrides();
+    void set_pwm_values(uint8_t channel, int16_t value) { _pwm_values[channel] = value; };
+    uint16_t get_pwm_values(uint8_t channel) { return _pwm_values[channel]; };
+    void set_num_channels(uint8_t chn_num) { _num_channels = chn_num; };
+    void set_new_rc_input() { new_rc_input = true; };
 
     // default empty _timer_tick, this is overridden by board
     // specific implementations

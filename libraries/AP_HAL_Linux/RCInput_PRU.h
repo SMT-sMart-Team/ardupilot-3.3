@@ -12,6 +12,14 @@
 #define RCIN_PRUSS_SHAREDRAM_BASE   0x4a312000
 // we use 300 ring buffer entries to guarantee that a full 25 byte
 // frame of 12 bits per byte
+//
+// AB ZhaoYJ for multi-pwm to replace ppm-sum @2016-09-13
+#define MULTI_PWM
+
+#ifdef MULTI_PWM
+#define MAX_RCIN_NUM 8
+#define NUM_RCIN_BUFF 64
+#endif
 
 class Linux::LinuxRCInput_PRU : public Linux::LinuxRCInput 
 {
@@ -29,6 +37,12 @@ public:
                uint16_t pin_value;
                uint16_t delta_t;
         } buffer[NUM_RING_ENTRIES];
+#ifdef MULTI_PWM 
+    volatile struct {
+        volatile uint16_t high;
+        volatile uint16_t low;
+    }multi_pwm_out[MAX_RCIN_NUM];
+#endif
     };
     volatile struct ring_buffer *ring_buffer;
 

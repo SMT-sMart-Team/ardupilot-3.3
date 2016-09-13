@@ -178,11 +178,10 @@ void Copter::setup()
     cliSerial = hal.console;
 #ifdef SMT_HASHLET_USE
 #define BUFSIZE 256
-    int sn;  
     char buf[BUFSIZE]; 
     memset(buf,0,BUFSIZE); 
     char* targetStr = "encrypt success\n";
-    sn=execute("zypkp mac",buf,BUFSIZE);   
+    execute("zypkp mac",buf,BUFSIZE);   
    
     printf("%s\n",buf);   
     if(0 !=strcmp(buf,targetStr))
