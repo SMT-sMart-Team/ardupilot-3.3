@@ -23,9 +23,13 @@ public:
     void set_num_channels(uint8_t chn_num) { _num_channels = chn_num; };
     void set_new_rc_input() { new_rc_input = true; };
 
+
     // default empty _timer_tick, this is overridden by board
     // specific implementations
     virtual void _timer_tick() {}
+
+    /* AB ZhaoYJ@2016-09-13 for direct pwm*/
+    void set_direct_pwm(uint8_t v) {};
 
  protected:
     void _process_rc_pulse(uint16_t width_s0, uint16_t width_s1);

@@ -46,6 +46,7 @@ void LinuxRCInput_PRU::init(void*)
     // hal.gpio->write(BBB_P8_17, 1);
 }
 
+
 /*
   called at 1kHz to check for new pulse capture data from the PRU
  */
@@ -54,9 +55,9 @@ void LinuxRCInput_PRU::_timer_tick()
 {
 #ifdef TEST_MULTI_PWM
     static uint16_t test_cnt = 0;
-    uint8_t g_rcin_multi_pwm = 1;
-    if(!g_rcin_multi_pwm)
+    uint8_t rcin_multi_pwm = 1;
 #endif
+    if(!_direct_pwm)
     {
     while (ring_buffer->ring_head != ring_buffer->ring_tail) {
         if (ring_buffer->ring_tail >= NUM_RING_ENTRIES) {

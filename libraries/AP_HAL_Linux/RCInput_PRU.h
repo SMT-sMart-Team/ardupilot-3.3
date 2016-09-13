@@ -27,6 +27,9 @@ public:
     void init(void*);
     void _timer_tick(void);
 
+    /* AB ZhaoYJ@2016-09-13 for direct pwm*/
+    void set_direct_pwm(uint8_t v) { _direct_pwm = v; };
+
  private:
     static const unsigned int NUM_RING_ENTRIES=300;
     // shared ring buffer with the PRU which records pin transitions
@@ -48,6 +51,11 @@ public:
 
     // time spent in the low state
     uint16_t _s0_time;
+
+
+#ifdef MULTI_PWM 
+    uint8_t _direct_pwm;
+#endif
 };
 
 #endif // __AP_HAL_LINUX_RCINPUT_PRU_H__

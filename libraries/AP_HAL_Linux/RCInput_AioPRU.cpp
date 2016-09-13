@@ -63,3 +63,4 @@ void LinuxRCInput_AioPRU::_timer_tick()
 }
 
 #endif // CONFIG_HAL_BOARD_SUBTYPE
+

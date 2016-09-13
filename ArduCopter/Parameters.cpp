@@ -1076,6 +1076,13 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(autotune_min_d, "AUTOTUNE_MIN_D", 0.004f),
 
+    // @Param: RCIN_DIRECT_PWM 
+    // @DisplayName: RCin direct PWM
+    // @Description: RCin receiver is direct PWM input
+    // @Range: 0 1
+    // @User: Standard
+    GSCALAR(rcin_direct_pwm, "RCIN_DIRECT_PWM", 0),
+
     AP_VAREND
 };
 

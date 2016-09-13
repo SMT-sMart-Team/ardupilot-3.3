@@ -285,6 +285,11 @@
  # define EKF_ORIGIN_MAX_DIST_M         50000   // EKF origin and waypoints (including home) must be within 50km
 #endif
 
+
+#ifndef RCIN_DIRECT_PWM_DEFAULT 
+ # define RCIN_DIRECT_PWM_DEFAULT 0 // default RCin is ppm_sum/s.bus, not direct PWM
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 //  MAGNETOMETER
 #ifndef MAGNETOMETER

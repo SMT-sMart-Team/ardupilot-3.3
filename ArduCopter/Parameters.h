@@ -346,7 +346,7 @@ public:
         k_param_autotune_min_d, // 251
 
         // 254,255: reserved
-        // k_param_multi_pwm, // 252, AB ZhaoYJ for multi-pwm supporting
+        k_param_rcin_direct_pwm, // 252, AB ZhaoYJ for multi-pwm supporting
     };
 
     AP_Int16        format_version;
@@ -506,6 +506,9 @@ public:
     AP_Int8                 autotune_axis_bitmask;
     AP_Float                autotune_aggressiveness;
     AP_Float                autotune_min_d;
+
+    // AB ZhaoYJ @2016-09-13 for multi-pwm 
+    AP_Int8                 rcin_direct_pwm;
 
     // Note: keep initializers here in the same order as they are declared
     // above.

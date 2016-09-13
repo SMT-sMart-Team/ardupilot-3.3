@@ -55,6 +55,9 @@ public:
 
     /* execute receiver bind */
     virtual bool rc_bind(int dsmMode) { return false; };
+
+    /* AB ZhaoYJ@2016-09-13 for direct pwm*/
+    virtual void set_direct_pwm(uint8_t v) {};
 };
 
 #endif // __AP_HAL_RC_INPUT_H__

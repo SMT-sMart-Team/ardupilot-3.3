@@ -68,6 +68,7 @@ uint8_t LinuxRCInput::read(uint16_t* periods, uint8_t len)
     return (i+1);
 }
 
+
 bool LinuxRCInput::set_overrides(int16_t *overrides, uint8_t len) 
 {
     bool res = false;

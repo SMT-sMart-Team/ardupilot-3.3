@@ -540,6 +540,9 @@ void Copter::one_hz_loop()
 
     // enable/disable raw gyro/accel logging
     ins.set_raw_logging(should_log(MASK_LOG_IMU_RAW));
+
+    // check for direct pwm
+    hal.rcin->set_direct_pwm(g.rcin_direct_pwm);
 }
 
 // called at 50hz
