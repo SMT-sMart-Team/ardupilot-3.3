@@ -346,6 +346,7 @@ public:
         k_param_autotune_min_d, // 251
 
         // 254,255: reserved
+        // k_param_multi_pwm, // 252, AB ZhaoYJ for multi-pwm supporting
     };
 
     AP_Int16        format_version;

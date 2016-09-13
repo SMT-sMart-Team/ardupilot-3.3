@@ -25,7 +25,9 @@ extern const AP_HAL::HAL& hal;
 using namespace Linux;
 
 // AB ZhaoYJ @2016-09-13 for testing multi-pwm
+#ifdef MULTI_PWM
 #define  TEST_MULTI_PWM
+#endif
 
 void LinuxRCInput_PRU::init(void*)
 {
@@ -53,8 +55,8 @@ void LinuxRCInput_PRU::_timer_tick()
 #ifdef TEST_MULTI_PWM
     static uint16_t test_cnt = 0;
     uint8_t g_rcin_multi_pwm = 1;
-#endif
     if(!g_rcin_multi_pwm)
+#endif
     {
     while (ring_buffer->ring_head != ring_buffer->ring_tail) {
         if (ring_buffer->ring_tail >= NUM_RING_ENTRIES) {
@@ -73,6 +75,7 @@ void LinuxRCInput_PRU::_timer_tick()
         ring_buffer->ring_head = (ring_buffer->ring_head + 1) % NUM_RING_ENTRIES;        
     }
     }
+#ifdef MULTI_PWM 
     else
     {
 
@@ -85,7 +88,7 @@ void LinuxRCInput_PRU::_timer_tick()
             uint16_t width_usec = ring_buffer->multi_pwm_out[i].high;
 
             // valid pwm
-            if (width_usec > 700 && width_usec < 2300) {
+            if (width_usec < 700 || width_usec > 2300) {
                 // take a reading for the current channel
                 // move to next channel
                 continue;
@@ -94,23 +97,24 @@ void LinuxRCInput_PRU::_timer_tick()
             chn_num++;
         }
 
-        if(!chn_num)
-        {
-            set_num_channels(chn_num);
-            set_new_rc_input();
-
 #ifdef TEST_MULTI_PWM
-            if(!((test_cnt++)%2000))
+            if(!((test_cnt++)%200))
             {
                 printf("dump pwm chs: \n");
                 for (uint8_t i=0; i<MAX_RCIN_NUM; i++) {
-                    printf("ch[%d]: %d\n", i, get_pwm_values(i));
+                    printf("ch[%d]: %d\n", i, ring_buffer->multi_pwm_out[i].high);
                 }
                 printf("=========================== \n");
             }
 #endif
+        if(chn_num)
+        {
+            set_num_channels(chn_num);
+            set_new_rc_input();
+
         }
     }
+#endif
 }
 
 #endif // CONFIG_HAL_BOARD_SUBTYPE
