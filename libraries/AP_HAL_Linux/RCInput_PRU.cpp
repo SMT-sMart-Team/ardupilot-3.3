@@ -26,7 +26,7 @@ using namespace Linux;
 
 // AB ZhaoYJ @2016-09-13 for testing multi-pwm
 #ifdef MULTI_PWM
-#define  TEST_MULTI_PWM
+// #define  TEST_MULTI_PWM
 #endif
 
 void LinuxRCInput_PRU::init(void*)
