@@ -4,6 +4,11 @@
 
 #define CONTROL_SWITCH_DEBOUNCE_TIME_MS  200
 
+// AB ZhaoYJ@2016-09-20
+#ifdef SMT_CH5_CH6_SWITCH
+#define TEST_PRT
+#endif
+
 //Documentation of Aux Switch Flags:
 static union {
     struct {
@@ -26,11 +31,19 @@ void Copter::read_control_switch()
     int8_t switch_position;
     bool ret = false;
 #ifdef SMT_CH5_CH6_SWITCH
-#define RC5_STATBLIZED 0xFF
-    int8_t stablized_now = 0;
+#define RC5_STATBLIZED 0x7F
+
+#ifdef TEST_PRT
+    static uint32_t test_cnt = 0;
+    if(!((test_cnt++)%1000))
+    {
+        printf("fm1: %d, fm2: %d, fm3: %d\n", g.flight_mode1, g.flight_mode2, g.flight_mode3);
+        printf("rc5: %d, rc6: %d\n", g.rc_5.radio_in, g.rc_6.radio_in);
+    }
+#endif
+
     if(g.rc_5.radio_in < 1100) 
     {
-        stablized_now  = 1;
         switch_position = RC5_STATBLIZED;
     }
     else if ((g.rc_5.radio_in < 2100) && (g.rc_5.radio_in > 1900))
@@ -80,12 +93,16 @@ void Copter::read_control_switch()
         if(RC5_STATBLIZED == switch_position)
         {
             ret = set_mode(STABILIZE);
+#ifdef TEST_PRT
             printf("stablized\n");
+#endif
         }
         else
         {
             ret = set_mode(flight_modes[switch_position]);
+#ifdef TEST_PRT
             printf("GPS: %d\n", flight_modes[switch_position]);
+#endif
         }
 #else
         ret = set_mode(flight_modes[switch_position]);
