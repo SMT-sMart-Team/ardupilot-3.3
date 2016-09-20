@@ -24,12 +24,46 @@ void Copter::read_control_switch()
 
     // calculate position of flight mode switch
     int8_t switch_position;
+    bool ret = false;
+#ifdef SMT_CH5_CH6_SWITCH
+#define RC5_STATBLIZED 0xFF
+    int8_t stablized_now = 0;
+    if(g.rc_5.radio_in < 1100) 
+    {
+        stablized_now  = 1;
+        switch_position = RC5_STATBLIZED;
+    }
+    else if ((g.rc_5.radio_in < 2100) && (g.rc_5.radio_in > 1900))
+    {
+        if(g.rc_6.radio_in < 1100)
+        {
+            switch_position = 0;
+        }
+        else if ((g.rc_6.radio_in < 1600) && (g.rc_6.radio_in > 1400))
+        {
+            switch_position = 1;
+        }
+        else if ((g.rc_6.radio_in < 2100) && (g.rc_6.radio_in > 1900))
+        {
+            switch_position = 2;
+        }
+        else 
+        {
+            return;
+        }
+    }
+    else 
+    {
+        return;
+    }
+#else
     if      (g.rc_5.radio_in < 1231) switch_position = 0;
     else if (g.rc_5.radio_in < 1361) switch_position = 1;
     else if (g.rc_5.radio_in < 1491) switch_position = 2;
     else if (g.rc_5.radio_in < 1621) switch_position = 3;
     else if (g.rc_5.radio_in < 1750) switch_position = 4;
     else switch_position = 5;
+#endif
 
     // store time that switch last moved
     if(control_switch_state.last_switch_position != switch_position) {
@@ -42,8 +76,23 @@ void Copter::read_control_switch()
     bool failsafe_disengaged = !failsafe.radio && failsafe.radio_counter == 0;
 
     if (control_switch_changed && sufficient_time_elapsed && failsafe_disengaged) {
+#ifdef SMT_CH5_CH6_SWITCH
+        if(RC5_STATBLIZED == switch_position)
+        {
+            ret = set_mode(STABILIZE);
+            printf("stablized\n");
+        }
+        else
+        {
+            ret = set_mode(flight_modes[switch_position]);
+            printf("GPS: %d\n", flight_modes[switch_position]);
+        }
+#else
+        ret = set_mode(flight_modes[switch_position]);
+#endif
         // set flight mode and simple mode setting
-        if (set_mode(flight_modes[switch_position])) {
+        if (ret) {
+        // if (set_mode(flight_modes[switch_position])) {
             // play a tone
             if (control_switch_state.debounced_switch_position != -1) {
                 // alert user to mode change failure (except if autopilot is just starting up)
