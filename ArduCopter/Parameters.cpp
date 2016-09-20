@@ -306,6 +306,29 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Increment: 1
     GSCALAR(throttle_deadzone,  "THR_DZ",    THR_DZ_DEFAULT),
 
+#ifdef SMT_CH5_CH6_SWITCH
+    // @Param: FLTMODE1
+    // @DisplayName: Flight Mode 1
+    // @Description: Flight mode when Channel 6 pwm is <= 1100
+    // @Values: 0:Stabilize,1:Acro,2:AltHold,3:Auto,4:Guided,5:Loiter,6:RTL,7:Circle,9:Land,11:Drift,13:Sport,14:Flip,15:AutoTune,16:PosHold,17:Brake
+    // @User: Standard
+    GSCALAR(flight_mode1, "FLTMODE1",               LOITER),
+
+    // @Param: FLTMODE2
+    // @DisplayName: Flight Mode 2
+    // @Description: Flight mode when Channel 6 pwm is >= 1400 <= 1600
+    // @Values: 0:Stabilize,1:Acro,2:AltHold,3:Auto,4:Guided,5:Loiter,6:RTL,7:Circle,9:Land,11:Drift,13:Sport,14:Flip,15:AutoTune,16:PosHold,17:Brake
+    // @User: Standard
+    GSCALAR(flight_mode2, "FLTMODE2",               GUIDED),
+
+    // @Param: FLTMODE3
+    // @DisplayName: Flight Mode 3
+    // @Description: Flight mode when Channel 6 pwm is >= 1900 <= 2100
+    // @Values: 0:Stabilize,1:Acro,2:AltHold,3:Auto,4:Guided,5:Loiter,6:RTL,7:Circle,9:Land,11:Drift,13:Sport,14:Flip,15:AutoTune,16:PosHold,17:Brake
+    // @User: Standard
+    GSCALAR(flight_mode3, "FLTMODE3",               RTL),
+#else
+
     // @Param: FLTMODE1
     // @DisplayName: Flight Mode 1
     // @Description: Flight mode when Channel 5 pwm is <= 1230
@@ -326,6 +349,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Values: 0:Stabilize,1:Acro,2:AltHold,3:Auto,4:Guided,5:Loiter,6:RTL,7:Circle,9:Land,11:Drift,13:Sport,14:Flip,15:AutoTune,16:PosHold,17:Brake
     // @User: Standard
     GSCALAR(flight_mode3, "FLTMODE3",               FLIGHT_MODE_3),
+#endif
 
     // @Param: FLTMODE4
     // @DisplayName: Flight Mode 4
