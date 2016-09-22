@@ -59,11 +59,11 @@ void AP_SerialBus_SPI_MS5803::init()
 {
     _spi = hal.spi->device(_device);
     if (_spi == NULL) {
-        hal.scheduler->panic(PSTR("did not get valid SPI device driver!"));
+        // hal.scheduler->panic(PSTR("did not get valid SPI device driver!"));
     }
     _spi_sem = _spi->get_semaphore();
     if (_spi_sem == NULL) {
-        hal.scheduler->panic(PSTR("AP_SerialBus_SPI did not get valid SPI semaphroe!"));
+        // hal.scheduler->panic(PSTR("AP_SerialBus_SPI did not get valid SPI semaphroe!"));
     }
     _spi->set_bus_speed(_speed);
 }
@@ -118,7 +118,7 @@ void AP_SerialBus_I2C_MS5803::init()
 {
     _i2c_sem = _i2c->get_semaphore();
     if (_i2c_sem == NULL) {
-        hal.scheduler->panic(PSTR("AP_SerialBus_I2C did not get valid I2C semaphore!"));
+        // hal.scheduler->panic(PSTR("AP_SerialBus_I2C did not get valid I2C semaphore!"));
     }
 }
 
@@ -176,7 +176,7 @@ AP_Baro_MS58XX::AP_Baro_MS58XX(AP_Baro &baro, AP_SerialBus *serial, bool use_tim
     _instance = _frontend.register_sensor();
     _serial->init();
     if (!_serial->sem_take_blocking()){
-        hal.scheduler->panic(PSTR("PANIC: AP_Baro_MS58XX: failed to take serial semaphore for init"));
+        // hal.scheduler->panic(PSTR("PANIC: AP_Baro_MS58XX: failed to take serial semaphore for init"));
     }
 
     _serial->write(CMD_MS5803_RESET);
@@ -192,7 +192,7 @@ AP_Baro_MS58XX::AP_Baro_MS58XX(AP_Baro &baro, AP_SerialBus *serial, bool use_tim
     _C6 = _serial->read_16bits(CMD_MS5803_PROM_C6);
 
     if (!_check_crc()) {
-        hal.scheduler->panic(PSTR("Bad CRC on MS5803"));
+        // hal.scheduler->panic(PSTR("Bad CRC on MS5803"));
     }
 
     // Send a command to read Temp first

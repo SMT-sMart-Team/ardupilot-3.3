@@ -28,9 +28,9 @@ LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
     // different SPI tables per board subtype
     // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_LSM9DS0_AM, SPI_MODE_3, 8, BBB_P9_17,  10*MHZ,10*MHZ),
     // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_LSM9DS0_G,  SPI_MODE_3, 8, BBB_P8_9,   10*MHZ,10*MHZ),
-    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5611,     SPI_MODE_3, 8, BBB_P9_42,  10*MHZ,10*MHZ),
+    // LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5611,     SPI_MODE_3, 8, BBB_P9_42,  10*MHZ,10*MHZ),
     #ifdef SMT_NEW_SENSORS_BOARD
-	LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5803,     SPI_MODE_3, 8, BBB_P9_28,  10*MHZ,10*MHZ),
+	// LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5803,     SPI_MODE_3, 8, BBB_P9_31,  10*MHZ,10*MHZ),
     #else
 	LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU6000,    SPI_MODE_3, 8, BBB_P9_28,  500*1000, 20*MHZ),
 	#endif

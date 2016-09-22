@@ -96,8 +96,8 @@ void AP_Baro::calibrate()
         do {
             update();
             if (hal.scheduler->millis() - tstart > 500) {
-                hal.scheduler->panic(PSTR("PANIC: AP_Baro::read unsuccessful "
-                        "for more than 500ms in AP_Baro::calibrate [2]\r\n"));
+                // hal.scheduler->panic(PSTR("PANIC: AP_Baro::read unsuccessful "
+                        // "for more than 500ms in AP_Baro::calibrate [2]\r\n"));
             }
             hal.scheduler->delay(10);
         } while (!healthy());

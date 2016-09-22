@@ -1,9 +1,7 @@
-#include <AP_HAL/AP_HAL.h>
 
-#if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF || \
-    CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLE || \
-    CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BBBMINI
+#define CONFIG_HAL_BOARD HAL_BOARD_LINUX
 
+#include "RCInput_PRU_test.h"
 #include <stdio.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -17,23 +15,20 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
-#include "GPIO.h"
-#include "RCInput.h"
 
-extern const AP_HAL::HAL& hal;
 
-using namespace Linux;
 
 // AB ZhaoYJ @2016-09-13 for testing multi-pwm
 #ifdef MULTI_PWM
 #define  TEST_MULTI_PWM
 #endif
 
+
 void LinuxRCInput_PRU::init(void*)
 {
     int mem_fd = open("/dev/mem", O_RDWR|O_SYNC);
     if (mem_fd == -1) {
-        hal.scheduler->panic("Unable to open /dev/mem");
+        ::printf("Unable to open /dev/mem");
     }
     ring_buffer = (volatile struct ring_buffer*) mmap(0, sizeof(ring_buffer) + 0x100, PROT_READ|PROT_WRITE, MAP_SHARED, mem_fd, RCIN_PRUSS_SHAREDRAM_BASE);
     close(mem_fd);
@@ -46,10 +41,16 @@ void LinuxRCInput_PRU::init(void*)
     // hal.gpio->write(BBB_P8_17, 1);
 }
 
-
 /*
-  called at 1kHz to check for new pulse capture data from the PRU
+  process a PPM-sum pulse of the given width
  */
+void LinuxRCInput_PRU::_process_ppmsum_pulse(uint16_t width_usec)
+{
+}
+
+void LinuxRCInput_PRU::_process_rc_pulse(uint16_t width_s0, uint16_t width_s1)
+{
+}
 
 void LinuxRCInput_PRU::_timer_tick()
 {
@@ -57,27 +58,6 @@ void LinuxRCInput_PRU::_timer_tick()
     static uint16_t test_cnt = 0;
     uint8_t rcin_multi_pwm = 1;
 #endif
-    if(!_direct_pwm)
-    {
-    while (ring_buffer->ring_head != ring_buffer->ring_tail) {
-        if (ring_buffer->ring_tail >= NUM_RING_ENTRIES) {
-            // invalid ring_tail from PRU - ignore RC input
-            return;
-        }
-        if (ring_buffer->buffer[ring_buffer->ring_head].pin_value == 1) {
-            // remember the time we spent in the low state
-            _s0_time = ring_buffer->buffer[ring_buffer->ring_head].delta_t;
-        } else {
-            // the pulse value is the sum of the time spent in the low
-            // and high states
-            _process_rc_pulse(_s0_time, ring_buffer->buffer[ring_buffer->ring_head].delta_t);
-        }
-        // move to the next ring buffer entry
-        ring_buffer->ring_head = (ring_buffer->ring_head + 1) % NUM_RING_ENTRIES;        
-    }
-    }
-#ifdef MULTI_PWM 
-    else
     {
 
         uint8_t chn_num = 0;
@@ -94,28 +74,40 @@ void LinuxRCInput_PRU::_timer_tick()
                 // move to next channel
                 continue;
             }
-            set_pwm_values(i, width_usec);
             chn_num++;
         }
 
 #ifdef TEST_MULTI_PWM
-            if(!((test_cnt++)%200))
+            if(!((test_cnt++)%2000))
             {
                 printf("dump pwm chs: \n");
                 for (uint8_t i=0; i<MAX_RCIN_NUM; i++) {
                     printf("ch[%d]: %d\n", i, ring_buffer->multi_pwm_out[i].high);
                 }
                 printf("=========================== \n");
+                sleep(2);
             }
 #endif
-        if(chn_num)
-        {
-            set_num_channels(chn_num);
-            set_new_rc_input();
-
-        }
     }
-#endif
 }
 
-#endif // CONFIG_HAL_BOARD_SUBTYPE
+LinuxRCInput_PRU pruintest;
+
+
+
+int main(void)
+{
+    unsigned int ii = 0;
+    printf("enter pruin_test...\n");
+    pruintest.init(NULL);
+
+    // first write magic head to pwmpru, then wait for resp
+    // then change mask for enable
+    while(1)
+    {
+
+        pruintest._timer_tick();
+        // usleep(200);
+    }
+}
+
