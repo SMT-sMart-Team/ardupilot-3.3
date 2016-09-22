@@ -319,7 +319,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Description: Flight mode when Channel 6 pwm is >= 1400 <= 1600
     // @Values: 0:Stabilize,1:Acro,2:AltHold,3:Auto,4:Guided,5:Loiter,6:RTL,7:Circle,9:Land,11:Drift,13:Sport,14:Flip,15:AutoTune,16:PosHold,17:Brake
     // @User: Standard
-    GSCALAR(flight_mode2, "FLTMODE2",               GUIDED),
+    GSCALAR(flight_mode2, "FLTMODE2",               AUTO),
 
     // @Param: FLTMODE3
     // @DisplayName: Flight Mode 3
