@@ -6,7 +6,7 @@
 
 // AB ZhaoYJ@2016-09-20
 #ifdef SMT_CH5_CH6_SWITCH
-#define TEST_PRT
+// #define TEST_PRT
 #endif
 
 //Documentation of Aux Switch Flags:
@@ -48,15 +48,15 @@ void Copter::read_control_switch()
     }
     else if ((g.rc_5.radio_in < 2100) && (g.rc_5.radio_in > 1900))
     {
-        if(g.rc_6.radio_in < 1100)
+        if(g.rc_7.radio_in < 1100)
         {
             switch_position = 0;
         }
-        else if ((g.rc_6.radio_in < 1600) && (g.rc_6.radio_in > 1400))
+        else if ((g.rc_7.radio_in < 1600) && (g.rc_7.radio_in > 1400))
         {
             switch_position = 1;
         }
-        else if ((g.rc_6.radio_in < 2100) && (g.rc_6.radio_in > 1900))
+        else if ((g.rc_7.radio_in < 2100) && (g.rc_7.radio_in > 1900))
         {
             switch_position = 2;
         }
