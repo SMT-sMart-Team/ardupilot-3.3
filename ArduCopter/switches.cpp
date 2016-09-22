@@ -6,7 +6,7 @@
 
 // AB ZhaoYJ@2016-09-20
 #ifdef SMT_CH5_CH6_SWITCH
-#define TEST_PRT
+// #define TEST_PRT
 #endif
 
 //Documentation of Aux Switch Flags:
