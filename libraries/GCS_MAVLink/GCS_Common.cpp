@@ -1344,10 +1344,31 @@ void GCS_MAVLINK::send_local_position(const AP_AHRS &ahrs) const
 /*
   send LOCAL_POSITION_NED message
  */
-void GCS_MAVLINK::send_vibration(const AP_InertialSensor &ins) const
+void GCS_MAVLINK::send_vibration(const AP_InertialSensor &ins) 
 {
 #if INS_VIBRATION_CHECK
+    static float cnt  = 10.0;
     Vector3f vibration = ins.get_vibration_levels();
+
+
+
+#if 1
+    // if(!((cnt++)%10))
+    {
+        vibration.x = cnt;
+        vibration.y = cnt + 10;
+        vibration.z = cnt + 20;
+        cnt += 2.0;
+        if(cnt > 80)
+        {
+            cnt = 10.0;
+        }
+        this->send_statustext_all(SEVERITY_CRITICAL, "send vibe: vx: %f, vy: %f, vz: %f", vibration.x, vibration.y, vibration.z);
+        // printf("vx: %d, vy: %d, vz: %d", vibration.x, vibration.y, vibration.z);
+
+        
+    }
+#endif
 
     mavlink_msg_vibration_send(
         chan,

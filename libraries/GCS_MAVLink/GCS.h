@@ -150,7 +150,7 @@ public:
 #endif
     void send_autopilot_version(uint8_t major_version, uint8_t minor_version, uint8_t patch_version, uint8_t version_type) const;
     void send_local_position(const AP_AHRS &ahrs) const;
-    void send_vibration(const AP_InertialSensor &ins) const;
+    void send_vibration(const AP_InertialSensor &ins) ;
 
     // return a bitmap of active channels. Used by libraries to loop
     // over active channels to send to all active channels    
