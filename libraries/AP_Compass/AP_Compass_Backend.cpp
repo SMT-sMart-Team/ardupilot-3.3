@@ -52,7 +52,12 @@ uint8_t AP_Compass_Backend::register_compass(void) const
 void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
 {
     Compass::mag_state &state = _compass._state[i];
+    if (state.diagonals.get().is_zero()) {
+        state.diagonals.set(Vector3f(1.0f,1.0f,1.0f));
+    }
     const Vector3f &offsets = state.offset.get();
+    const Vector3f &diagonals = state.diagonals.get();
+    const Vector3f &offdiagonals = state.offdiagonals.get();
     const Vector3f &mot = state.motor_compensation.get();
 
     /*
@@ -66,10 +71,42 @@ void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
     } else {
         state.motor_offset.zero();
     }
+    Matrix3f mat(
+        diagonals.x, offdiagonals.x, offdiagonals.y,
+        offdiagonals.x,    diagonals.y, offdiagonals.z,
+        offdiagonals.y, offdiagonals.z,    diagonals.z
+    );
+
+    mag = mat * mag;
 }
 
+/*
+  copy latest data to the frontend from a backend
+ */
+void AP_Compass_Backend::publish_filtered_field(const Vector3f &mag, uint8_t instance)
+{
+    Compass::mag_state &state = _compass._state[instance];
+
+    state.field = mag;
+
+    state.last_update_ms = AP_HAL::millis();
+    state.last_update_usec = AP_HAL::micros();
+}
+
+void AP_Compass_Backend::set_last_update_usec(uint32_t last_update, uint8_t instance)
+{
+    Compass::mag_state &state = _compass._state[instance];
+    state.last_update_usec = last_update;
+}
 
 /*
+  register a new backend with frontend, returning instance which
+  should be used in publish_field()
+ */
+uint8_t AP_Compass_Backend::register_compass(void) const
+{ 
+    return _compass.register_compass(); 
+}
   set dev_id for an instance
 */
 void AP_Compass_Backend::set_dev_id(uint8_t instance, uint32_t dev_id)
@@ -84,5 +121,7 @@ void AP_Compass_Backend::set_dev_id(uint8_t instance, uint32_t dev_id)
 */
 void AP_Compass_Backend::set_external(uint8_t instance, bool external)
 {
-    _compass._state[instance].external.set(external);
+    if (_compass._state[instance].external != 2) {
+        _compass._state[instance].external.set(external);
+    }
 }
