@@ -1456,6 +1456,15 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
         }
 
+
+        case MAV_CMD_DO_START_MAG_CAL:
+        case MAV_CMD_DO_ACCEPT_MAG_CAL:
+        case MAV_CMD_DO_CANCEL_MAG_CAL:
+            result = copter.compass.handle_mag_cal_command(packet);
+            printf("msg: %d\n", packet.command);
+
+            break;
+
         default:
             result = MAV_RESULT_UNSUPPORTED;
             break;

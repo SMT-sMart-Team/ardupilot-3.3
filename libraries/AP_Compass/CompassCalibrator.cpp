@@ -200,6 +200,7 @@ void CompassCalibrator::update(bool &failure) {
             }
             run_sphere_fit();
             _fit_step++;
+            
         }
     } else if(_status == COMPASS_CAL_RUNNING_STEP_TWO) {
         if (_fit_step >= 35) {
