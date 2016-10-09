@@ -737,6 +737,19 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
         mavlink_msg_mission_item_reached_send(chan, mission_item_reached_index);
         break;
 
+
+
+    case MSG_MAG_CAL_PROGRESS:
+        copter.compass.send_mag_cal_progress(chan);
+        printf("msg_cal_progress: %d\n", id);
+        break;
+
+    case MSG_MAG_CAL_REPORT:
+        copter.compass.send_mag_cal_report(chan);
+        printf("msg_cal_report: %d\n", id);
+        break;
+
+
     case MSG_RETRY_DEFERRED:
         break; // just here to prevent a warning
     }

@@ -42,6 +42,8 @@ public:
     float get_fitness() const { return sqrtf(_fitness); }
     bool get_autosave() const { return _autosave; }
     uint8_t get_attempt() const { return _attempt; }
+    uint16_t get_samples_num() const { return _samples_collected; };
+
 
 private:
     class param_t {

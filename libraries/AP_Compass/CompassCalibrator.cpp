@@ -76,6 +76,8 @@ extern const AP_HAL::HAL& hal;
 #define COMPASS_CALIBRATOR_OFS_MAX 1000
 #endif
 
+uint16_t test_prt = 0;
+
 CompassCalibrator::CompassCalibrator():
 _tolerance(COMPASS_CAL_DEFAULT_TOLERANCE),
 _sample_buffer(NULL)
@@ -96,7 +98,9 @@ void CompassCalibrator::start(bool retry, bool autosave, float delay) {
     _retry = retry;
     _delay_start_sec = delay;
     _start_time_ms = hal.scheduler->millis();
+    hal.util->prt("set wait to start!");
     set_status(COMPASS_CAL_WAITING_TO_START);
+    hal.util->prt("set wait to start done!");
 }
 
 void CompassCalibrator::get_calibration(Vector3f &offsets, Vector3f &diagonals, Vector3f &offdiagonals) {
@@ -158,7 +162,7 @@ CompassCalibrator::completion_mask_t& CompassCalibrator::get_completion_mask()
 
 bool CompassCalibrator::check_for_timeout() {
     uint32_t tnow = hal.scheduler->millis(); //  AP_HAL::millis();
-    if(running() && tnow - _last_sample_ms > 1000) {
+    if(running() && ((tnow - _last_sample_ms) > 1000) && _last_sample_ms) {
         _retry = false;
         set_status(COMPASS_CAL_FAILED);
         return true;
@@ -173,10 +177,13 @@ void CompassCalibrator::new_sample(const Vector3f& sample) {
         set_status(COMPASS_CAL_RUNNING_STEP_ONE);
     }
 
+
     if(running() && _samples_collected < COMPASS_CAL_NUM_SAMPLES && accept_sample(sample)) {
+    // if(running() && _samples_collected < COMPASS_CAL_NUM_SAMPLES ) {
         update_completion_mask(sample);
         _sample_buffer[_samples_collected].set(sample);
         _samples_collected++;
+        hal.util->prt("accept sample...");
     }
 }
 
@@ -184,15 +191,30 @@ void CompassCalibrator::update(bool &failure) {
     failure = false;
 
     if(!fitting()) {
+        // hal.util->prt("compass cali return!");
+        if(test_prt)
+        {
+        // if(!running())
+        // {
+        //     hal.util->prt("running status: %d!", _status);
+        // }
+        // if(_samples_collected != COMPASS_CAL_NUM_SAMPLES)
+        // {
+        //     hal.util->prt("not enough samples: %d!", _samples_collected);
+        // }
+        // hal.util->prt("cali return !");
+        }
         return;
     }
 
     if(_status == COMPASS_CAL_RUNNING_STEP_ONE) {
+        hal.util->prt("compass cali step 1!");
         if (_fit_step >= 10) {
             if(is_equal(_fitness,_initial_fitness) || isnan(_fitness)) {           //if true, means that fitness is diverging instead of converging
                 set_status(COMPASS_CAL_FAILED);
                 failure = true;
             }
+        hal.util->prt("compass cali enter step 2!");
             set_status(COMPASS_CAL_RUNNING_STEP_TWO);
         } else {
             if (_fit_step == 0) {
@@ -203,6 +225,7 @@ void CompassCalibrator::update(bool &failure) {
             
         }
     } else if(_status == COMPASS_CAL_RUNNING_STEP_TWO) {
+        hal.util->prt("compass cali step 2!");
         if (_fit_step >= 35) {
             if(fit_acceptable()) {
                 set_status(COMPASS_CAL_SUCCESS);
@@ -277,10 +300,13 @@ bool CompassCalibrator::set_status(compass_cal_status_t status) {
             _status = COMPASS_CAL_WAITING_TO_START;
 
             set_status(COMPASS_CAL_RUNNING_STEP_ONE);
+            test_prt = 1;
             return true;
 
         case COMPASS_CAL_RUNNING_STEP_ONE:
+            // hal.util->prt("COMPASS_CAL_RUNNING_STEP_ONE!");
             if(_status != COMPASS_CAL_WAITING_TO_START) {
+                // hal.util->prt("error status !");
                 return false;
             }
 
@@ -297,6 +323,7 @@ bool CompassCalibrator::set_status(compass_cal_status_t status) {
             if(_sample_buffer != NULL) {
                 initialize_fit();
                 _status = COMPASS_CAL_RUNNING_STEP_ONE;
+                // hal.util->prt("running now!");
                 return true;
             }
 

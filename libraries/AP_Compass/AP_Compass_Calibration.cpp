@@ -14,6 +14,12 @@ Compass::compass_cal_update()
 
     for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
         bool failure;
+        if(0 == i)
+        {
+        hal.util->prt("1st cali start: %d-status(%d)", i, _calibrator[i].get_status());
+        hal.util->prt("samples: %d-number(%d)", i, _calibrator[i].get_samples_num());
+        hal.util->prt("progress: %f%", _calibrator[i].get_completion_percent());
+        }
         _calibrator[i].update(failure);
         if (failure) {
             AP_Notify::events.compass_cal_failed = 1;
@@ -38,12 +44,14 @@ Compass::compass_cal_update()
         hal.scheduler->delay(1000);
         hal.scheduler->reboot(false);
     }
+    hal.util->prt("1st cali done: 0-status(%d)",  _calibrator[0].get_status());
 }
 
 bool
 Compass::start_calibration(uint8_t i, bool retry, bool autosave, float delay, bool autoreboot)
 {
     if (!healthy(i)) {
+        hal.util->prt("unhealth ...");
         return false;
     }
     memset(_reports_sent,0,sizeof(_reports_sent));
@@ -59,6 +67,7 @@ Compass::start_calibration(uint8_t i, bool retry, bool autosave, float delay, bo
         _calibrator[i].set_tolerance(_calibration_threshold*2);
     }
     _calibrator[i].start(retry, autosave, delay);
+    hal.util->prt("cali start done: %d", _calibrator[i].get_status());
     _compass_cal_autoreboot = autoreboot;
 
     // disable compass learning both for calibration and after completion
@@ -84,6 +93,7 @@ Compass::start_calibration_mask(uint8_t mask, bool retry, bool autosave, float d
 bool
 Compass::start_calibration_all(bool retry, bool autosave, float delay, bool autoreboot)
 {
+    hal.util->prt("start all...");
     for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
         if (healthy(i) && use_for_yaw(i)) {
             if (!start_calibration(i,retry,autosave,delay,autoreboot)) {
@@ -112,6 +122,7 @@ Compass::cancel_calibration_mask(uint8_t mask)
     for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
         if((1<<i) & mask) {
             cancel_calibration(i);
+            hal.util->prt("cancel cali[%d]", i);
         }
     }
 }
@@ -288,6 +299,8 @@ uint8_t Compass::handle_mag_cal_command(const mavlink_command_long_t &packet)
             break;
         }
 
+        hal.util->prt("enter start cali");
+
         uint8_t mag_mask = packet.param1;
         bool retry = !is_zero(packet.param2);
         bool autosave = !is_zero(packet.param3);
@@ -295,6 +308,7 @@ uint8_t Compass::handle_mag_cal_command(const mavlink_command_long_t &packet)
         bool autoreboot = !is_zero(packet.param5);
 
         if (mag_mask == 0) { // 0 means all
+            // hal.util->prt("mag_mask ==0");
             if (!start_calibration_all(retry, autosave, delay, autoreboot)) {
                 result = MAV_RESULT_FAILED;
             }

@@ -38,6 +38,8 @@ public:
     // commands
     virtual bool run_debug_shell(AP_HAL::BetterStream *stream) = 0;
 
+    virtual void prt(const char *fmt, ...) {};
+
     enum safety_state {
         SAFETY_NONE, SAFETY_DISARMED, SAFETY_ARMED
     };

@@ -19,6 +19,10 @@ void AP_Compass_Backend::publish_field(const Vector3f &mag, uint8_t instance)
 
     state.field = mag;
 
+    // AB ZhaoYJ @2016-10-09
+    // for calibration
+    _compass._calibrator[instance].new_sample(mag);
+
     // apply default board orientation for this compass type. This is
     // a noop on most boards
     state.field.rotate(MAG_BOARD_ORIENTATION);
