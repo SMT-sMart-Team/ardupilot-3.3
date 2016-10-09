@@ -72,6 +72,7 @@ public:
         uint16_t autotune_next_axis     : 1;    // 1 when autotune has completed one axis and is moving onto the next
         uint16_t mission_complete       : 1;    // 1 when the mission has completed successfully
         uint16_t waypoint_complete      : 1;    // 1 as vehicle completes a waypoint
+        uint16_t initiated_compass_cal  : 1;    // 1 as vehicle completes a waypoint
         uint16_t compass_cal_saved      : 1;    // 1 when compass calibration was just saved
         uint16_t compass_cal_failed     : 1;    // 1 when compass calibration has just failed
         uint16_t compass_cal_canceled   : 1;    // 1 when compass calibration was just canceled

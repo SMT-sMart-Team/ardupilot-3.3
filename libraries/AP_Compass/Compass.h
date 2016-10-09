@@ -8,6 +8,7 @@
 #include <AP_Math/AP_Math.h>
 #include <AP_Declination/AP_Declination.h> // ArduPilot Mega Declination Helper Library
 #include <AP_HAL/AP_HAL.h>
+#include <GCS_MAVLink/GCS_MAVLink.h>
 #include "CompassCalibrator.h"
 #include "AP_Compass_Backend.h"
 
@@ -96,6 +97,9 @@ public:
     /// @param  offsets             Offsets to the raw mag_ values.
     ///
     void set_and_save_offsets(uint8_t i, const Vector3f &offsets);
+    void set_and_save_diagonals(uint8_t i, const Vector3f &diagonals);
+    void set_and_save_offdiagonals(uint8_t i, const Vector3f &diagonals);
+
 
     /// Saves the current offset x/y/z values for one or all compasses
     ///
@@ -339,6 +343,8 @@ private:
         bool        healthy;
         AP_Int8     orientation;
         AP_Vector3f offset;
+        AP_Vector3f diagonals;
+        AP_Vector3f offdiagonals;
 
 #if COMPASS_MAX_INSTANCES > 1
         // device id detected at init.  
