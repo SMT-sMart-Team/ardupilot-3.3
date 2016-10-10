@@ -4,6 +4,8 @@
 #include "AP_InertialSensor.h"
 #include "AP_InertialSensor_Backend.h"
 
+extern const AP_HAL::HAL& hal;
+
 AP_InertialSensor_Backend::AP_InertialSensor_Backend(AP_InertialSensor &imu) :
     _imu(imu),
     _product_id(AP_PRODUCT_ID_NONE)
@@ -76,6 +78,22 @@ void AP_InertialSensor_Backend::_publish_accel(uint8_t instance, const Vector3f 
     if (rotate_and_correct) {
         _rotate_and_correct_accel(instance, _imu._accel[instance]);
     }
+
+    // AB ZhaoYJ@2016-10-10 for VIBE output
+    // get time interval
+    static uint32_t last_time_us = 0;
+    uint32_t now = hal.scheduler->micros();
+    float dt;
+    if(0 == last_time_us)
+    {
+        last_time_us = now;
+    }
+    else
+    {
+        dt = (float)((now > last_time_us)? (now - last_time_us) : (0xFFFFFFFF - last_time_us + now))/1000.0; // us to ms
+        _imu.calc_vibration_and_clipping(instance, accel, dt);
+    }
+
 }
 
 void AP_InertialSensor_Backend::_set_accel_max_abs_offset(uint8_t instance,
