@@ -73,4 +73,22 @@ bool LinuxUtil::is_chardev_node(const char *path)
     return S_ISCHR(st.st_mode);
 }
 
+
+void LinuxUtil::prt(const char *fmt, ... )
+{
+        va_list args;  
+        char printbuffer[256];  
+                  
+        va_start(args, fmt);  
+                      
+        /* For this to work, printbuffer must be larger than  
+         *      * anything we ever want to print.  
+         *           */  
+        vsprintf(printbuffer, fmt, args);  
+        va_end(args);  
+              
+        /* Print the string */  
+        printf("%s\n", printbuffer);  
+}
+
 #endif // CONFIG_HAL_BOARD == HAL_BOARD_LINUX

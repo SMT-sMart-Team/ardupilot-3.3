@@ -2,6 +2,7 @@
 #ifndef __AP_HAL_LINUX_UTIL_H__
 #define __AP_HAL_LINUX_UTIL_H__
 
+#include <stdio.h>
 #include <AP_HAL/AP_HAL.h>
 #include "AP_HAL_Linux_Namespace.h"
 #include "ToneAlarmDriver.h"
@@ -37,6 +38,8 @@ public:
     void set_custom_terrain_directory(const char *_custom_terrain_directory) { custom_terrain_directory = _custom_terrain_directory; }
 
     bool is_chardev_node(const char *path);
+
+    void prt(const char *fmt, ... ); 
 
 private:
     static Linux::ToneAlarm _toneAlarm;

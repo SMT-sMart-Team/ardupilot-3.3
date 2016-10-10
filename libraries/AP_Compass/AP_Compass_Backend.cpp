@@ -19,6 +19,10 @@ void AP_Compass_Backend::publish_field(const Vector3f &mag, uint8_t instance)
 
     state.field = mag;
 
+    // AB ZhaoYJ @2016-10-09
+    // for calibration
+    _compass._calibrator[instance].new_sample(mag);
+
     // apply default board orientation for this compass type. This is
     // a noop on most boards
     state.field.rotate(MAG_BOARD_ORIENTATION);
@@ -52,7 +56,12 @@ uint8_t AP_Compass_Backend::register_compass(void) const
 void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
 {
     Compass::mag_state &state = _compass._state[i];
+    if (state.diagonals.get().is_zero()) {
+        state.diagonals.set(Vector3f(1.0f,1.0f,1.0f));
+    }
     const Vector3f &offsets = state.offset.get();
+    const Vector3f &diagonals = state.diagonals.get();
+    const Vector3f &offdiagonals = state.offdiagonals.get();
     const Vector3f &mot = state.motor_compensation.get();
 
     /*
@@ -66,6 +75,13 @@ void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
     } else {
         state.motor_offset.zero();
     }
+    Matrix3f mat(
+        diagonals.x, offdiagonals.x, offdiagonals.y,
+        offdiagonals.x,    diagonals.y, offdiagonals.z,
+        offdiagonals.y, offdiagonals.z,    diagonals.z
+    );
+
+    mag = mat * mag;
 }
 
 
@@ -84,5 +100,7 @@ void AP_Compass_Backend::set_dev_id(uint8_t instance, uint32_t dev_id)
 */
 void AP_Compass_Backend::set_external(uint8_t instance, bool external)
 {
-    _compass._state[instance].external.set(external);
+    if (_compass._state[instance].external != 2) {
+        _compass._state[instance].external.set(external);
+    }
 }
