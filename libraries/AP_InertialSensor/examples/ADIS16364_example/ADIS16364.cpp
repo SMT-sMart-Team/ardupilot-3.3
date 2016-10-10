@@ -41,9 +41,9 @@
 ////////////////////////////////////////////////////////////////////////////
 // CS - Chip select pin
 ////////////////////////////////////////////////////////////////////////////
-ADIS16364::ADIS16364(int CS){
+ADIS16364::ADIS16364(int _CS){
   // Set CS pin to specified value
-  this->CS = CS;
+  this->CS = _CS;
   // Begin SPI
   SPIbegin();
   // Set CS pin to be an Output
@@ -51,14 +51,16 @@ ADIS16364::ADIS16364(int CS){
   // Setup SPI
   set_SPI();
   // Initialize CS pin to be high
-  digitalWrite(CS, HIGH);
+  // digitalWrite(_CS, HIGH);
   // Don't use lower power mode
   low_power = 0;
   // Wake device up, incase it's sleeping
-  wake();
-
+  printf("construct: before init\n");
   // init: sample prd, lpf, scale, ...
   init();
+  printf("construct: before wake\n");
+  wake();
+  printf("construct: after init\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -80,9 +82,11 @@ void ADIS16364::init()
         if (fd == -1) {
             printf("Unable to open spi dev 1.0 %s\n", strerror(errno));
         }
+    printf("init: open spidev\n");
 
         // init GPIO_BBB
-        pGPIO->init();
+        GPIO.init();
+        printf("adis init done\n");
 }
 
 void ADIS16364::SPIbegin()
@@ -97,12 +101,14 @@ void ADIS16364::SPIend()
 
 void ADIS16364::digitalWrite(uint8_t _cs_pin, uint8_t value)
 {
-    pGPIO->write(_cs_pin, value);
+    GPIO.write(_cs_pin, value);
 }
 
 uint8_t ADIS16364::SPItransfer(int data)
 {
-    uint8_t rx = 0x0;
+    uint8_t rx = 0xff;
+    uint8_t tx = data;
+    printf("tx: %d\n", tx);
     // we set the mode before we assert the CS line so that the bus is
     // in the correct idle state before the chip is selected
     ioctl(fd, SPI_IOC_WR_MODE, SPI_MODE_3);
@@ -111,19 +117,20 @@ uint8_t ADIS16364::SPItransfer(int data)
     digitalWrite(CS, LOW);
     struct spi_ioc_transfer spi[1];
     memset(spi, 0, sizeof(spi));
-    spi[0].tx_buf        = (uint64_t)&data;
+    spi[0].tx_buf        = (uint64_t)&tx;
     spi[0].rx_buf        = (uint64_t)&rx;
     spi[0].len           = 1;
     spi[0].delay_usecs   = 0;
-    spi[0].speed_hz      = 1000*1000;
+    spi[0].speed_hz      = 300*1000;
     spi[0].bits_per_word = 8;
     spi[0].cs_change     = 0;
 
 
     ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
+    printf("rx: %d\n", rx);
     // cs_release(driver._type);
     digitalWrite(CS, HIGH);
-    return 0;
+    return rx;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -168,27 +175,17 @@ void ADIS16364::burst_read(){
 ////////////////////////////////////////////////////////////////////////////
 void ADIS16364::debug(){
   
-#if 0
   // print all readable registers
-  printf("Device ID:");
-  printf(device_id());
+  printf("Device ID: %d\n", device_id());
   
   // perform burst read
   burst_read();
   
-  printf("Supply Voltage: ");
-  printf(sensor[SUPPLY]);
-  printf(" V");
+  printf("Supply Voltage: %fV \n ", sensor[SUPPLY]);
   
-  printf("Gyroscope: ");
-  printf("(");
-  printf(sensor[XGYRO]);
-  printf(", ");
-  printf(sensor[YGYRO]);
-  printf(", ");
-  printf(sensor[ZGYRO]);
-  printf(") deg / s");
+  printf("Gyroscope: (%f, %f, %f) deg/s \n ", sensor[XGYRO], sensor[YGYRO], sensor[ZGYRO]);
   
+#if 0
   printf("Accelerometer: ");
   printf("(");
   printf(sensor[XACCEL]);

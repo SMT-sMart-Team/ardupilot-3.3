@@ -146,7 +146,7 @@ private:
 
   int fd;
 
-  LinuxGPIO_BBB *pGPIO;
+  LinuxGPIO_BBB GPIO;
 
   // Chip select pin
   int CS;

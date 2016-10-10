@@ -27,13 +27,14 @@
 
 #include "ADIS16364.h"
 #include <unistd.h>
+#include <stdio.h>
 
 // Instantiate ADIS16364 class as iSensor with CS pin 53
 // ****Use this for Mega 2560 setup****
 //ADIS16364 iSensor(53);
 
 // Instantiate ADIS16364 class as iSensor with CS pin 10
-ADIS16364 iSensor(10);
+ADIS16364 iSensor(5);
 
 int main(void)
 {
@@ -43,8 +44,11 @@ int main(void)
   // this will mess up the plotting program if you do this at the same time
   // so only use it if you want to verify setup before plotting 
   
+    printf("enter..\n");
+  
   while(1)
   {
+    printf("while..\n");
      // Perform burst read on iSensor
      iSensor.debug();
      sleep(2);
