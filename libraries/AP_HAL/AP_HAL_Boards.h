@@ -244,6 +244,9 @@
 // add by ZhaoYJ for new flight mode switch: CH5 (2 pos) + CH6 (3 pos)
 #define SMT_CH5_CH6_SWITCH
 
+// add by ZhaoYJ for debugging mag_cali on board @2016-10-10
+// #define SMT_MAG_CALI_DEBUG
+
 // add by ZhaoYJ for hopping on SMT new board @2016-05-19
 // #define SMT_NEW_RCIN
 // #define PRU_SHM_NEW_BASE

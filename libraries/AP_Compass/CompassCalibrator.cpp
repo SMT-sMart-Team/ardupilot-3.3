@@ -76,7 +76,9 @@ extern const AP_HAL::HAL& hal;
 #define COMPASS_CALIBRATOR_OFS_MAX 1000
 #endif
 
+#ifdef SMT_MAG_CALI_DEBUG
 uint16_t test_prt = 0;
+#endif
 
 CompassCalibrator::CompassCalibrator():
 _tolerance(COMPASS_CAL_DEFAULT_TOLERANCE),
@@ -98,9 +100,14 @@ void CompassCalibrator::start(bool retry, bool autosave, float delay) {
     _retry = retry;
     _delay_start_sec = delay;
     _start_time_ms = hal.scheduler->millis();
+
+#ifdef SMT_MAG_CALI_DEBUG
     hal.util->prt("set wait to start!");
+#endif
     set_status(COMPASS_CAL_WAITING_TO_START);
+#ifdef SMT_MAG_CALI_DEBUG
     hal.util->prt("set wait to start done!");
+#endif
 }
 
 void CompassCalibrator::get_calibration(Vector3f &offsets, Vector3f &diagonals, Vector3f &offdiagonals) {
@@ -183,7 +190,9 @@ void CompassCalibrator::new_sample(const Vector3f& sample) {
         update_completion_mask(sample);
         _sample_buffer[_samples_collected].set(sample);
         _samples_collected++;
+#ifdef SMT_MAG_CALI_DEBUG
         hal.util->prt("accept sample...");
+#endif
     }
 }
 
@@ -191,6 +200,7 @@ void CompassCalibrator::update(bool &failure) {
     failure = false;
 
     if(!fitting()) {
+#ifdef SMT_MAG_CALI_DEBUG
         // hal.util->prt("compass cali return!");
         if(test_prt)
         {
@@ -204,17 +214,22 @@ void CompassCalibrator::update(bool &failure) {
         // }
         // hal.util->prt("cali return !");
         }
+#endif
         return;
     }
 
     if(_status == COMPASS_CAL_RUNNING_STEP_ONE) {
+#ifdef SMT_MAG_CALI_DEBUG
         hal.util->prt("compass cali step 1!");
+#endif
         if (_fit_step >= 10) {
             if(is_equal(_fitness,_initial_fitness) || isnan(_fitness)) {           //if true, means that fitness is diverging instead of converging
                 set_status(COMPASS_CAL_FAILED);
                 failure = true;
             }
+#ifdef SMT_MAG_CALI_DEBUG
         hal.util->prt("compass cali enter step 2!");
+#endif
             set_status(COMPASS_CAL_RUNNING_STEP_TWO);
         } else {
             if (_fit_step == 0) {
@@ -225,7 +240,9 @@ void CompassCalibrator::update(bool &failure) {
             
         }
     } else if(_status == COMPASS_CAL_RUNNING_STEP_TWO) {
+#ifdef SMT_MAG_CALI_DEBUG
         hal.util->prt("compass cali step 2!");
+#endif
         if (_fit_step >= 35) {
             if(fit_acceptable()) {
                 set_status(COMPASS_CAL_SUCCESS);
@@ -300,7 +317,9 @@ bool CompassCalibrator::set_status(compass_cal_status_t status) {
             _status = COMPASS_CAL_WAITING_TO_START;
 
             set_status(COMPASS_CAL_RUNNING_STEP_ONE);
+#ifdef SMT_MAG_CALI_DEBUG
             test_prt = 1;
+#endif
             return true;
 
         case COMPASS_CAL_RUNNING_STEP_ONE:
