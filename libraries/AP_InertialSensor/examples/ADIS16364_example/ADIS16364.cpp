@@ -25,6 +25,11 @@
 #include "ADIS16364.h"
 #include <stdio.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
 
 
 #define delay(x) usleep(x*1000)
@@ -69,6 +74,15 @@ ADIS16364::~ADIS16364(){
 
 void ADIS16364::init()
 {
+    // open spi dev 
+
+        fd = open("/dev/spidev1.0", O_RDWR);
+        if (fd == -1) {
+            printf("Unable to open spi dev 1.0 %s\n", strerror(errno));
+        }
+
+        // init GPIO_BBB
+        pGPIO->init();
 }
 
 void ADIS16364::SPIbegin()
@@ -83,10 +97,32 @@ void ADIS16364::SPIend()
 
 void ADIS16364::digitalWrite(uint8_t _cs_pin, uint8_t value)
 {
+    pGPIO->write(_cs_pin, value);
 }
 
 uint8_t ADIS16364::SPItransfer(int data)
 {
+    uint8_t rx = 0x0;
+    // we set the mode before we assert the CS line so that the bus is
+    // in the correct idle state before the chip is selected
+    ioctl(fd, SPI_IOC_WR_MODE, SPI_MODE_3);
+
+    // cs_assert(driver._type);
+    digitalWrite(CS, LOW);
+    struct spi_ioc_transfer spi[1];
+    memset(spi, 0, sizeof(spi));
+    spi[0].tx_buf        = (uint64_t)&data;
+    spi[0].rx_buf        = (uint64_t)&rx;
+    spi[0].len           = 1;
+    spi[0].delay_usecs   = 0;
+    spi[0].speed_hz      = 1000*1000;
+    spi[0].bits_per_word = 8;
+    spi[0].cs_change     = 0;
+
+
+    ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
+    // cs_release(driver._type);
+    digitalWrite(CS, HIGH);
     return 0;
 }
 
@@ -211,15 +247,15 @@ unsigned int ADIS16364::read(unsigned char nbits, unsigned char reg){
   unsigned char upper, lower, mask; 
 
   // Get upper and lower unsigned chars
-  digitalWrite(CS, LOW);
+  // digitalWrite(CS, LOW);
   SPItransfer(reg);
   SPItransfer(0x00);
-  digitalWrite(CS, HIGH);
+  // digitalWrite(CS, HIGH);
   delay_cycle();
-  digitalWrite(CS, LOW);
+  // digitalWrite(CS, LOW);
   upper = SPItransfer(0x00);
   lower = SPItransfer(0x00);
-  digitalWrite(CS, HIGH);
+  // digitalWrite(CS, HIGH);
 
   // calculate mask
   mask = 0xFF >> (16 - nbits);
@@ -238,16 +274,16 @@ unsigned int ADIS16364::read(unsigned char nbits, unsigned char reg){
 ////////////////////////////////////////////////////////////////////////////
 void ADIS16364::write(unsigned char reg, unsigned int value){
   // set lower byte
-  digitalWrite(CS, LOW);
+  // digitalWrite(CS, LOW);
   SPItransfer(reg | 0x80);
   SPItransfer(value & 0x00FF);
-  digitalWrite(CS, HIGH);
+  // digitalWrite(CS, HIGH);
   delay_cycle();
   // set upper byte
-  digitalWrite(CS, LOW);
+  // digitalWrite(CS, LOW);
   SPItransfer( (reg + 1) | 0x80 );
   SPItransfer( value >> 8 );
-  digitalWrite(CS, HIGH);
+  // digitalWrite(CS, HIGH);
 }
 
 ////////////////////////////////////////////////////////////////////////////

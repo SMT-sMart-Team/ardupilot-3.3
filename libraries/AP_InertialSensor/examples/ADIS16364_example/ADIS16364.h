@@ -27,6 +27,7 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <stdint.h>
+#include "GPIO_BBB.h"
 
 #define HIGH 1
 #define LOW 0
@@ -142,6 +143,10 @@ public:
   void digitalWrite(uint8_t _cs_pin, uint8_t value);
   
 private:
+
+  int fd;
+
+  LinuxGPIO_BBB *pGPIO;
 
   // Chip select pin
   int CS;
