@@ -91,6 +91,7 @@ void AP_InertialSensor_Backend::_publish_accel(uint8_t instance, const Vector3f 
     else
     {
         dt = (float)((now > last_time_us)? (now - last_time_us) : (0xFFFFFFFF - last_time_us + now))/1000.0; // us to ms
+        last_time_us = now;
         _imu.calc_vibration_and_clipping(instance, accel, dt);
     }
 
