@@ -12,7 +12,7 @@
 #include "AP_InertialSensor.h"
 
 // enable debug to see a register dump on startup
-#define ADIS16365_DEBUG 0
+#define ADIS16365_DEBUG 1
 
 // register memory map
 #define BIT(n) (1 << n)

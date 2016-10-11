@@ -176,7 +176,7 @@ uint8_t ADIS16364::SPItransfer(char data)
 
 	memcpy(txbuf, &data, len);
 	memset(rxbuf, 0xff, len);
-    printf(">>>>>tx: %d\n", *txbuf);
+    printf(">>>>>tx: 0x%x\n", *txbuf);
 
     // cs_assert(driver._type);
     digitalWrite(CS, LOW);
@@ -192,7 +192,7 @@ uint8_t ADIS16364::SPItransfer(char data)
 
 
     ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
-    printf("rx<<<<<: %d\n", *rxbuf);
+    printf("rx<<<<<: 0x%x\n", *rxbuf);
     // cs_release(driver._type);
     digitalWrite(CS, HIGH);
     return *rxbuf;
@@ -240,9 +240,10 @@ void ADIS16364::burst_read(){
 ////////////////////////////////////////////////////////////////////////////
 void ADIS16364::debug(){
   
-    int8_t dev_id = device_id();
+    uint16_t dev_id = device_id();
   // print all readable registers
-  printf("Device ID: 0x%04x - %d\n", dev_id, (dev_id & 0x800)? (-1 *(~(dev_id - 1) & 0x7FF)): dev_id);
+  // printf("Device ID: 0x%04x - %d\n", dev_id, (dev_id & 0x800)? (-1 *(~(dev_id - 1) & 0x7FF)): dev_id);
+  printf("Device ID: %d\n", dev_id);
   // printf("Device ID: 0x%04x - %d\n", dev_id, (dev_id & 0x2000)? (-1 *(~(dev_id - 1) & 0x1FFF)): dev_id);
   
 #if 0
@@ -397,9 +398,9 @@ unsigned int ADIS16364::twos_comp(double num){
 ////////////////////////////////////////////////////////////////////////////
 unsigned int ADIS16364::device_id(){
   // Read 14 bits from the PROD_ID register
-  // return read(14, PROD_ID); 
+  return read(14, PROD_ID); 
   // return read(14, XGYRO_OUT); 
-  return read(12, SUPPLY_OUT); 
+  // return read(12, SUPPLY_OUT); 
   // return read(14, ZACCL_OUT); 
 }
 
