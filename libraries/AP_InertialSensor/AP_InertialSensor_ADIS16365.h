@@ -20,7 +20,11 @@
 #define AP_PRODUCT_ID_ADIS16365 16365
 
 #define ADIS16400_STARTUP_DELAY 290 /* ms */
-#define ADIS164 00_MTEST_DELAY 90 /* ms */
+#define ADIS16400_MTEST_DELAY 90 /* ms */
+
+#define T_CS 50 // 48.8 ns
+#define T_STALL 10 // 9 us
+#define T_READRATE 40 // 40 us
 
 #define ADIS16400_FLASH_CNT  0x00 /* Flash memory write count */
 #define ADIS16400_SUPPLY_OUT 0x02 /* Power supply measurement */

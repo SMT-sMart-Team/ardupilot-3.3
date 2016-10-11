@@ -97,11 +97,20 @@ bool AP_InertialSensor_ADIS16365::initialize_driver_state() {
      * driver asks it */
     spi->set_state(AP_HAL::SPIDeviceDriver::State::FAILED);
 
-    uint16_t id = _register_read_16(spi, ADIS16400_PRODUCT_ID);
-    if (id != AP_PRODUCT_ID_ADIS16365) {
-        hal.console->printf("ADIS16365: unexpected PROD_ID 0x%x\n", (unsigned)id);
-        hal.util->prt("ADIS16365: unexpected PROD_ID 0x%x\n", (unsigned)id);
-        goto fail_id;
+    uint16_t id = 0xFFFF;
+
+    // seems like need to warmup/wakeup ADIS
+    id = _register_read_16(spi, ADIS16334_LOT_ID1);
+
+    uint8_t tries;
+    for (tries = 0; tries < 5; tries++) {
+        id = _register_read_16(spi, ADIS16400_PRODUCT_ID);
+        if (id != AP_PRODUCT_ID_ADIS16365) {
+            hal.console->printf("ADIS16365: unexpected PROD_ID 0x%x\n", (unsigned)id);
+            hal.util->prt("ADIS16365: unexpected PROD_ID 0x%x\n", (unsigned)id);
+            if(5 == tries)
+                goto fail_id;
+        }
     }
 
 #if ADIS16365_DEBUG 
@@ -114,14 +123,13 @@ bool AP_InertialSensor_ADIS16365::initialize_driver_state() {
     // Chip reset
     //
     _register_write_16(spi, ADIS16400_GLOB_CMD, ADIS16400_GLOB_CMD_SW_RESET);
-    hal.scheduler->delay(100);
+    hal.scheduler->delay(ADIS16400_STARTUP_DELAY);
     //
     // Chip self-test
     _register_write_16(spi, ADIS16400_MSC_CTRL, ADIS16400_MSC_CTRL_MEM_TEST |
             ADIS16400_MSC_CTRL_INT_SELF_TEST | ADIS16400_MSC_CTRL_NEG_SELF_TEST |
             ADIS16400_MSC_CTRL_POS_SELF_TEST);
 
-    uint8_t tries;
     for (tries = 0; tries < 5; tries++) {
 
         hal.scheduler->delay(10);
@@ -328,6 +336,7 @@ uint16_t AP_InertialSensor_ADIS16365::_register_read_16(AP_HAL::SPIDeviceDriver 
 
     spi->transaction(tx, rx, 2);
 
+    hal.scheduler->delay_microseconds(T_STALL);
 
     tx[0] = 0;
     tx[1] = 0;
@@ -354,6 +363,8 @@ void AP_InertialSensor_ADIS16365::_register_write_16(AP_HAL::SPIDeviceDriver *sp
 
     tx[0] = (uint8_t)((reg + 1) | 0x80);
     tx[1] = (uint8_t) (val >> 8);
+
+    hal.scheduler->delay_microseconds(T_STALL);
 
     spi->transaction(tx, rx, 2);
 }
