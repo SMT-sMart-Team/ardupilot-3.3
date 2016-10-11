@@ -24,6 +24,7 @@
 
 #include "ADIS16364.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -33,6 +34,17 @@
 
 
 #define delay(x) usleep(x*1000)
+
+static uint8_t mode = 0;
+static uint8_t bits = 8;
+static uint32_t speed = 500000;
+static uint16_t delay = 0;
+
+static void pabort(const char *s)
+{
+	perror(s);
+	abort();
+}
 
 ////////////////////////////////////////////////////////////////////////////
 //                          ADIS16364(int CS)
@@ -59,7 +71,7 @@ ADIS16364::ADIS16364(int _CS){
   // init: sample prd, lpf, scale, ...
   init();
   printf("construct: before wake\n");
-  wake();
+  // wake();
   printf("construct: after init\n");
 }
 
@@ -86,7 +98,56 @@ void ADIS16364::init()
 
         // init GPIO_BBB
         GPIO.init();
+	/*
+	 * spi mode
+	 */
+
+			mode = SPI_CPHA | SPI_CPOL;
+
+            int8_t ret = 0;
+
+	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+	if (ret == -1)
+		pabort("can't set spi mode");
+
+	ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
+	if (ret == -1)
+		pabort("can't get spi mode");
+
+	/*
+	 * bits per word
+	 */
+    bits = 8;
+	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't set bits per word");
+
+	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
+	if (ret == -1)
+		pabort("can't get bits per word");
+
+	/*
+	 * max speed hz
+	 */
+    speed = 1000*1000;
+	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't set max speed hz");
+
+	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+	if (ret == -1)
+		pabort("can't get max speed hz");
         printf("adis init done\n");
+
+        // send null
+#if 0
+  SPItransfer(0x00);
+  SPItransfer(0x00);
+  SPItransfer(0x00);
+  SPItransfer(0x00);
+  SPItransfer(0x00);
+  SPItransfer(0x00);
+#endif
 }
 
 void ADIS16364::SPIbegin()
@@ -104,33 +165,37 @@ void ADIS16364::digitalWrite(uint8_t _cs_pin, uint8_t value)
     GPIO.write(_cs_pin, value);
 }
 
-uint8_t ADIS16364::SPItransfer(int data)
+uint8_t ADIS16364::SPItransfer(char data)
 {
-    uint8_t rx = 0xff;
-    uint8_t tx = data;
-    printf("tx: %d\n", tx);
     // we set the mode before we assert the CS line so that the bus is
     // in the correct idle state before the chip is selected
     ioctl(fd, SPI_IOC_WR_MODE, SPI_MODE_3);
+    uint8_t len = 1;
+	char *txbuf = (char*)malloc(len);
+	char *rxbuf = (char*)malloc(len);
+
+	memcpy(txbuf, &data, len);
+	memset(rxbuf, 0xff, len);
+    printf(">>>>>tx: %d\n", *txbuf);
 
     // cs_assert(driver._type);
     digitalWrite(CS, LOW);
     struct spi_ioc_transfer spi[1];
     memset(spi, 0, sizeof(spi));
-    spi[0].tx_buf        = (uint64_t)&tx;
-    spi[0].rx_buf        = (uint64_t)&rx;
+    spi[0].tx_buf        = (uint64_t)txbuf;
+    spi[0].rx_buf        = (uint64_t)rxbuf;
     spi[0].len           = 1;
     spi[0].delay_usecs   = 0;
-    spi[0].speed_hz      = 300*1000;
+    spi[0].speed_hz      = 1000*1000;
     spi[0].bits_per_word = 8;
     spi[0].cs_change     = 0;
 
 
     ioctl(fd, SPI_IOC_MESSAGE(1), &spi);
-    printf("rx: %d\n", rx);
+    printf("rx<<<<<: %d\n", *rxbuf);
     // cs_release(driver._type);
     digitalWrite(CS, HIGH);
-    return rx;
+    return *rxbuf;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -175,9 +240,12 @@ void ADIS16364::burst_read(){
 ////////////////////////////////////////////////////////////////////////////
 void ADIS16364::debug(){
   
+    int8_t dev_id = device_id();
   // print all readable registers
-  printf("Device ID: %d\n", device_id());
+  printf("Device ID: 0x%04x - %d\n", dev_id, (dev_id & 0x800)? (-1 *(~(dev_id - 1) & 0x7FF)): dev_id);
+  // printf("Device ID: 0x%04x - %d\n", dev_id, (dev_id & 0x2000)? (-1 *(~(dev_id - 1) & 0x1FFF)): dev_id);
   
+#if 0
   // perform burst read
   burst_read();
   
@@ -185,7 +253,6 @@ void ADIS16364::debug(){
   
   printf("Gyroscope: (%f, %f, %f) deg/s \n ", sensor[XGYRO], sensor[YGYRO], sensor[ZGYRO]);
   
-#if 0
   printf("Accelerometer: ");
   printf("(");
   printf(sensor[XACCEL]);
@@ -330,7 +397,10 @@ unsigned int ADIS16364::twos_comp(double num){
 ////////////////////////////////////////////////////////////////////////////
 unsigned int ADIS16364::device_id(){
   // Read 14 bits from the PROD_ID register
-  return read(14, PROD_ID); 
+  // return read(14, PROD_ID); 
+  // return read(14, XGYRO_OUT); 
+  return read(12, SUPPLY_OUT); 
+  // return read(14, ZACCL_OUT); 
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -611,6 +681,7 @@ void ADIS16364::set_SPI(void){
 // Delays Arduino for once SCLK cycle
 ////////////////////////////////////////////////////////////////////////////
 void ADIS16364::delay_cycle(){
+#if 0
   if(low_power){
     // if low power mode, delay for 1/250e3
     usleep(4);
@@ -618,4 +689,5 @@ void ADIS16364::delay_cycle(){
     // if normal mode delay for 1/1e6
     usleep(1);
   }
+#endif
 }  
