@@ -71,6 +71,9 @@ AP_InertialSensor_Backend *AP_InertialSensor_ADIS16365::detect(AP_InertialSensor
         delete sensor;
         return NULL;
     }
+#if ADIS16365_DEBUG
+    hal.util->prt("[%d us]: detect done", hal.scheduler->micros());
+#endif
 
     return sensor;
 }
@@ -113,18 +116,18 @@ bool AP_InertialSensor_ADIS16365::initialize_driver_state() {
         }
     }
 
-#if ADIS16365_DEBUG 
     hal.util->prt("ADIS16365: PROD_ID %d\n", id);
-#endif
     
     // initially run the bus at low speed
     spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
 
     // Chip reset
     //
+#if !FAST_BOOT
     _register_write_16(spi, ADIS16400_GLOB_CMD, ADIS16400_GLOB_CMD_SW_RESET);
     hal.scheduler->delay(ADIS16400_STARTUP_DELAY);
     //
+#endif
     // Chip self-test
     _register_write_16(spi, ADIS16400_MSC_CTRL, ADIS16400_MSC_CTRL_MEM_TEST |
             ADIS16400_MSC_CTRL_INT_SELF_TEST | ADIS16400_MSC_CTRL_NEG_SELF_TEST |
@@ -177,9 +180,6 @@ bool AP_InertialSensor_ADIS16365::_init_sensor(void)
     // start the timer process to read samples
     hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
 
-#if ADIS16365_DEBUG
-    _dump_registers(_spi);
-#endif
     return true;
 }
 
@@ -188,7 +188,7 @@ bool AP_InertialSensor_ADIS16365::_init_sensor(void)
  */
 bool AP_InertialSensor_ADIS16365::update( void )
 {
-#if ADIS16365_DEBUG
+#if DUMP_DATA
     static uint16_t cnt = 0;
     cnt++;
     if(!(cnt%100))
@@ -196,16 +196,12 @@ bool AP_InertialSensor_ADIS16365::update( void )
         _dump_registers(_spi);
     }
 #endif
-#if 0
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
     Vector3f gyro = _shared_data[idx]._gyro_filtered;
     Vector3f accel = _shared_data[idx]._accel_filtered;
 
     _have_sample_available = false;
-
-    accel *= ADIS16365_ACCEL_SCALE_1G;
-    gyro *= GYRO_SCALE;
 
     accel.rotate(_default_rotation);
     gyro.rotate(_default_rotation);
@@ -222,7 +218,6 @@ bool AP_InertialSensor_ADIS16365::update( void )
         _set_gyro_filter(_gyro_filter_cutoff());
         _last_gyro_filter_hz = _gyro_filter_cutoff();
     }
-#endif
 
     return true;
 }
@@ -248,30 +243,79 @@ void AP_InertialSensor_ADIS16365::_poll_data(void)
 }
 
 
+#define SIGNED_FLOAT(value, mask_bit)  \
+    ((value & (1 << (mask_bit - 1)))?( -1.0 * (~(value - 1) & (0xFFFF >> (16 - mask_bit)))) : (1.0 * (value & (0xFFFF >> (16 - mask_bit)))))
+#define SUPPLY_SCALE 2.418e-3 // V
+#define GYRO_SCALE   0.05 // deg/sec
+#define ACCEL_SCALE  3.333e-3 // mg
 /*
   read from the data registers and update filtered data
  */
 void AP_InertialSensor_ADIS16365::_read_data_transaction() 
 {
+
+    Vector3f accel_sample, gyro_sample;
+
+
+    // check if data ready
+    //
+#if !BURST_READ
+    // read accel
+    uint16_t ax, ay, az, gx, gy, gz;
+    ax = _register_read_16(ADIS16400_XACCL_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    ay = _register_read_16(ADIS16400_YACCL_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    az = _register_read_16(ADIS16400_ZACCL_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    
+    // read gyro
+    gx = _register_read_16(ADIS16400_XGYRO_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    gy = _register_read_16(ADIS16400_YGYRO_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    gz = _register_read_16(ADIS16400_ZGYRO_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+
+    
+    // scale
+    accel_sample.x = ACCEL_SCALE * SIGNED_FLOAT(ax, 14); 
+    accel_sample.y = ACCEL_SCALE * SIGNED_FLOAT(ay, 14); 
+    accel_sample.z = ACCEL_SCALE * SIGNED_FLOAT(az, 14); 
+
+    gyro_sample.x = GYRO_SCALE * SIGNED_FLOAT(gx, 14); 
+    gyro_sample.y = GYRO_SCALE * SIGNED_FLOAT(gy, 14);
+    gyro_sample.z = GYRO_SCALE * SIGNED_FLOAT(gz, 14);
+#else
+
+    // TODO: burst read
+    if(!_burst_read(&accel_sample, &gyro_sample))
+    {
+        hal.util->prt("Warning: adis16365 burst read failed");
+    }
+#endif
+
+    // filter and shared
+    Vector3f _accel_filtered = _accel_filter.apply(accel_sample);
+    Vector3f _gyro_filtered = _gyro_filter.apply(gyro_sample);
+
+// #if ADIS16365_DEBUG
 #if 0
-    /* one resister address followed by seven 2-byte registers */
-    struct PACKED {
-        uint8_t cmd;
-        uint8_t int_status;
-        uint8_t v[14];
-    } rx, tx = { cmd : MPUREG_INT_STATUS | 0x80, };
+    static uint16_t cnt = 0;
+    cnt++;
+    if((0 == (cnt%1000)) || (1 == (cnt%1000)))
+    {
+        hal.util->prt("[%d us]: ============================", hal.scheduler->micros());
+        hal.util->prt("Supply Voltage: %f[%d]\n", SUPPLY_SCALE * (_register_read_16(ADIS16400_SUPPLY_OUT) & (0xFFFF >> (16 - 12))), _register_read_16(ADIS16400_SUPPLY_OUT) & (0xFFFF >> (16 - 12)));
+        hal.util->prt("new sample: accel_x: %f[%d], accel_y: %f[%d], accel_z: %f[%d]\n",
+            accel_sample.x, ax, accel_sample.y, ay, accel_sample.z, az);
 
-    _spi->transaction((const uint8_t *)&tx, (uint8_t *)&rx, sizeof(rx));
+        hal.util->prt("new sample: gyro_x: %f[%d], gyro_y: %f[%d], gyro_z: %f[%d]\n",
+            gyro_sample.x, gx, gyro_sample.y, gy, gyro_sample.z, gz);
 
-#define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx] << 8) | v[2*idx+1]))
+        hal.util->prt("filtered: accel_x: %f, accel_y: %f, accel_z: %f\n", 
+            _accel_filtered.x, _accel_filtered.y, _accel_filtered.z);
+        hal.util->prt("filtered: gyro_x: %f, gyro_y: %f, gyro_z: %f\n", 
+            _gyro_filtered.x, _gyro_filtered.y, _gyro_filtered.z);
+    }
+#endif
 
-    Vector3f _accel_filtered = _accel_filter.apply(Vector3f(int16_val(rx.v, 1),
-                                                   int16_val(rx.v, 0),
-                                                   -int16_val(rx.v, 2)));
 
-    Vector3f _gyro_filtered = _gyro_filter.apply(Vector3f(int16_val(rx.v, 5),
-                                                 int16_val(rx.v, 4),
-                                                 -int16_val(rx.v, 6)));
+
     // update the shared buffer
     uint8_t idx = _shared_data_idx ^ 1;
     _shared_data[idx]._accel_filtered = _accel_filtered;
@@ -279,7 +323,7 @@ void AP_InertialSensor_ADIS16365::_read_data_transaction()
     _shared_data_idx = idx;
 
     _have_sample_available = true;
-#endif
+
 }
 
 /*
@@ -343,6 +387,8 @@ uint16_t AP_InertialSensor_ADIS16365::_register_read_16(AP_HAL::SPIDeviceDriver 
 
     spi->transaction(tx, rx, 2);
 
+    hal.scheduler->delay_microseconds(T_STALL);
+
 
     return (rx[0] << 8 | rx[1]);
 }
@@ -360,6 +406,8 @@ void AP_InertialSensor_ADIS16365::_register_write_16(AP_HAL::SPIDeviceDriver *sp
     tx[1] = (uint8_t) (val & 0xFF);
 
     spi->transaction(tx, rx, 2);
+
+    hal.scheduler->delay_microseconds(T_STALL);
 
     tx[0] = (uint8_t)((reg + 1) | 0x80);
     tx[1] = (uint8_t) (val >> 8);
@@ -435,23 +483,132 @@ int16_t AP_InertialSensor_ADIS16365::_check_status(AP_HAL::SPIDeviceDriver *spi)
     return _register_read_16(spi, ADIS16400_DIAG_STAT);
 }
 
+#define ADIS_BURST 1
+#if ADIS_BURST
+#define BURST_TX_MSG_LEN 22 // 11 16bits = 22 bytes
+#else
+#define BURST_TX_MSG_LEN 16 // 7 + 1 16bits = 16 bytes
+#endif
+bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
+{
+    uint8_t rx[BURST_TX_MSG_LEN];
+
+
+    uint16_t ax, ay, az, gx, gy, gz;
+
+#if ADIS_BURST
+    uint8_t tx_burst[2] = {
+        0x3E, 0x00
+    };
+    hal.scheduler->delay_microseconds(300);
+    // send burst msg
+    _spi->transaction(tx_burst, rx, 2);
+    hal.scheduler->delay_microseconds(T_STALL);
+
+    uint8_t tx[BURST_TX_MSG_LEN] = {
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00
+    };
+
+    // collect burst data
+    _spi->transaction(tx, rx, BURST_TX_MSG_LEN);
+
+    uint8_t idx = 0; // start with 2nd DOUT
+#else
+    uint8_t tx[BURST_TX_MSG_LEN] = {
+        ADIS16400_SUPPLY_OUT, 0x00,
+        ADIS16400_XGYRO_OUT, 0x00,
+        ADIS16400_YGYRO_OUT, 0x00,
+        ADIS16400_ZGYRO_OUT, 0x00,
+        ADIS16400_XACCL_OUT, 0x00,
+        ADIS16400_YACCL_OUT, 0x00,
+        ADIS16400_ZACCL_OUT, 0x00,
+        0x00, 0x00
+    };
+    _spi->transaction(tx, rx, BURST_TX_MSG_LEN);
+
+    uint8_t idx = 2; // start with 2nd DOUT
+#endif
+
 #if ADIS16365_DEBUG
+    static uint16_t cnt = 0;
+    cnt++;
+    if((0 == (cnt%1000)) || (1 == (cnt%1000)))
+    {
+        hal.util->prt("[%d us]: ============================", hal.scheduler->micros());
+        hal.util->prt("bv: %f[%d]\n", SUPPLY_SCALE * ((rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12))), ((rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12))));
+    }
+#endif
+
+    idx += 2;
+    gx = (rx[idx] << 8 | rx[idx+1]);
+    idx += 2;
+    gy = (rx[idx] << 8 | rx[idx+1]);
+    idx += 2;
+    gz = (rx[idx] << 8 | rx[idx+1]);
+    idx += 2;
+    ax = (rx[idx] << 8 | rx[idx+1]);
+    idx += 2;
+    ay = (rx[idx] << 8 | rx[idx+1]);
+    idx += 2;
+    az = (rx[idx] << 8 | rx[idx+1]);
+
+    // scale
+    pAccl->x = ACCEL_SCALE * SIGNED_FLOAT(ax, 14); 
+    pAccl->y = ACCEL_SCALE * SIGNED_FLOAT(ay, 14); 
+    pAccl->z = ACCEL_SCALE * SIGNED_FLOAT(az, 14); 
+
+    pGyro->x = GYRO_SCALE * SIGNED_FLOAT(gx, 14); 
+    pGyro->y = GYRO_SCALE * SIGNED_FLOAT(gy, 14);
+    pGyro->z = GYRO_SCALE * SIGNED_FLOAT(gz, 14);
+
+    return true;
+
+}
+
+#if DUMP_DATA 
 // dump all config registers - used for debug
 void AP_InertialSensor_ADIS16365::_dump_registers(AP_HAL::SPIDeviceDriver *spi)
 {
     hal.console->println_P(PSTR("ADIS16365 registers"));
     hal.util->prt("============================");
-    hal.util->prt("Supply Voltage: %d\n", _register_read_16(spi, ADIS16400_SUPPLY_OUT ));
-#if 0
-    for (uint8_t reg=0; reg<=126; reg++) {
-        uint8_t v = _register_read(spi, reg);
-        hal.console->printf_P(PSTR("%02x:%02x "), (unsigned)reg, (unsigned)v);
-        if ((reg - (MPUREG_PRODUCT_ID-1)) % 16 == 0) {
-            hal.console->println();
-        }
-    }
-#endif
-    hal.console->println();
+    hal.util->prt("Supply Voltage: %f[%d]\n", SUPPLY_SCALE * _register_read_16(spi, ADIS16400_SUPPLY_OUT), _register_read_16(spi, ADIS16400_SUPPLY_OUT) & (0xFFFF >> (16 - 12)));
+
+    Vector3f accel_sample, gyro_sample;
+
+    uint16_t ax, ay, az, gx, gy, gz;
+
+    // check if data ready
+    //
+    // read accel
+    ax = _register_read_16(spi, ADIS16400_XACCL_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    ay = _register_read_16(spi, ADIS16400_YACCL_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    az = _register_read_16(spi, ADIS16400_ZACCL_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    accel_sample.x = ACCEL_SCALE * SIGNED_FLOAT(ax, 14); 
+    accel_sample.y = ACCEL_SCALE * SIGNED_FLOAT(ay, 14); 
+    accel_sample.z = ACCEL_SCALE * SIGNED_FLOAT(az, 14); 
+    
+    hal.util->prt("new sample: accel_x: %f[%d], accel_y: %f[%d], accel_z: %f[%d]\n",
+            accel_sample.x, ax, accel_sample.y, ay, accel_sample.z, az);
+    // read gyro
+    gx = _register_read_16(spi, ADIS16400_XGYRO_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    gy = _register_read_16(spi, ADIS16400_YGYRO_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    gz = _register_read_16(spi, ADIS16400_ZGYRO_OUT) & (0xFFFF >> 2); // 2 = 16 - 14
+    gyro_sample.x = GYRO_SCALE * SIGNED_FLOAT(gx, 14); 
+    gyro_sample.y = GYRO_SCALE * SIGNED_FLOAT(gy, 14);
+    gyro_sample.z = GYRO_SCALE * SIGNED_FLOAT(gz, 14);
+
+    hal.util->prt("new sample: gyro_x: %f[%d], gyro_y: %f[%d], gyro_z: %f[%d]\n",
+            gyro_sample.x, gx, gyro_sample.y, gy, gyro_sample.z, gz);
 }
 #endif
 

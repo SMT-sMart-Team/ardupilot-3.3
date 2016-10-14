@@ -13,6 +13,10 @@
 
 // enable debug to see a register dump on startup
 #define ADIS16365_DEBUG 1
+#define DUMP_DATA 0
+#define FAST_BOOT 0
+#define BURST_READ 1
+
 
 // register memory map
 #define BIT(n) (1 << n)
@@ -209,6 +213,8 @@ private:
 
     static int16_t _check_status(AP_HAL::SPIDeviceDriver *spi);
 
+    bool _burst_read(Vector3f *pAccl, Vector3f *pGyro);
+
     // This structure is used to pass data from the timer which reads
     // the sensor to the main thread. The _shared_data_idx is used to
     // prevent race conditions by ensuring the data is fully updated
@@ -234,7 +240,7 @@ private:
     // placed by default on the system
     enum Rotation _default_rotation;
 
-#if ADIS16365_DEBUG
+#if DUMP_DATA 
     static void _dump_registers(AP_HAL::SPIDeviceDriver *spi);
 #endif
 };
