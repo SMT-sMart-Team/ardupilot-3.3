@@ -11,14 +11,24 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+// AB ZhaoYJ@2016-10-15 for adis16365 iio
+#define INS_IIO 1
+
+#if INS_IIO
+#define INS_IIO_RAW_NUM 10
+#define INS_IIO_ANALOG_IN_DIR "/sys/bus/iio/devices/iio:device1/"
+#endif
+
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-#define IIO_ANALOG_IN_COUNT 8
-// Note that echo BB-ADC cape should be loaded
-#define IIO_ANALOG_IN_DIR "/sys/bus/iio/devices/iio:device0/"
+
 // add by ZhaoYJ @2016-05-12
 #define BOARD_VOLT_PIN 7
 
 #define BBB_VOLTAGE_SCALING 0.00142602816
+
+#define IIO_ANALOG_IN_COUNT 8
+// Note that echo BB-ADC cape should be loaded
+#define IIO_ANALOG_IN_DIR "/sys/bus/iio/devices/iio:device0/"
 
 #else
 #define IIO_ANALOG_IN_COUNT 8
@@ -37,6 +47,24 @@ public:
     float voltage_average();
     float voltage_latest();
     float voltage_average_ratiometric() { return voltage_average(); }
+
+    // AB ZhaoYJ@2016-10-15 for adis16365 iio
+    //
+#if INS_IIO
+    enum {
+        ins_voltage_idx = 3,
+        ins_accl_x_idx,
+        ins_accl_y_idx,
+        ins_accl_z_idx,
+        ins_gyro_x_idx,
+        ins_gyro_y_idx,
+        ins_gyro_z_idx,
+        ins_data_all
+    };
+    uint16_t read_imu_voltage();
+    bool read_imu_data(float *ax, float *ay, float *az, float *gx, float *gy, float *gz);
+#endif
+
 private:
     float       _value;
     float       _latest;
@@ -50,6 +78,16 @@ private:
     void reopen_pin(void);
     void init_pins(void);
     void select_pin(void);
+
+    // AB ZhaoYJ@2016-10-15 for adis16365 iio
+    //
+#if INS_IIO
+    int _ins_fd[INS_IIO_RAW_NUM];
+    float _ins_volt_scale;
+    float _ins_accl_scale;
+    float _ins_gyro_scale;
+    bool init_ins_iio();
+#endif
 
     static const char *analog_sources[IIO_ANALOG_IN_COUNT];
 };

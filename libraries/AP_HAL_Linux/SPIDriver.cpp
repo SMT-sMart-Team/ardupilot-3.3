@@ -26,7 +26,7 @@ extern const AP_HAL::HAL& hal;
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF || CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLE
 LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
     // different SPI tables per board subtype
-#ifdef SMT_INS_ADIS16365
+#ifdef SMT_INS_ADIS16365_SPI
     // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  300*KHZ,300*KHZ),
     LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  1*MHZ,1*MHZ),
 #endif

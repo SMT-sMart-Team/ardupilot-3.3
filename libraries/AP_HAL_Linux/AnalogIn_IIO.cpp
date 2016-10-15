@@ -7,6 +7,7 @@
 // add by ZhaoYJ @2016-05-12
 #ifdef SMT_NEW_SENSORS_BOARD
 // #define IIO_DEBUG
+// #define  IIO_DEBUG_ADIS
 float AIScales[IIO_ANALOG_IN_COUNT] = {
     0.00131836,
     0.00131836,
@@ -45,6 +46,8 @@ AnalogSource_IIO::AnalogSource_IIO(int16_t pin, float initial_value) :
 {
     init_pins();
     select_pin();
+    if(!init_ins_iio())
+        hal.util->prt("error: init adis16365 iio failed!");
 }
 
 void AnalogSource_IIO::init_pins(void)
@@ -193,6 +196,151 @@ void AnalogSource_IIO::set_stop_pin(uint8_t p)
 void AnalogSource_IIO::set_settle_time(uint16_t settle_time_ms)
 {}
 
+
+#if INS_IIO
+// open dev; get scales
+bool AnalogSource_IIO::init_ins_iio()
+{
+
+    const char* ins_node[INS_IIO_RAW_NUM] = {
+        "in_voltage0_supply_scale",
+        "in_accel_scale",
+        "in_anglvel_scale",
+        "in_voltage0_supply_raw",
+        "in_accel_x_raw",
+        "in_accel_y_raw",
+        "in_accel_z_raw",
+        "in_anglvel_x_raw",
+        "in_anglvel_y_raw",
+        "in_anglvel_z_raw"
+    };
+
+    // open nodes
+    char buf[100];
+    for (int i=0; i < INS_IIO_RAW_NUM; i++) {
+        strncpy(buf, INS_IIO_ANALOG_IN_DIR, sizeof(buf));
+        strncat(buf, ins_node[i], sizeof(buf) - strlen(buf) -1);
+
+        _ins_fd[i] = open(buf, O_RDONLY | O_NONBLOCK);
+        if (_ins_fd[i] == -1) {
+            printf("Failed to open analog pin %s\n", buf);
+            return false;
+        }
+    }
+
+    // get scale first
+    hal.scheduler->suspend_timer_procs();
+    char sbuf[10];
+    memset(sbuf, 0, sizeof(sbuf));
+    uint8_t try_num = 0;
+    uint8_t idx = 0;
+
+    while(try_num++ < 3)
+    {
+        if(-1 == pread(_ins_fd[idx++], sbuf, sizeof(sbuf)-1, 0))
+        {
+            printf("Failed to read analog pin %d\n", idx);
+        }
+        else
+            break;
+    }
+    _ins_volt_scale = atof(sbuf);
+#ifdef IIO_DEBUG_ADIS
+    printf(" volt-scale: %f\n", _ins_volt_scale);
+#endif
+
+    while(try_num++ < 3)
+    {
+        if(-1 == pread(_ins_fd[idx++], sbuf, sizeof(sbuf)-1, 0))
+        {
+            printf("Failed to read analog pin %d\n", idx);
+        }
+        else
+            break;
+    }
+    _ins_accl_scale = atof(sbuf);
+#ifdef IIO_DEBUG_ADIS
+    printf(" accl-scale: %f\n", _ins_accl_scale);
+#endif
+
+    while(try_num++ < 3)
+    {
+        if(-1 == pread(_ins_fd[idx++], sbuf, sizeof(sbuf)-1, 0))
+        {
+            printf("Failed to read analog pin %d\n", idx);
+        }
+        else
+            break;
+    }
+    _ins_gyro_scale = atof(sbuf);
+#ifdef IIO_DEBUG_ADIS
+    printf(" gyro-scale: %f\n", _ins_gyro_scale);
+#endif
+
+    hal.scheduler->resume_timer_procs();
+
+    return true;
+
+}
+
+uint16_t AnalogSource_IIO::read_imu_voltage()
+{
+    char sbuf[10];
+    memset(sbuf, 0, sizeof(sbuf));
+
+
+    if(-1 == pread(_ins_fd[ins_voltage_idx], sbuf, sizeof(sbuf)-1, 0))
+    {
+        printf("Failed to read analog pin %d\n", ins_voltage_idx);
+    }
+
+#ifdef IIO_DEBUG_ADIS
+    printf(" voltage[%d]: %d\n", ins_voltage_idx, atoi(sbuf));
+#endif
+
+    return atoi(sbuf);
+
+}
+
+#define DATA_LEN 10
+bool AnalogSource_IIO::read_imu_data(float *ax, float *ay, float *az, float *gx, float *gy, float *gz)
+{
+    char sbuf[INS_IIO_RAW_NUM][DATA_LEN];
+    memset(sbuf, 0, sizeof(sbuf));
+    bool ret = false;
+    uint8_t idx = ins_accl_x_idx;
+
+    for(; idx < ins_data_all; idx++) 
+    {
+        if((_ins_fd[idx] != NULL) && (sbuf[idx] != NULL))
+        {
+            if(-1 == pread(_ins_fd[idx], sbuf[idx], DATA_LEN - 1, 0))
+            {
+                printf("Failed to read analog pin %d\n", idx);
+                return false;
+            }
+        }
+        else
+        {
+            printf("ins_fd or sbuf NULL\n");
+            return false;
+        }
+    }
+
+    // get data
+    idx = ins_accl_x_idx;
+    *ax = atof(sbuf[idx++]) * _ins_accl_scale;
+    *ay = atof(sbuf[idx++]) * _ins_accl_scale;
+    *az = atof(sbuf[idx++]) * _ins_accl_scale;
+    *gx = atof(sbuf[idx++]) * _ins_gyro_scale;
+    *gy = atof(sbuf[idx++]) * _ins_gyro_scale;
+    *gz = atof(sbuf[idx++]) * _ins_gyro_scale;
+
+    return true;
+}
+
+#endif
+
 AnalogIn_IIO::AnalogIn_IIO()
 {}
 
@@ -224,5 +372,6 @@ float AnalogIn_IIO::board_voltage(void)
 
 }
 #endif
+
 
 #endif // CONFIG_HAL_BOARD

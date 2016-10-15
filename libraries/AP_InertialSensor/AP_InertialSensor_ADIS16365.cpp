@@ -39,7 +39,7 @@ AP_InertialSensor_ADIS16365::AP_InertialSensor_ADIS16365(AP_InertialSensor &imu)
     _gyro_filter(1000, 15),
     _have_sample_available(false),
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
-#ifdef SMT_NEW_BOARD
+#ifdef SMT_NEW_SENSORS_BOARD 
     _default_rotation(ROTATION_NONE)
 #else
     _default_rotation(ROTATION_ROLL_180_YAW_270)
@@ -53,8 +53,231 @@ AP_InertialSensor_ADIS16365::AP_InertialSensor_ADIS16365(AP_InertialSensor &imu)
     _default_rotation(ROTATION_ROLL_180_YAW_90)
 #endif
 {
+#if HAL_INS_DEFAULT == HAL_INS_ADIS16365_IIO
+#define FAKE_PIN 0xFF
+
+    pAI_ins = hal.analogin->channel(FAKE_PIN);
+#endif
 }
 
+#if HAL_INS_DEFAULT == HAL_INS_ADIS16365_IIO
+/*
+  detect the sensor
+ */
+AP_InertialSensor_Backend *AP_InertialSensor_ADIS16365::detect(AP_InertialSensor &_imu)
+{
+    AP_InertialSensor_ADIS16365 *sensor = new AP_InertialSensor_ADIS16365(_imu);
+    if (sensor == NULL) {
+        hal.util->prt("sensor NULL");
+        return NULL;
+    }
+    if (!sensor->_init_sensor()) {
+        hal.util->prt("sensor init error");
+        delete sensor;
+        return NULL;
+    }
+#if ADIS16365_DEBUG
+    hal.util->prt("[%d us]: detect done", hal.scheduler->micros());
+#endif
+
+    return sensor;
+}
+
+bool AP_InertialSensor_ADIS16365::initialize_driver_state() {
+
+    return true;
+
+}
+
+/*
+  initialise the sensor
+ */
+bool AP_InertialSensor_ADIS16365::_init_sensor(void)
+{
+
+    if (!_hardware_init())
+    {
+        hal.util->prt("hw init failed");
+        return false;
+    }
+
+    _gyro_instance = _imu.register_gyro();
+    _accel_instance = _imu.register_accel();
+
+    _product_id = 0;
+
+    // start the timer process to read samples
+    hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
+
+    return true;
+}
+
+/*
+  update the accel and gyro vectors
+ */
+bool AP_InertialSensor_ADIS16365::update( void )
+{
+#if DUMP_DATA
+    static uint16_t cnt = 0;
+    cnt++;
+    if(!(cnt%100))
+    {
+        _dump_registers(_spi);
+    }
+#endif
+    // pull the data from the timer shared data buffer
+    uint8_t idx = _shared_data_idx;
+    Vector3f gyro = _shared_data[idx]._gyro_filtered;
+    Vector3f accel = _shared_data[idx]._accel_filtered;
+
+    _have_sample_available = false;
+
+    accel.rotate(_default_rotation);
+    gyro.rotate(_default_rotation);
+
+    _publish_gyro(_gyro_instance, gyro);
+    _publish_accel(_accel_instance, accel);
+
+    if (_last_accel_filter_hz != _accel_filter_cutoff()) {
+        _set_accel_filter(_accel_filter_cutoff());
+        _last_accel_filter_hz = _accel_filter_cutoff();
+    }
+
+    if (_last_gyro_filter_hz != _gyro_filter_cutoff()) {
+        _set_gyro_filter(_gyro_filter_cutoff());
+        _last_gyro_filter_hz = _gyro_filter_cutoff();
+    }
+
+
+    return true;
+}
+
+/*================ HARDWARE FUNCTIONS ==================== */
+
+/**
+ * Timer process to poll for new data from the ADIS16365.
+ */
+void AP_InertialSensor_ADIS16365::_poll_data(void)
+{
+    _read_data_transaction();
+}
+
+
+/*
+  read from the data registers and update filtered data
+ */
+void AP_InertialSensor_ADIS16365::_read_data_transaction() 
+{
+
+    Vector3f accel_sample, gyro_sample;
+    float ax, ay, az, gx, gy, gz;
+
+    ax = 0.0; 
+    ay = 0.0; 
+    az = 0.0; 
+    gx = 0.0; 
+    gy = 0.0; 
+    gz = 0.0; 
+
+
+    // get imu data from iio driver
+    //
+    if(!pAI_ins->read_imu_data(&ax, &ay, &az, &gx, &gy, &gz))
+    {
+        hal.util->prt("get imu data from IIo failed!");
+    }
+
+    // filter and shared
+    // g -> mg
+    // rad/s -> deg/s: 180/3.14
+    accel_sample.x = ax*1000.0;
+    accel_sample.y = ay*1000.0;
+    accel_sample.z = az*1000.0;
+    gyro_sample.x = gx*57.324841;
+    gyro_sample.y = gy*57.324841;
+    gyro_sample.z = gz*57.324841;
+    Vector3f _accel_filtered = _accel_filter.apply(accel_sample);
+    Vector3f _gyro_filtered = _gyro_filter.apply(gyro_sample);
+
+    // update the shared buffer
+    uint8_t idx = _shared_data_idx ^ 1;
+    _shared_data[idx]._accel_filtered = _accel_filtered;
+    _shared_data[idx]._gyro_filtered = _gyro_filtered;
+    _shared_data_idx = idx;
+
+    _have_sample_available = true;
+
+#if 0
+#define SUPPLY_SCALE 2.418e-3 // V
+    static uint16_t cnt = 0;
+    cnt++;
+    if((0 == (cnt%1000)) || (1 == (cnt%1000)))
+    {
+        hal.util->prt("[%d us]: ============================", hal.scheduler->micros());
+        hal.util->prt("Supply Voltage: %f[%d]\n", SUPPLY_SCALE * pAI_ins->read_imu_voltage(), pAI_ins->read_imu_voltage());
+        hal.util->prt("new sample: accel_x: %f[%f], accel_y: %f[%f], accel_z: %f[%f]\n",
+                accel_sample.x, ax, accel_sample.y, ay, accel_sample.z, az);
+        hal.util->prt("new sample: gyro_x: %f[%f], gyro_y: %f[%f], gyro_z: %f[%f]\n",
+                gyro_sample.x, gx, gyro_sample.y, gy, gyro_sample.z, gz);
+
+        hal.util->prt("filtered: accel_x: %f, accel_y: %f, accel_z: %f\n", 
+            _accel_filtered.x, _accel_filtered.y, _accel_filtered.z);
+        hal.util->prt("filtered: gyro_x: %f, gyro_y: %f, gyro_z: %f\n", 
+            _gyro_filtered.x, _gyro_filtered.y, _gyro_filtered.z);
+    }
+#endif
+
+}
+
+
+/*
+  set the accel filter frequency
+ */
+void AP_InertialSensor_ADIS16365::_set_accel_filter(uint8_t filter_hz)
+{
+    _accel_filter.set_cutoff_frequency(1000, filter_hz);
+}
+
+/*
+  set the gyro filter frequency
+ */
+void AP_InertialSensor_ADIS16365::_set_gyro_filter(uint8_t filter_hz)
+{
+    _gyro_filter.set_cutoff_frequency(1000, filter_hz);
+}
+
+
+/*
+  initialise the sensor configuration registers
+ */
+bool AP_InertialSensor_ADIS16365::_hardware_init(void)
+{
+
+    // check if supply voltage is in range : 6.0v > voltage > 3.3v 
+    if(!_check_voltage())
+        return false;
+
+    return true;
+}
+
+bool AP_InertialSensor_ADIS16365::_check_voltage()
+{
+
+    // check if supply voltage is in range : 6.0v > voltage > 3.3v 
+    // scale: 2.418 mv, 6.0v: 2481, 3.3v: 1365
+    //
+    uint16_t imu_volt = pAI_ins->read_imu_voltage(); 
+
+
+    if((imu_volt > 2481) || (imu_volt < 1365))
+    {
+        hal.util->prt("error: adis16365 supply voltage bad: %d!", imu_volt);
+        return false; 
+    }
+    return true;
+}
+
+#elif HAL_INS_DEFAULT == HAL_INS_ADIS16365_SPI
 
 /*
   detect the sensor
@@ -610,6 +833,7 @@ void AP_InertialSensor_ADIS16365::_dump_registers(AP_HAL::SPIDeviceDriver *spi)
     hal.util->prt("new sample: gyro_x: %f[%d], gyro_y: %f[%d], gyro_z: %f[%d]\n",
             gyro_sample.x, gx, gyro_sample.y, gy, gyro_sample.z, gz);
 }
+#endif
 #endif
 
 

@@ -28,6 +28,7 @@ static const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 static void catch_sigbus(int sig)
 {
     hal.scheduler->panic("RCOutput.cpp:SIGBUS error gernerated\n");
+    // hal.util->prt("RCOutput.cpp:SIGBUS error gernerated\n");
 }
 void LinuxRCOutput_PRU::init(void* machtnicht)
 {

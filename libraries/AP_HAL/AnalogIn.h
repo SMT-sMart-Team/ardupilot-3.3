@@ -35,6 +35,9 @@ public:
     // return a voltage from 0.0 to 5.0V, assuming a ratiometric
     // sensor
     virtual float voltage_average_ratiometric() = 0;
+
+    virtual uint16_t read_imu_voltage() {return 0xdead; }; 
+    virtual bool read_imu_data(float *ax, float *ay, float *az, float *gx, float *gy, float *gz) {return true; };
 };
 
 class AP_HAL::AnalogIn {

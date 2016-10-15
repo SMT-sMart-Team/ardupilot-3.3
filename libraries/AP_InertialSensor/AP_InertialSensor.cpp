@@ -15,6 +15,8 @@
  */
 #define TIMING_DEBUG 0
 
+#define FLOW_DEBUG 1
+
 #if TIMING_DEBUG
 #include <stdio.h>
 #define timing_printf(fmt, args...)      do { printf("[timing] " fmt, ##args); } while(0)
@@ -436,7 +438,7 @@ AP_InertialSensor::_detect_backends(void)
     _add_backend(AP_InertialSensor_Oilpan::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_MPU9250
     _add_backend(AP_InertialSensor_MPU9250::detect(*this));
-#elif HAL_INS_DEFAULT == HAL_INS_ADIS16365
+#elif HAL_INS_DEFAULT == HAL_INS_ADIS16365_SPI || HAL_INS_DEFAULT == HAL_INS_ADIS16365_IIO
     _add_backend(AP_InertialSensor_MPU9250::detect(*this));
     _add_backend(AP_InertialSensor_ADIS16365::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_FLYMAPLE
@@ -853,6 +855,10 @@ AP_InertialSensor::_init_gyro()
 
     // cold start
     hal.console->print_P(PSTR("Init Gyro"));
+#if FLOW_DEBUG 
+    hal.util->prt("init gyro");
+#endif
+
 
     /*
       we do the gyro calibration with no board rotation. This avoids
@@ -874,6 +880,9 @@ AP_InertialSensor::_init_gyro()
         hal.scheduler->delay(5);
         update();
     }
+#if FLOW_DEBUG 
+    hal.util->prt("after update");
+#endif
 
     // the strategy is to average 50 points over 0.5 seconds, then do it
     // again and see if the 2nd average is within a small margin of
@@ -945,6 +954,9 @@ AP_InertialSensor::_init_gyro()
     // we've kept the user waiting long enough - use the best pair we
     // found so far
     hal.console->println();
+#if FLOW_DEBUG 
+    hal.util->prt("gyro calib done");
+#endif
     for (uint8_t k=0; k<num_gyros; k++) {
         if (!converged[k]) {
             hal.console->printf_P(PSTR("gyro[%u] did not converge: diff=%f dps\n"),
@@ -966,6 +978,9 @@ AP_InertialSensor::_init_gyro()
 
     // stop flashing leds
     AP_Notify::flags.initialising = false;
+#if FLOW_DEBUG 
+    hal.util->prt("init gyro end");
+#endif
 }
 
 /*
