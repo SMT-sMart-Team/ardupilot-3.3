@@ -27,7 +27,7 @@ extern const AP_HAL::HAL& hal;
 LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
     // different SPI tables per board subtype
 #ifdef SMT_INS_ADIS16365
-    // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  300*KHZ,300*KHZ),
+    // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  100*KHZ,100*KHZ),
     LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  1*MHZ,1*MHZ),
 #endif
     // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_LSM9DS0_G,  SPI_MODE_3, 8, BBB_P8_9,   10*MHZ,10*MHZ),

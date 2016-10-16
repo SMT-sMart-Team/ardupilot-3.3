@@ -12,10 +12,10 @@
 #include "AP_InertialSensor.h"
 
 // enable debug to see a register dump on startup
-#define ADIS16365_DEBUG 1
+#define ADIS16365_DEBUG 0
 #define DUMP_DATA 0
 #define FAST_BOOT 0
-#define BURST_READ 1
+#define BURST_READ 0
 
 
 // register memory map

@@ -178,7 +178,7 @@ bool AP_InertialSensor_ADIS16365::_init_sensor(void)
     _product_id = 0;
 
     // start the timer process to read samples
-    hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
+    // hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
 
     return true;
 }
@@ -196,6 +196,9 @@ bool AP_InertialSensor_ADIS16365::update( void )
         _dump_registers(_spi);
     }
 #endif
+
+    _read_data_transaction();
+
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
     Vector3f gyro = _shared_data[idx]._gyro_filtered;
@@ -238,7 +241,6 @@ void AP_InertialSensor_ADIS16365::_poll_data(void)
         */
         return;
     }
-    _read_data_transaction();
     _spi_sem->give();
 }
 
@@ -247,7 +249,8 @@ void AP_InertialSensor_ADIS16365::_poll_data(void)
     ((value & (1 << (mask_bit - 1)))?( -1.0 * (~(value - 1) & (0xFFFF >> (16 - mask_bit)))) : (1.0 * (value & (0xFFFF >> (16 - mask_bit)))))
 #define SUPPLY_SCALE 2.418e-3 // V
 #define GYRO_SCALE   0.05 // deg/sec
-#define ACCEL_SCALE  3.333e-3 // mg
+// #define ACCEL_SCALE  3.333e-3 // mg
+#define ACCEL_SCALE  3.333e-2 // mg
 /*
   read from the data registers and update filtered data
  */
@@ -280,12 +283,22 @@ void AP_InertialSensor_ADIS16365::_read_data_transaction()
     gyro_sample.x = GYRO_SCALE * SIGNED_FLOAT(gx, 14); 
     gyro_sample.y = GYRO_SCALE * SIGNED_FLOAT(gy, 14);
     gyro_sample.z = GYRO_SCALE * SIGNED_FLOAT(gz, 14);
+
+    uint16_t volt = _register_read_16(ADIS16400_SUPPLY_OUT) & (0xFFFF >> (16 - 12));
+    static uint16_t err = 0;
+    if((volt > 2481) || (volt < 1364))
+    {
+        err++;
+        hal.util->prt("sample error : %d", err);
+        return ;
+    }
 #else
 
     // TODO: burst read
     if(!_burst_read(&accel_sample, &gyro_sample))
     {
         hal.util->prt("Warning: adis16365 burst read failed");
+        return; 
     }
 #endif
 
@@ -483,7 +496,7 @@ int16_t AP_InertialSensor_ADIS16365::_check_status(AP_HAL::SPIDeviceDriver *spi)
     return _register_read_16(spi, ADIS16400_DIAG_STAT);
 }
 
-#define ADIS_BURST 1
+#define ADIS_BURST 0
 #if ADIS_BURST
 #define BURST_TX_MSG_LEN 22 // 11 16bits = 22 bytes
 #else
@@ -496,23 +509,23 @@ bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
 
     uint16_t ax, ay, az, gx, gy, gz;
 
+
 #if ADIS_BURST
     uint8_t tx_burst[2] = {
         0x3E, 0x00
     };
-    hal.scheduler->delay_microseconds(300);
     // send burst msg
     _spi->transaction(tx_burst, rx, 2);
-    hal.scheduler->delay_microseconds(T_STALL);
+    hal.scheduler->delay_microseconds(T_READRATE);
 
     uint8_t tx[BURST_TX_MSG_LEN] = {
-        0x00, 0x00,
-        0x00, 0x00,
-        0x00, 0x00,
-        0x00, 0x00,
-        0x00, 0x00,
-        0x00, 0x00,
-        0x00, 0x00,
+        0x00, 0x00, // supply volt
+        0x00, 0x00, // gx
+        0x00, 0x00, // gy
+        0x00, 0x00, // gz
+        0x00, 0x00, // ax
+        0x00, 0x00, // ay
+        0x00, 0x00, // az
         0x00, 0x00,
         0x00, 0x00,
         0x00, 0x00,
@@ -520,9 +533,11 @@ bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
     };
 
     // collect burst data
+    memset(rx, 0x0, sizeof(rx));
     _spi->transaction(tx, rx, BURST_TX_MSG_LEN);
 
     uint8_t idx = 0; // start with 2nd DOUT
+
 #else
     uint8_t tx[BURST_TX_MSG_LEN] = {
         ADIS16400_SUPPLY_OUT, 0x00,
@@ -537,6 +552,7 @@ bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
     _spi->transaction(tx, rx, BURST_TX_MSG_LEN);
 
     uint8_t idx = 2; // start with 2nd DOUT
+
 #endif
 
 #if ADIS16365_DEBUG
@@ -548,6 +564,16 @@ bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
         hal.util->prt("bv: %f[%d]\n", SUPPLY_SCALE * ((rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12))), ((rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12))));
     }
 #endif
+
+    // check if bus error
+    uint16_t volt = (rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12));
+    static uint16_t err = 0;
+    if((volt > 2481) || (volt < 1364))
+    {
+        err++;
+        hal.util->prt("sample error : %d", err);
+        return false;
+    }
 
     idx += 2;
     gx = (rx[idx] << 8 | rx[idx+1]);
