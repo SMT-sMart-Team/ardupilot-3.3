@@ -12,9 +12,8 @@
 #include <stdlib.h>
 
 // AB ZhaoYJ@2016-10-15 for adis16365 iio
-#define INS_IIO 1
 
-#if INS_IIO
+#ifdef SMT_INS_ADIS16365_IIO
 #define INS_IIO_RAW_NUM 10
 #define INS_IIO_ANALOG_IN_DIR "/sys/bus/iio/devices/iio:device1/"
 #endif
@@ -50,7 +49,7 @@ public:
 
     // AB ZhaoYJ@2016-10-15 for adis16365 iio
     //
-#if INS_IIO
+#ifdef SMT_INS_ADIS16365_IIO
     enum {
         ins_voltage_idx = 3,
         ins_accl_x_idx,
@@ -81,7 +80,8 @@ private:
 
     // AB ZhaoYJ@2016-10-15 for adis16365 iio
     //
-#if INS_IIO
+#ifdef SMT_INS_ADIS16365_IIO
+
     int _ins_fd[INS_IIO_RAW_NUM];
     float _ins_volt_scale;
     float _ins_accl_scale;

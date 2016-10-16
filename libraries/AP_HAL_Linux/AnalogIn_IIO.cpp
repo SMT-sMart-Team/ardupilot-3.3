@@ -46,8 +46,10 @@ AnalogSource_IIO::AnalogSource_IIO(int16_t pin, float initial_value) :
 {
     init_pins();
     select_pin();
+#ifdef SMT_INS_ADIS16365_IIO
     if(!init_ins_iio())
         hal.util->prt("error: init adis16365 iio failed!");
+#endif
 }
 
 void AnalogSource_IIO::init_pins(void)
@@ -197,7 +199,7 @@ void AnalogSource_IIO::set_settle_time(uint16_t settle_time_ms)
 {}
 
 
-#if INS_IIO
+#ifdef SMT_INS_ADIS16365_IIO
 // open dev; get scales
 bool AnalogSource_IIO::init_ins_iio()
 {
@@ -310,6 +312,7 @@ bool AnalogSource_IIO::read_imu_data(float *ax, float *ay, float *az, float *gx,
     bool ret = false;
     uint8_t idx = ins_accl_x_idx;
 
+#if 1
     for(; idx < ins_data_all; idx++) 
     {
         if((_ins_fd[idx] != NULL) && (sbuf[idx] != NULL))
@@ -326,6 +329,7 @@ bool AnalogSource_IIO::read_imu_data(float *ax, float *ay, float *az, float *gx,
             return false;
         }
     }
+#endif
 
     // get data
     idx = ins_accl_x_idx;

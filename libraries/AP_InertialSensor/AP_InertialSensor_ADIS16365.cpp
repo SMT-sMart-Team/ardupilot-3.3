@@ -125,6 +125,9 @@ bool AP_InertialSensor_ADIS16365::update( void )
         _dump_registers(_spi);
     }
 #endif
+
+    _read_data_transaction();
+
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
     Vector3f gyro = _shared_data[idx]._gyro_filtered;
@@ -159,7 +162,6 @@ bool AP_InertialSensor_ADIS16365::update( void )
  */
 void AP_InertialSensor_ADIS16365::_poll_data(void)
 {
-    _read_data_transaction();
 }
 
 
@@ -419,6 +421,8 @@ bool AP_InertialSensor_ADIS16365::update( void )
         _dump_registers(_spi);
     }
 #endif
+
+
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
     Vector3f gyro = _shared_data[idx]._gyro_filtered;
