@@ -436,6 +436,9 @@ AP_InertialSensor::_detect_backends(void)
     _add_backend(AP_InertialSensor_Oilpan::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_MPU9250
     _add_backend(AP_InertialSensor_MPU9250::detect(*this));
+#elif HAL_INS_DEFAULT == HAL_INS_ADIS16365
+    _add_backend(AP_InertialSensor_MPU9250::detect(*this));
+    _add_backend(AP_InertialSensor_ADIS16365::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_FLYMAPLE
     _add_backend(AP_InertialSensor_Flymaple::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_LSM9DS0
@@ -1462,6 +1465,13 @@ void AP_InertialSensor::set_delta_angle(uint8_t instance, const Vector3f &deltaa
 }
 
 #if INS_VIBRATION_CHECK
+
+// #define DEBUG_VIBE
+
+#ifdef DEBUG_VIBE
+uint16_t cnt = 0;
+#endif
+
 // calculate vibration levels and check for accelerometer clipping (called by a backends)
 void AP_InertialSensor::calc_vibration_and_clipping(uint8_t instance, const Vector3f &accel, float dt)
 {
@@ -1471,7 +1481,14 @@ void AP_InertialSensor::calc_vibration_and_clipping(uint8_t instance, const Vect
         fabsf(accel.z) > AP_INERTIAL_SENSOR_ACCEL_CLIP_THRESH_MSS) {
         _accel_clip_count[instance]++;
     }
+#ifdef DEBUG_VIBE
+    cnt++;
 
+    if(!(cnt%100))
+    {
+        hal.util->prt("ax: %f ay: %f az: %f, dt: %f(ms)", accel.x, accel.y, accel.z, dt);
+    }
+#endif
     // calculate vibration levels
     if (instance < INS_VIBRATION_CHECK_INSTANCES) {
         // filter accel at 5hz
@@ -1482,9 +1499,21 @@ void AP_InertialSensor::calc_vibration_and_clipping(uint8_t instance, const Vect
         accel_diff.x *= accel_diff.x;
         accel_diff.y *= accel_diff.y;
         accel_diff.z *= accel_diff.z;
+
         _accel_vibe_filter[instance].apply(accel_diff, dt);
+
+#ifdef DEBUG_VIBE
+        if(!(cnt%100))
+        {
+            hal.util->prt("afx: %f afy: %f afz: %f", accel_filt.x, accel_filt.y, accel_filt.z);
+            hal.util->prt("adx: %f ady: %f adz: %f", accel_diff.x, accel_diff.y, accel_diff.z);
+            hal.util->prt("avx: %f avy: %f avz: %f", _accel_vibe_filter[instance].get().x, _accel_vibe_filter[instance].get().y, _accel_vibe_filter[instance].get().z);
+        }
+#endif
+
     }
 }
+
 
 // retrieve latest calculated vibration levels
 Vector3f AP_InertialSensor::get_vibration_levels(uint8_t instance) const
@@ -1496,6 +1525,12 @@ Vector3f AP_InertialSensor::get_vibration_levels(uint8_t instance) const
         vibe.y = safe_sqrt(vibe.y);
         vibe.z = safe_sqrt(vibe.z);
     }
+#ifdef DEBUG_VIBE
+    if(!(cnt%100))
+    {
+        hal.util->prt("vx: %f vy: %f vz: %f", vibe.x, vibe.y, vibe.z);
+    }
+#endif
     return vibe;
 }
 #endif

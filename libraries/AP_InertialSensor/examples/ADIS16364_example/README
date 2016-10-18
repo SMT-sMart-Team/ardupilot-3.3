@@ -1,0 +1,75 @@
+Interfacing ADIS16364 with Arduino
+====================================
+This software package is an example of how to interface an ADIS16364 iSensor with an Arduino Mega 2560.
+
+What you'll need
+----------------
+- Arduino Uno, or Arduino Mega 2560
+- ADIS16364 with breakout board
+- Jumper wires
+- Arduino IDE
+- Python with modules below, I tested this on Python 2.7
+    + pySerial python module, see http://pyserial.sourceforge.net/
+    + NumPy python module, see http://numpy.scipy.org/ 
+    + SciPy python module, see http://www.scipy.org/
+    + matplotlib python module, see http://matplotlib.sourceforge.net/
+
+Connections
+------------
+Using jumper wires, make connections from the ADIS16364 breakout board to the Arduino
+as shown below:
+
+Arduino Uno Connections 
+-----------------------------
+CS   (J1-3)  - to digital pin 10 (SS)
+SCLK (J1-2)  - to digital pin 13 (SCK)
+DOUT (J1-4)  - to digital pin 12 (MISO)
+DIN  (J1-6)  - to digital pin 11 (MOSI)
+VCC  (J1-12) - to 5V
+GND  (J1-9)  - to GND 
+
+Arduino Mega 2560 Connections 
+-----------------------------
+CS   (J1-3)  - to digital pin 53 (SS)
+SCLK (J1-2)  - to digital pin 52 (SCK)
+DOUT (J1-4)  - to digital pin 50 (MISO)
+DIN  (J1-6)  - to digital pin 51 (MOSI)
+VCC  (J1-12) - to 5V
+GND  (J1-9)  - to GND 
+
+See ADIS16364 datasheet Rev D, Figure 18, pg 17 for illustration of J1 and J2 connectors
+
+
+How to use 
+----------
+Once you've installed everything above, and made all the proper connections, it's time to
+program the Arduino. First open up the ADIS164364.ino file with the Arduino IDE. 
+Press verify, and upload (after which you have properly setup the IDE with serial port, and device).
+Now close the IDE, because you may have issues with the python plotting if you have both 
+programs trying to access the same serial port.
+
+Plotting data with Python
+-------------------------
+usage: plot_data.py [-h] -p PORT -r RATE [-b] [-n NUM] [-s]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PORT, --port PORT  Serial port, ie /dev/ttyACMX on Linux, or COMX on Windows
+  -r RATE, --rate RATE  Baud rate
+  -b, --bar             Show Bargraphs Instead of line plots
+  -n NUM, --num NUM     Window width, default is 100 points
+  -s, --smooth          Make lines look smoother
+
+
+To run on Windows:
+
+python plot_data.py -p COMX -r 9600
+
+To run on Linux:
+
+python plot_data.py -p /dev/ttyACMX -r 9600  
+
+if you don't have udev setup for your Arduino, and you get permission issues, try running it as root:
+
+sudo python plot_data.py -p /dev/ttyACMX -r 9600  
+

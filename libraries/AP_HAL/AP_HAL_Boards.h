@@ -232,7 +232,7 @@
 #define KEEP_ALIVE_TIME_OUT_PRU 75 // 75*20ms
 
 // add by Mi for test SMT new board atsha204a debug using hashlet @2016-06-12
-#define SMT_HASHLET_USE
+// #define SMT_HASHLET_USE
 // add by ZhaoYJ for test SMT new board @2016-05-09
 #define SMT_NEW_SENSORS_BOARD 
 
@@ -243,6 +243,9 @@
 
 // add by ZhaoYJ for new flight mode switch: CH5 (2 pos) + CH6 (3 pos)
 #define SMT_CH5_CH6_SWITCH
+
+// add by ZhaoYJ for adis16365
+// #define SMT_INS_ADIS16365
 
 // add by ZhaoYJ for debugging mag_cali on board @2016-10-10
 // #define SMT_MAG_CALI_DEBUG
@@ -261,7 +264,13 @@
 // #define HAL_INS_DEFAULT HAL_INS_MPU9255
 // #define HAL_BARO_DEFAULT HAL_BARO_MS5611_SPI
 // #define HAL_COMPASS_DEFAULT HAL_COMPASS_HMC5843
+//
+
+#ifdef SMT_INS_ADIS16365
+#define HAL_INS_DEFAULT HAL_INS_ADIS16365
+#else
 #define HAL_INS_DEFAULT HAL_INS_MPU9250
+#endif
 #define HAL_BARO_DEFAULT HAL_BARO_MS5803_SPI
 #define SMT_NEW_BOARD
 // #define HAL_COMPASS_DEFAULT HAL_COMPASS_AK8963_MPU9250

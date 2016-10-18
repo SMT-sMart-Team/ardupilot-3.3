@@ -26,7 +26,10 @@ extern const AP_HAL::HAL& hal;
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF || CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_ERLE
 LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
     // different SPI tables per board subtype
-    // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_LSM9DS0_AM, SPI_MODE_3, 8, BBB_P9_17,  10*MHZ,10*MHZ),
+#ifdef SMT_INS_ADIS16365
+    // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  100*KHZ,100*KHZ),
+    LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_ADIS16365, SPI_MODE_3, 8, BBB_P9_17,  1*MHZ,1*MHZ),
+#endif
     // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_LSM9DS0_G,  SPI_MODE_3, 8, BBB_P8_9,   10*MHZ,10*MHZ),
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5611,     SPI_MODE_3, 8, BBB_P9_42,  10*MHZ,10*MHZ),
     #ifdef SMT_NEW_SENSORS_BOARD
@@ -36,6 +39,7 @@ LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
 	#endif
     /* MPU9250 is restricted to 1MHz for non-data and interrupt registers */
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU9250,    SPI_MODE_3, 8, BBB_P9_23,  1*MHZ, 10*MHZ),
+    // LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU9250,    SPI_MODE_3, 8, BBB_P9_23,  1*MHZ, 1*MHZ),
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_Dataflash,  SPI_MODE_3, 8, BBB_P8_12,  6*MHZ, 6*MHZ),
 };
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NAVIO
