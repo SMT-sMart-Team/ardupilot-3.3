@@ -60,7 +60,8 @@ namespace AP_HAL {
         SPIDevice_LSM9DS0_G         = 10,
         SPIDevice_Ublox             = 11,
         SPIDevice_MS5803            = 12,
-        SPIDevice_ADIS16365          = 13
+        SPIDevice_ADIS16365         = 13,
+        SPIDevice_ICM20689          = 14
     };
 
 }

@@ -39,7 +39,9 @@ LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
 	#endif
     /* MPU9250 is restricted to 1MHz for non-data and interrupt registers */
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU9250,    SPI_MODE_3, 8, BBB_P9_23,  1*MHZ, 10*MHZ),
-    // LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU9250,    SPI_MODE_3, 8, BBB_P9_23,  1*MHZ, 1*MHZ),
+#ifdef SMT_INS_ICM20689
+    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_ICM20689,    SPI_MODE_3, 8, BBB_P8_14,  1*MHZ, 10*MHZ),
+#endif
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_Dataflash,  SPI_MODE_3, 8, BBB_P8_12,  6*MHZ, 6*MHZ),
 };
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NAVIO

@@ -246,6 +246,9 @@
 
 // add by ZhaoYJ for adis16365
 // #define SMT_INS_ADIS16365
+//
+// add by ZhaoYJ@2016-10-18 for icm20689
+// #define SMT_INS_ICM20689
 
 // add by ZhaoYJ for debugging mag_cali on board @2016-10-10
 // #define SMT_MAG_CALI_DEBUG
