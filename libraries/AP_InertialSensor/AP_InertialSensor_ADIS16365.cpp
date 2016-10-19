@@ -250,7 +250,7 @@ void AP_InertialSensor_ADIS16365::_poll_data(void)
 #define SUPPLY_SCALE 2.418e-3 // V
 #define GYRO_SCALE   0.05 // deg/sec
 // #define ACCEL_SCALE  3.333e-3 // mg
-#define ACCEL_SCALE  3.333e-2 // mg
+#define ACCEL_SCALE  0.0326856 // 3.333e-3*9.80665 // mg
 /*
   read from the data registers and update filtered data
  */
