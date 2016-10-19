@@ -21,6 +21,7 @@
 #define AP_COMPASS_TYPE_VRBRAIN         0x05
 #define AP_COMPASS_TYPE_AK8963_MPU9250  0x06
 #define AP_COMPASS_TYPE_AK8963_I2C      0x07
+#define AP_COMPASS_TYPE_HMC5983         0x08
 
 // motor compensation types (for use with motor_comp_enabled)
 #define AP_COMPASS_MOT_COMP_DISABLED    0x00

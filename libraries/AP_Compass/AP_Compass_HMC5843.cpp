@@ -32,7 +32,7 @@
 extern const AP_HAL::HAL& hal;
 
 #define COMPASS_ADDRESS      0x1E
-#define ConfigRegA           0x00
+#define ConfigRegA           0x00 // for 5983, bit7 is temp-comp
 #define ConfigRegB           0x01
 #define magGain              0x20
 #define PositiveBiasConfig   0x11
@@ -56,6 +56,10 @@ extern const AP_HAL::HAL& hal;
 #define DataOutputRate_15HZ   0x04
 #define DataOutputRate_30HZ   0x05
 #define DataOutputRate_75HZ   0x06
+#define DataOutputRate_220HZ  0x07 // AB ZhaoYJ@2016-10-19 for HMC5983 
+
+// AB ZhaoYJ@2016-10-19 for HMC5983
+#define TEMP_COMPENSTATE_EN   0x80
 
 // constructor
 AP_Compass_HMC5843::AP_Compass_HMC5843(Compass &compass):
@@ -121,7 +125,7 @@ bool AP_Compass_HMC5843::read_raw()
 
     int16_t rx, ry, rz;
     rx = (((int16_t)buff[0]) << 8) | buff[1];
-    if (_product_id == AP_COMPASS_TYPE_HMC5883L) {
+    if ((_product_id == AP_COMPASS_TYPE_HMC5883L) || (_product_id == AP_COMPASS_TYPE_HMC5983)) {
         rz = (((int16_t)buff[2]) << 8) | buff[3];
         ry = (((int16_t)buff[4]) << 8) | buff[5];
     } else {
@@ -218,14 +222,27 @@ AP_Compass_HMC5843::init()
 
     // determine if we are using 5843 or 5883L
     _base_config = 0;
-    if (!write_register(ConfigRegA, SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation) ||
+    if (!write_register(ConfigRegA, TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation) ||
         !read_register(ConfigRegA, &_base_config)) {
         _i2c_sem->give();
         hal.scheduler->resume_timer_procs();
         return false;
     }
-    if ( _base_config == (SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation)) {
+
+    if ( _base_config == (TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation)) {
         // a 5883L supports the sample averaging config
+        _product_id = AP_COMPASS_TYPE_HMC5983;
+        calibration_gain = 0x60;
+        /*
+          note that the HMC5883 datasheet gives the x and y expected
+          values as 766 and the z as 713. Experiments have shown the x
+          axis is around 766, and the y and z closer to 713.
+         */
+        expected_x = 766;
+        expected_yz  = 713;
+        gain_multiple = 660.0f / 1090;  // adjustment for runtime vs calibration gain
+    } else if ( _base_config == (SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation)) {
+       // a 5883L supports the sample averaging config
         _product_id = AP_COMPASS_TYPE_HMC5883L;
         calibration_gain = 0x60;
         /*
@@ -390,7 +407,7 @@ void AP_Compass_HMC5843::read()
 	_mag_x_accum = _mag_y_accum = _mag_z_accum = 0;
 
     // rotate to the desired orientation
-    if (_product_id == AP_COMPASS_TYPE_HMC5883L) {
+    if ((_product_id == AP_COMPASS_TYPE_HMC5883L) || (_product_id == AP_COMPASS_TYPE_HMC5983)) {
         field.rotate(ROTATION_YAW_90);
     }
 
