@@ -61,7 +61,8 @@ namespace AP_HAL {
         SPIDevice_Ublox             = 11,
         SPIDevice_MS5803            = 12,
         SPIDevice_ADIS16365         = 13,
-        SPIDevice_ICM20689          = 14
+        SPIDevice_ICM20689          = 14,
+        SPIDevice_HMC5983           = 15
     };
 
 }

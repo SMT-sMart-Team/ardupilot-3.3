@@ -230,6 +230,8 @@ bool AP_InertialSensor_ICM20689::initialize_driver_state() {
         goto fail_whoami;
     }
 
+    hal.util->prt("ICM20689: whoami - 0x%x", whoami);
+
     // initially run the bus at low speed
     spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
 

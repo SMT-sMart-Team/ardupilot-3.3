@@ -247,8 +247,11 @@
 // add by ZhaoYJ for adis16365
 // #define SMT_INS_ADIS16365
 //
-// add by ZhaoYJ@2016-10-18 for icm20689
+// add by ZhaoYJ@2016-10-18 for ICM20689
 // #define SMT_INS_ICM20689
+//
+// add by ZhaoYJ@2016-10-21 for HMC5983
+#define SMT_INS_HMC5983
 
 // add by ZhaoYJ for debugging mag_cali on board @2016-10-10
 // #define SMT_MAG_CALI_DEBUG
@@ -271,6 +274,8 @@
 
 #ifdef SMT_INS_ADIS16365
 #define HAL_INS_DEFAULT HAL_INS_ADIS16365
+#elif defined(SMT_INS_ICM20689)
+#define HAL_INS_DEFAULT HAL_INS_ICM20689
 #else
 #define HAL_INS_DEFAULT HAL_INS_MPU9250
 #endif
