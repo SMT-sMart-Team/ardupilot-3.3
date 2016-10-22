@@ -75,6 +75,11 @@ void AP_HMC5983_SPI::setHighSpeed(uint8_t speed)
 {
 }
 
+AP_HAL::Semaphore * AP_HMC5983_SPI::get_semaphore()
+{
+    return _spi->get_semaphore();
+}
+
 #define BURST_CMD 0xC3
 #define BURST_LEN 0x6
 bool AP_HMC5983_SPI::burst_read(uint8_t *out)
@@ -131,9 +136,11 @@ AP_Compass_Backend *AP_Compass_HMC5983::detect(Compass &compass)
 {
     AP_Compass_HMC5983 *sensor = new AP_Compass_HMC5983(compass, new AP_HMC5983_SPI());
     if (sensor == NULL) {
+        hal.util->prt("HMC5983: sensor NULL");
         return NULL;
     }
     if (!sensor->init()) {
+        hal.util->prt("HMC5983: delete sensor");
         delete sensor;
         return NULL;
     }
@@ -165,7 +172,7 @@ bool AP_Compass_HMC5983::read_raw()
 {
     uint8_t buff[BURST_LEN];
 
-    if (_bus->burst_read(buff) != 0) {
+    if (!_bus->burst_read(buff)) {
         _bus->setHighSpeed(false);
         _retry_time = hal.scheduler->millis() + 1000;
         return false;
@@ -269,15 +276,20 @@ AP_Compass_HMC5983::init()
     }
 
     // determine if we are using 5983 or 5883L
+    read_register(ConfigRegA, &_base_config);
+    hal.util->prt("HMC5983: configA: 0x%x, pre-wr 0x%x", _base_config, TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation);
     _base_config = 0;
     if (!write_register(ConfigRegA, TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation) ||
         !read_register(ConfigRegA, &_base_config)) {
         _bus_sem->give();
         hal.scheduler->resume_timer_procs();
+        hal.util->prt("HMC5983 init wr config reg error");
         return false;
     }
 
+
     if ( _base_config == (TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation)) {
+        hal.util->prt("HMC5983 detect");
         // a 5883L supports the sample averaging config
         _product_id = AP_COMPASS_TYPE_HMC5983;
         calibration_gain = 0x60;
@@ -290,6 +302,7 @@ AP_Compass_HMC5983::init()
         expected_yz  = 713;
         gain_multiple = 660.0f / 1090;  // adjustment for runtime vs calibration gain
     } else if ( _base_config == (SampleAveraging_8<<5 | DataOutputRate_75HZ<<2 | NormalOperation)) {
+        hal.util->prt("HMC5883L detect");
        // a 5883L supports the sample averaging config
         _product_id = AP_COMPASS_TYPE_HMC5883L;
         calibration_gain = 0x60;
@@ -302,8 +315,10 @@ AP_Compass_HMC5983::init()
         expected_yz  = 713;
         gain_multiple = 660.0f / 1090;  // adjustment for runtime vs calibration gain
     } else if (_base_config == (NormalOperation | DataOutputRate_75HZ<<2)) {
-        _product_id = AP_COMPASS_TYPE_HMC5983;
+        hal.util->prt("HMC5843 detect");
+        _product_id = AP_COMPASS_TYPE_HMC5843;
     } else {
+        hal.util->prt("HMC5983: error detect-0x%x", _base_config);
         // not behaving like either supported compass type
         _bus_sem->give();
         hal.scheduler->resume_timer_procs();
@@ -321,13 +336,19 @@ AP_Compass_HMC5983::init()
 
         // force positiveBias (compass should return 715 for all channels)
         if (!write_register(ConfigRegA, PositiveBiasConfig))
+        {
+            hal.util->prt("wr configA error");
             continue;      // compass not responding on the bus
+        }
         hal.scheduler->delay(50);
 
         // set gains
         if (!write_register(ConfigRegB, calibration_gain) ||
             !write_register(ModeRegister, SingleConversion))
+        {
+            hal.util->prt("wr configB & mode error");
             continue;
+        }
 
         // read values from the compass
         hal.scheduler->delay(50);
@@ -362,8 +383,10 @@ AP_Compass_HMC5983::init()
 
 #if 0
         /* useful for debugging */
-        hal.console->printf_P(PSTR("MagX: %d MagY: %d MagZ: %d\n"), (int)_mag_x, (int)_mag_y, (int)_mag_z);
-        hal.console->printf_P(PSTR("CalX: %.2f CalY: %.2f CalZ: %.2f\n"), cal[0], cal[1], cal[2]);
+        // hal.console->printf_P(PSTR("MagX: %d MagY: %d MagZ: %d\n"), (int)_mag_x, (int)_mag_y, (int)_mag_z);
+        // hal.console->printf_P(PSTR("CalX: %.2f CalY: %.2f CalZ: %.2f\n"), cal[0], cal[1], cal[2]);
+        hal.util->prt("MagX: %d MagY: %d MagZ: %d\n", (int)_mag_x, (int)_mag_y, (int)_mag_z);
+        hal.util->prt("CalX: %.2f CalY: %.2f CalZ: %.2f\n", cal[0], cal[1], cal[2]);
 #endif
     }
 

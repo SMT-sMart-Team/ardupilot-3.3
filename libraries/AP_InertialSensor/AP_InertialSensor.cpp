@@ -408,11 +408,17 @@ AP_InertialSensor::init( Start_style style,
 
 void AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
 {
+    hal.util->prt("_add_backend: start...");
     if (!backend)
+    {
+        hal.util->prt("_add_backend: backend NULL");
         return;
+    }
     if (_backend_count == INS_MAX_BACKENDS)
         hal.scheduler->panic(PSTR("Too many INS backends"));
+    hal.util->prt("_add_backend: before count++");
     _backends[_backend_count++] = backend;
+    hal.util->prt("_add_backend: after count++");
 }
 
 /*
@@ -426,31 +432,42 @@ AP_InertialSensor::_detect_backends(void)
         _add_backend(AP_InertialSensor_HIL::detect(*this));
         return;
     }
-    hal.util->prt("_add_backend done");
+    hal.util->prt("_add_backend hil mode done");
 #if HAL_INS_DEFAULT == HAL_INS_HIL
+    hal.util->prt("hil");
     _add_backend(AP_InertialSensor_HIL::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_MPU60XX_SPI
+    hal.util->prt("mpu6k spi");
     _add_backend(AP_InertialSensor_MPU6000::detect_spi(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_MPU60XX_I2C && HAL_INS_MPU60XX_I2C_BUS == 2
+    hal.util->prt("mpu6k i2c");
     _add_backend(AP_InertialSensor_MPU6000::detect_i2c(*this, hal.i2c2, HAL_INS_MPU60XX_I2C_ADDR));
 #elif HAL_INS_DEFAULT == HAL_INS_PX4 || HAL_INS_DEFAULT == HAL_INS_VRBRAIN
+    hal.util->prt("px4");
     _add_backend(AP_InertialSensor_PX4::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_OILPAN
+    hal.util->prt("oilpan");
     _add_backend(AP_InertialSensor_Oilpan::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_MPU9250
+    hal.util->prt("9250");
     _add_backend(AP_InertialSensor_MPU9250::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_ICM20689
+    hal.util->prt("20689");
     _add_backend(AP_InertialSensor_ICM20689::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_ADIS16365
-    _add_backend(AP_InertialSensor_MPU9250::detect(*this));
+    hal.util->prt("_add_backend before ");
+    // _add_backend(AP_InertialSensor_MPU9250::detect(*this));
     hal.util->prt("MPU9250 detect done");
     _add_backend(AP_InertialSensor_ADIS16365::detect(*this));
     hal.util->prt("ADIS16365 detect done");
 #elif HAL_INS_DEFAULT == HAL_INS_FLYMAPLE
+    hal.util->prt("flymaple");
     _add_backend(AP_InertialSensor_Flymaple::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_LSM9DS0
+    hal.util->prt("lsm9ds0");
     _add_backend(AP_InertialSensor_LSM9DS0::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_L3G4200D
+    hal.util->prt("l3g4200d");
     _add_backend(AP_InertialSensor_L3G4200D::detect(*this));
 #else
     #error Unrecognised HAL_INS_TYPE setting
@@ -860,6 +877,7 @@ AP_InertialSensor::_init_gyro()
 
     // cold start
     hal.console->print_P(PSTR("Init Gyro"));
+    hal.util->prt("Init Gyro");
 
     /*
       we do the gyro calibration with no board rotation. This avoids
@@ -882,6 +900,7 @@ AP_InertialSensor::_init_gyro()
         update();
     }
 
+    hal.util->prt("first update");
     // the strategy is to average 50 points over 0.5 seconds, then do it
     // again and see if the 2nd average is within a small margin of
     // the first
@@ -899,6 +918,7 @@ AP_InertialSensor::_init_gyro()
         memset(diff_norm, 0, sizeof(diff_norm));
 
         hal.console->print_P(PSTR("*"));
+        hal.util->prt("*");
 
         for (uint8_t k=0; k<num_gyros; k++) {
             gyro_sum[k].zero();
@@ -954,8 +974,8 @@ AP_InertialSensor::_init_gyro()
     hal.console->println();
     for (uint8_t k=0; k<num_gyros; k++) {
         if (!converged[k]) {
-            hal.console->printf_P(PSTR("gyro[%u] did not converge: diff=%f dps\n"),
-                                  (unsigned)k, (double)ToDeg(best_diff[k]));
+            hal.console->printf_P(PSTR("gyro[%u] did not converge: diff=%f dps\n"), (unsigned)k, (double)ToDeg(best_diff[k]));
+            hal.util->prt(PSTR("gyro[%u] did not converge: diff=%f dps\n"), (unsigned)k, (double)ToDeg(best_diff[k]));
             _gyro_offset[k] = best_avg[k];
             // flag calibration as failed for this gyro
             _gyro_cal_ok[k] = false;
@@ -1193,7 +1213,9 @@ void AP_InertialSensor::update(void)
 {
     // during initialisation update() may be called without
     // wait_for_sample(), and a wait is implied
+    hal.util->prt("wait for sample");
     wait_for_sample();
+    hal.util->prt("wait for sample done");
 
     if (!_hil_mode) {
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
@@ -1206,7 +1228,9 @@ void AP_InertialSensor::update(void)
             _delta_angle_valid[i] = false;
         }
         for (uint8_t i=0; i<_backend_count; i++) {
+            hal.util->prt("[%d] start update...", i);
             _backends[i]->update();
+            hal.util->prt("[%d] done update...", i);
         }
 
         // adjust health status if a sensor has a non-zero error count
@@ -1272,6 +1296,7 @@ void AP_InertialSensor::wait_for_sample(void)
         return;
     }
 
+    hal.util->prt("1299");
     uint32_t now = hal.scheduler->micros();
 
     if (_next_sample_usec == 0 && _delta_time <= 0) {
@@ -1316,10 +1341,12 @@ check_sample:
         bool accel_available = false;
         while (!gyro_available || !accel_available) {
             for (uint8_t i=0; i<_backend_count; i++) {
+                _backends[i]->update();
                 gyro_available |= _backends[i]->gyro_sample_available();
                 accel_available |= _backends[i]->accel_sample_available();
             }
             if (!gyro_available || !accel_available) {
+                hal.util->prt("ins sample not available");
                 hal.scheduler->delay_microseconds(100);
             }
         }
@@ -1353,6 +1380,7 @@ check_sample:
 #endif
 
     _have_sample = true;
+    hal.util->prt("have sample");
 }
 
 

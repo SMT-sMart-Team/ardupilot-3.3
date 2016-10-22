@@ -179,7 +179,7 @@ bool AP_InertialSensor_ADIS16365::_init_sensor(void)
     _product_id = 0;
 
     // start the timer process to read samples
-    // hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
+    hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
 
     return true;
 }
@@ -233,6 +233,7 @@ bool AP_InertialSensor_ADIS16365::update( void )
  */
 void AP_InertialSensor_ADIS16365::_poll_data(void)
 {
+#if 0
     if (!_spi_sem->take_nonblocking()) {
         /*
           the semaphore being busy is an expected condition when the
@@ -242,7 +243,11 @@ void AP_InertialSensor_ADIS16365::_poll_data(void)
         */
         return;
     }
+
+    _read_data_transaction();
+
     _spi_sem->give();
+#endif
 }
 
 
@@ -307,8 +312,7 @@ void AP_InertialSensor_ADIS16365::_read_data_transaction()
     Vector3f _accel_filtered = _accel_filter.apply(accel_sample);
     Vector3f _gyro_filtered = _gyro_filter.apply(gyro_sample);
 
-// #if ADIS16365_DEBUG
-#if 0
+#if ADIS16365_DEBUG
     static uint16_t cnt = 0;
     cnt++;
     if((0 == (cnt%1000)) || (1 == (cnt%1000)))

@@ -67,6 +67,8 @@
 #define HAL_INS_MPU9250  9
 #define HAL_INS_L3GD20   10
 #define HAL_INS_LSM9DS0 11
+#define HAL_INS_ADIS16365 12
+#define HAL_INS_ICM20689 13
 
 // barometer driver types
 #define HAL_BARO_BMP085     1
@@ -252,7 +254,7 @@
 // #define SMT_INS_ICM20689
 //
 // add by ZhaoYJ@2016-10-21 for HMC5983
-// #define SMT_COMPASS_HMC5983
+#define SMT_COMPASS_HMC5983
 
 // add by ZhaoYJ for debugging mag_cali on board @2016-10-10
 // #define SMT_MAG_CALI_DEBUG

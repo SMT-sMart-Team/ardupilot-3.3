@@ -7,3 +7,4 @@
 #include "AP_Compass_HIL.h"
 #include "AP_Compass_PX4.h"
 #include "AP_Compass_AK8963.h"
+#include "AP_Compass_HMC5983.h"
