@@ -55,7 +55,8 @@ static void run_calibration();
 
 void setup(void)
 {
-    hal.console->println("AP_InertialSensor startup...");
+    // hal.console->println("AP_InertialSensor startup...");
+    hal.util->prt("AP_InertialSensor startup...");
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
     // we need to stop the barometer from holding the SPI bus
@@ -65,10 +66,12 @@ void setup(void)
 
     ins.init(AP_InertialSensor::COLD_START, 
 			 AP_InertialSensor::RATE_100HZ);
+    hal.util->prt("AP_InertialSensor init done");
 
     // display initial values
     display_offsets_and_scaling();
-    hal.console->println("Complete. Reading:");
+    // hal.console->println("Complete. Reading:");
+    hal.util->prt("Complete. Reading:");
 }
 
 void loop(void)

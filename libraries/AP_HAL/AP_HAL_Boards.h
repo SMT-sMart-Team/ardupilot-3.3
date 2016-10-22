@@ -85,6 +85,7 @@
 #define HAL_COMPASS_VRBRAIN   4
 #define HAL_COMPASS_AK8963_MPU9250 5
 #define HAL_COMPASS_AK8963_I2C  6
+#define HAL_COMPASS_HMC5983   7
 
 /**
    CPU classes, used to select if CPU intensive algorithms should be used
@@ -245,13 +246,13 @@
 #define SMT_CH5_CH6_SWITCH
 
 // add by ZhaoYJ for adis16365
-// #define SMT_INS_ADIS16365
+#define SMT_INS_ADIS16365
 //
 // add by ZhaoYJ@2016-10-18 for ICM20689
 // #define SMT_INS_ICM20689
 //
 // add by ZhaoYJ@2016-10-21 for HMC5983
-#define SMT_INS_HMC5983
+// #define SMT_COMPASS_HMC5983
 
 // add by ZhaoYJ for debugging mag_cali on board @2016-10-10
 // #define SMT_MAG_CALI_DEBUG
@@ -282,7 +283,12 @@
 #define HAL_BARO_DEFAULT HAL_BARO_MS5803_SPI
 #define SMT_NEW_BOARD
 // #define HAL_COMPASS_DEFAULT HAL_COMPASS_AK8963_MPU9250
+#ifdef SMT_COMPASS_HMC5983
+#define HAL_COMPASS_DEFAULT HAL_COMPASS_HMC5983
+#else
 #define HAL_COMPASS_DEFAULT HAL_COMPASS_HMC5843
+#endif
+
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BEBOP
 #define HAL_BOARD_LOG_DIRECTORY "/data/ftp/internal_000/APM/logs"
 #define HAL_BOARD_TERRAIN_DIRECTORY "/data/ftp/internal_000/APM/terrain"

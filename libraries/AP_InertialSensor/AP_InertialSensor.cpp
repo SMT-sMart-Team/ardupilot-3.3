@@ -361,6 +361,7 @@ void
 AP_InertialSensor::init( Start_style style,
                          Sample_rate sample_rate)
 {
+    hal.util->prt("ins init ...");
     // remember the sample rate
     _sample_rate = sample_rate;
 
@@ -420,10 +421,12 @@ void AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
 void 
 AP_InertialSensor::_detect_backends(void)
 {
+    hal.util->prt("ins detect start...");
     if (_hil_mode) {
         _add_backend(AP_InertialSensor_HIL::detect(*this));
         return;
     }
+    hal.util->prt("_add_backend done");
 #if HAL_INS_DEFAULT == HAL_INS_HIL
     _add_backend(AP_InertialSensor_HIL::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_MPU60XX_SPI
@@ -440,7 +443,9 @@ AP_InertialSensor::_detect_backends(void)
     _add_backend(AP_InertialSensor_ICM20689::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_ADIS16365
     _add_backend(AP_InertialSensor_MPU9250::detect(*this));
+    hal.util->prt("MPU9250 detect done");
     _add_backend(AP_InertialSensor_ADIS16365::detect(*this));
+    hal.util->prt("ADIS16365 detect done");
 #elif HAL_INS_DEFAULT == HAL_INS_FLYMAPLE
     _add_backend(AP_InertialSensor_Flymaple::detect(*this));
 #elif HAL_INS_DEFAULT == HAL_INS_LSM9DS0
