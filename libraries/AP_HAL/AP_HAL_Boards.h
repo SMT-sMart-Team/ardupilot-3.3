@@ -248,10 +248,10 @@
 #define SMT_CH5_CH6_SWITCH
 
 // add by ZhaoYJ for adis16365
-#define SMT_INS_ADIS16365
+// #define SMT_INS_ADIS16365
 //
 // add by ZhaoYJ@2016-10-18 for ICM20689
-// #define SMT_INS_ICM20689
+#define SMT_INS_ICM20689
 //
 // add by ZhaoYJ@2016-10-21 for HMC5983
 #define SMT_COMPASS_HMC5983

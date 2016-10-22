@@ -361,7 +361,6 @@ void
 AP_InertialSensor::init( Start_style style,
                          Sample_rate sample_rate)
 {
-    hal.util->prt("ins init ...");
     // remember the sample rate
     _sample_rate = sample_rate;
 
@@ -408,7 +407,6 @@ AP_InertialSensor::init( Start_style style,
 
 void AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
 {
-    hal.util->prt("_add_backend: start...");
     if (!backend)
     {
         hal.util->prt("_add_backend: backend NULL");
@@ -416,9 +414,7 @@ void AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
     }
     if (_backend_count == INS_MAX_BACKENDS)
         hal.scheduler->panic(PSTR("Too many INS backends"));
-    hal.util->prt("_add_backend: before count++");
     _backends[_backend_count++] = backend;
-    hal.util->prt("_add_backend: after count++");
 }
 
 /*
@@ -427,12 +423,10 @@ void AP_InertialSensor::_add_backend(AP_InertialSensor_Backend *backend)
 void 
 AP_InertialSensor::_detect_backends(void)
 {
-    hal.util->prt("ins detect start...");
     if (_hil_mode) {
         _add_backend(AP_InertialSensor_HIL::detect(*this));
         return;
     }
-    hal.util->prt("_add_backend hil mode done");
 #if HAL_INS_DEFAULT == HAL_INS_HIL
     hal.util->prt("hil");
     _add_backend(AP_InertialSensor_HIL::detect(*this));
@@ -900,7 +894,6 @@ AP_InertialSensor::_init_gyro()
         update();
     }
 
-    hal.util->prt("first update");
     // the strategy is to average 50 points over 0.5 seconds, then do it
     // again and see if the 2nd average is within a small margin of
     // the first
@@ -1213,9 +1206,7 @@ void AP_InertialSensor::update(void)
 {
     // during initialisation update() may be called without
     // wait_for_sample(), and a wait is implied
-    hal.util->prt("wait for sample");
     wait_for_sample();
-    hal.util->prt("wait for sample done");
 
     if (!_hil_mode) {
         for (uint8_t i=0; i<INS_MAX_INSTANCES; i++) {
@@ -1228,9 +1219,7 @@ void AP_InertialSensor::update(void)
             _delta_angle_valid[i] = false;
         }
         for (uint8_t i=0; i<_backend_count; i++) {
-            hal.util->prt("[%d] start update...", i);
             _backends[i]->update();
-            hal.util->prt("[%d] done update...", i);
         }
 
         // adjust health status if a sensor has a non-zero error count
@@ -1296,7 +1285,6 @@ void AP_InertialSensor::wait_for_sample(void)
         return;
     }
 
-    hal.util->prt("1299");
     uint32_t now = hal.scheduler->micros();
 
     if (_next_sample_usec == 0 && _delta_time <= 0) {
@@ -1341,12 +1329,13 @@ check_sample:
         bool accel_available = false;
         while (!gyro_available || !accel_available) {
             for (uint8_t i=0; i<_backend_count; i++) {
+#ifdef SMT_INS_ADIS16365
                 _backends[i]->update();
+#endif
                 gyro_available |= _backends[i]->gyro_sample_available();
                 accel_available |= _backends[i]->accel_sample_available();
             }
             if (!gyro_available || !accel_available) {
-                hal.util->prt("ins sample not available");
                 hal.scheduler->delay_microseconds(100);
             }
         }
@@ -1380,7 +1369,6 @@ check_sample:
 #endif
 
     _have_sample = true;
-    hal.util->prt("have sample");
 }
 
 
