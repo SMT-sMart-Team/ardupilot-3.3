@@ -198,7 +198,6 @@ bool AP_InertialSensor_ADIS16365::update( void )
     }
 #endif
 
-    _read_data_transaction();
 
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
@@ -206,6 +205,8 @@ bool AP_InertialSensor_ADIS16365::update( void )
     Vector3f accel = _shared_data[idx]._accel_filtered;
 
     _have_sample_available = false;
+
+    // _read_data_transaction();
 
     accel.rotate(_default_rotation);
     gyro.rotate(_default_rotation);
@@ -233,7 +234,7 @@ bool AP_InertialSensor_ADIS16365::update( void )
  */
 void AP_InertialSensor_ADIS16365::_poll_data(void)
 {
-#if 0
+#if 1
     if (!_spi_sem->take_nonblocking()) {
         /*
           the semaphore being busy is an expected condition when the
@@ -501,9 +502,9 @@ int16_t AP_InertialSensor_ADIS16365::_check_status(AP_HAL::SPIDeviceDriver *spi)
     return _register_read_16(spi, ADIS16400_DIAG_STAT);
 }
 
-#define ADIS_BURST 0
+#define ADIS_BURST 1
 #if ADIS_BURST
-#define BURST_TX_MSG_LEN 22 // 11 16bits = 22 bytes
+#define BURST_TX_MSG_LEN 24 // 11 16bits = 22 bytes
 #else
 #define BURST_TX_MSG_LEN 16 // 7 + 1 16bits = 16 bytes
 #endif
@@ -521,7 +522,8 @@ bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
     };
     // send burst msg
     _spi->transaction(tx_burst, rx, 2);
-    hal.scheduler->delay_microseconds(T_READRATE);
+
+    // hal.scheduler->delay_microseconds(T_READRATE);
 
     uint8_t tx[BURST_TX_MSG_LEN] = {
         0x00, 0x00, // supply volt
@@ -571,14 +573,29 @@ bool AP_InertialSensor_ADIS16365::_burst_read(Vector3f *pAccl, Vector3f *pGyro)
 #endif
 
     // check if bus error
-    uint16_t volt = (rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12));
     static uint16_t err = 0;
+    // checkout volt first
+    uint16_t volt = (rx[idx] << 8 | rx[idx+1]) & (0xFFFF >> (16 - 12));
+    // checkout EA bit
+#define EA_BIT 0x4000
+    for(uint8_t ii = idx; ii < BURST_TX_MSG_LEN; ii++)
+    {
+        if((rx[idx] << 8 | rx[idx+1]) & EA_BIT)
+        {
+            err++;
+            hal.util->prt("ADIS: sample EA error : %d", err);
+            return false;
+        }
+    }
+
     if((volt > 2481) || (volt < 1364))
     {
         err++;
-        hal.util->prt("sample error : %d", err);
+        hal.util->prt("ADIS: volt error : %d", err);
         return false;
     }
+
+
 
     idx += 2;
     gx = (rx[idx] << 8 | rx[idx+1]);

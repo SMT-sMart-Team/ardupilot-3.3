@@ -478,9 +478,8 @@ void AP_Compass_HMC5983::read()
 	_mag_x_accum = _mag_y_accum = _mag_z_accum = 0;
 
     // rotate to the desired orientation
-    if ((_product_id == AP_COMPASS_TYPE_HMC5883L) || (_product_id == AP_COMPASS_TYPE_HMC5983)) {
-        field.rotate(ROTATION_YAW_90);
-    }
+    // HMC5983 no ratation needed
+    field.rotate(ROTATION_YAW_90);
 
     publish_field(field, _compass_instance);
     _retry_time = 0;

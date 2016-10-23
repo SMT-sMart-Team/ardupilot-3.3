@@ -86,6 +86,7 @@ void LinuxRCInput_PRU::_timer_tick()
         // mark as unsynchronised, so we wait for a wide pulse
         for (uint8_t i=0; i<MAX_RCIN_NUM; i++) {
 
+            // AB ZhaoYJ for inverse-order of pwm
             uint16_t width_usec = ring_buffer->multi_pwm_out[i].high;
 
             // valid pwm

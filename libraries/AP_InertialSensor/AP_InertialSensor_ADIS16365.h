@@ -15,7 +15,7 @@
 #define ADIS16365_DEBUG 0
 #define DUMP_DATA 0
 #define FAST_BOOT 0
-#define BURST_READ 0
+#define BURST_READ 1
 
 
 // register memory map
