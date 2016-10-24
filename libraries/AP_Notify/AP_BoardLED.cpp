@@ -21,6 +21,7 @@ extern const AP_HAL::HAL& hal;
 
 bool AP_BoardLED::init(void)
 {
+#if 0
     // setup the main LEDs as outputs
     hal.gpio->pinMode(HAL_GPIO_A_LED_PIN, HAL_GPIO_OUTPUT);
     hal.gpio->pinMode(HAL_GPIO_B_LED_PIN, HAL_GPIO_OUTPUT);
@@ -30,6 +31,7 @@ bool AP_BoardLED::init(void)
     hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_OFF);
     hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
     hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
+#endif
     return true;
 }
 
@@ -38,6 +40,7 @@ bool AP_BoardLED::init(void)
  */
 void AP_BoardLED::update(void)
 {
+#if 0
     _counter++;
 
     // we never want to update LEDs at a higher than 16Hz rate
@@ -168,4 +171,5 @@ void AP_BoardLED::update(void)
             hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
             break;        
     }
+#endif
 }

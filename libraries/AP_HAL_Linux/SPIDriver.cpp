@@ -45,7 +45,7 @@ LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
 #ifdef SMT_COMPASS_HMC5983
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_HMC5983,    SPI_MODE_3, 8, BBB_P8_16,  1*MHZ, 4*MHZ),
 #endif
-    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_Dataflash,  SPI_MODE_3, 8, BBB_P8_12,  6*MHZ, 6*MHZ),
+    // LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_Dataflash,  SPI_MODE_3, 8, BBB_P8_12,  6*MHZ, 6*MHZ),
 };
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_NAVIO
 LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
