@@ -175,7 +175,7 @@ int execute(char* command,char* buf,int bufmax)
 
 void Copter::setup() 
 {
-    printf("main setup start\n");
+    printf("[OK] main setup start\n");
     cliSerial = hal.console;
 #ifdef SMT_HASHLET_USE
 #define BUFSIZE 256
@@ -197,10 +197,10 @@ void Copter::setup()
 
     // setup storage layout for copter
     StorageManager::set_layout_copter();
-    printf("init_ardupilot init start \n");
+    printf("[OK] init start \n");
 
     init_ardupilot();
-    printf("init_ardupilot init end \n");
+    printf("[OK] init done\n");
 
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], ARRAY_SIZE(scheduler_tasks));

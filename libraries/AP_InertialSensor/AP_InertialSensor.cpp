@@ -859,7 +859,7 @@ AP_InertialSensor::_init_gyro()
 
     // cold start
     // hal.console->print_P(PSTR("Init Gyro"));
-    hal.util->prt("Init Gyro start...");
+    // hal.util->prt("Init Gyro start...");
 
     /*
       we do the gyro calibration with no board rotation. This avoids
@@ -882,7 +882,7 @@ AP_InertialSensor::_init_gyro()
         update();
     }
 
-    hal.util->prt("Init Gyro: update");
+    // hal.util->prt("Init Gyro: update");
 
     // the strategy is to average 50 points over 0.5 seconds, then do it
     // again and see if the 2nd average is within a small margin of

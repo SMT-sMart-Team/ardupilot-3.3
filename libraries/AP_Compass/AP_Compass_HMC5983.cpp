@@ -144,6 +144,9 @@ AP_Compass_Backend *AP_Compass_HMC5983::detect(Compass &compass)
         delete sensor;
         return NULL;
     }
+
+    hal.util->prt("[OK] HMC5983 detected done");
+
     return sensor;
 }
 
@@ -277,7 +280,7 @@ AP_Compass_HMC5983::init()
 
     // determine if we are using 5983 or 5883L
     read_register(ConfigRegA, &_base_config);
-    hal.util->prt("HMC5983: configA: 0x%x, pre-wr 0x%x", _base_config, TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation);
+    // hal.util->prt("HMC5983: configA: 0x%x, pre-wr 0x%x", _base_config, TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation);
     _base_config = 0;
     if (!write_register(ConfigRegA, TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation) ||
         !read_register(ConfigRegA, &_base_config)) {
@@ -289,7 +292,7 @@ AP_Compass_HMC5983::init()
 
 
     if ( _base_config == (TEMP_COMPENSTATE_EN | SampleAveraging_8<<5 | DataOutputRate_220HZ<<2 | NormalOperation)) {
-        hal.util->prt("HMC5983 detect");
+        // hal.util->prt("HMC5983 detect");
         // a 5883L supports the sample averaging config
         _product_id = AP_COMPASS_TYPE_HMC5983;
         calibration_gain = 0x60;

@@ -204,7 +204,6 @@ AP_InertialSensor_MPU9250::AP_InertialSensor_MPU9250(AP_InertialSensor &imu) :
  */
 AP_InertialSensor_Backend *AP_InertialSensor_MPU9250::detect(AP_InertialSensor &_imu)
 {
-    hal.util->prt("9250 detect start...");
     AP_InertialSensor_MPU9250 *sensor = new AP_InertialSensor_MPU9250(_imu);
     if (sensor == NULL) {
         hal.util->prt("9250 sensor NULL");
@@ -215,6 +214,8 @@ AP_InertialSensor_Backend *AP_InertialSensor_MPU9250::detect(AP_InertialSensor &
         delete sensor;
         return NULL;
     }
+
+    hal.util->prt("[OK] MPU9250 detected done");
 
     return sensor;
 }

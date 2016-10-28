@@ -120,6 +120,8 @@ AP_Compass_Backend *AP_Compass_AK8963::detect_mpu9250(Compass &compass)
         return nullptr;
     }
 
+    hal.util->prt("[OK] AK8963 detected done");
+
     return sensor;
 }
 
@@ -187,7 +189,7 @@ bool AP_Compass_AK8963::init()
     /* register the compass instance in the frontend */
     _compass_instance = register_compass();
     set_dev_id(_compass_instance, _bus->get_dev_id());
-    debug("ak8963 devid: %d", _bus->get_dev_id());
+    // debug("ak8963 devid: %d", _bus->get_dev_id());
     hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_Compass_AK8963::_update, void));
 
     _bus_sem->give();
@@ -303,7 +305,7 @@ bool AP_Compass_AK8963::_check_id()
         _bus->register_read(AK8963_WIA, &deviceid, 0x01); /* Read AK8963's id */
 
         if (deviceid == AK8963_Device_ID) {
-            debug("ak8963: prot_id 0x%x", deviceid);
+            // debug("ak8963: prot_id 0x%x", deviceid);
             return true;
         }
     }

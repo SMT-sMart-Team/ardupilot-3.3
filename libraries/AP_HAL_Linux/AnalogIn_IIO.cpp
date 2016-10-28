@@ -4,9 +4,26 @@
 #if CONFIG_HAL_BOARD == HAL_BOARD_LINUX
 #include "AnalogIn_IIO.h"
 
+
 // add by ZhaoYJ @2016-05-12
 #ifdef SMT_NEW_SENSORS_BOARD
 #define IIO_DEBUG
+typedef struct {
+    float scale;
+    float offset;
+}AICali;
+
+AICali cali[IIO_ANALOG_IN_COUNT] = {
+    0.01552700, 0.0923,
+    0.00132930, 0.0035,
+    0.00133088, 0.0000,
+    0.00088726, 0.0000,
+    0.00088726, 0.0000,
+    0.00636497, 0.0241,
+    0.00088814, 0.0000,
+    0.00088814, 0.0000
+    };
+/*
 float AIScales[IIO_ANALOG_IN_COUNT] = {
     0.01538090,
     0.00131836,
@@ -17,6 +34,7 @@ float AIScales[IIO_ANALOG_IN_COUNT] = {
     0.00087891,
     0.00087891
     };
+    */
 #endif
 
 extern const AP_HAL::HAL& hal;
@@ -137,7 +155,7 @@ float AnalogSource_IIO::read_latest()
     pread(_pin_fd, sbuf, sizeof(sbuf)-1, 0);
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
 #ifdef SMT_NEW_SENSORS_BOARD
-    _latest = atoi(sbuf) * AIScales[_pin];
+    _latest = atoi(sbuf) * cali[_pin].scale + cali[_pin].offset;
 #else
     _latest = atoi(sbuf) * BBB_VOLTAGE_SCALING;
 #endif
@@ -236,8 +254,8 @@ float AnalogIn_IIO::board_voltage(void)
 
             fd = open(buf, O_RDONLY | O_NONBLOCK);
             pread(fd, sbuf, sizeof(sbuf)-1, 0);
-            val = atoi(sbuf) * AIScales[i];
-            printf(" AI[%d], scale: %f, ADC value: %d, actual value: %f\n", i, AIScales[i], atoi(sbuf), val);
+            val = atoi(sbuf) * cali[i].scale + cali[i].offset;
+            printf(" AI[%d]: scale-offset: %f-%f, ADC value: %d, actual value: %f\n", i, cali[i].scale, cali[i].offset, atoi(sbuf), val);
             close(fd);
         }
     }

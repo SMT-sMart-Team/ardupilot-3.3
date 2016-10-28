@@ -85,6 +85,9 @@ AP_Compass_Backend *AP_Compass_HMC5843::detect(Compass &compass)
         delete sensor;
         return NULL;
     }
+
+    hal.util->prt("[OK] HMC5883L detected done");
+
     return sensor;
 }
 

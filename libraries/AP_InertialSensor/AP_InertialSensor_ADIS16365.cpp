@@ -61,7 +61,6 @@ AP_InertialSensor_ADIS16365::AP_InertialSensor_ADIS16365(AP_InertialSensor &imu)
  */
 AP_InertialSensor_Backend *AP_InertialSensor_ADIS16365::detect(AP_InertialSensor &_imu)
 {
-    hal.util->prt("ADIS: detect start...");
     AP_InertialSensor_ADIS16365 *sensor = new AP_InertialSensor_ADIS16365(_imu);
     if (sensor == NULL) {
         hal.util->prt("sensor NULL");
@@ -75,6 +74,8 @@ AP_InertialSensor_Backend *AP_InertialSensor_ADIS16365::detect(AP_InertialSensor
 #if ADIS16365_DEBUG
     hal.util->prt("[%d us]: detect done", hal.scheduler->micros());
 #endif
+
+    hal.util->prt("[OK] ADIS16365 detected done");
 
     return sensor;
 }

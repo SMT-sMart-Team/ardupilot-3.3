@@ -195,6 +195,8 @@ AP_Baro_MS58XX::AP_Baro_MS58XX(AP_Baro &baro, AP_SerialBus *serial, bool use_tim
         hal.scheduler->panic(PSTR("Bad CRC on MS5803"));
     }
 
+    hal.util->prt("[OK] MS5803 detected done");
+
     // Send a command to read Temp first
     _serial->write(CMD_CONVERT_D2_OSR4096);
     _last_timer = hal.scheduler->micros();
