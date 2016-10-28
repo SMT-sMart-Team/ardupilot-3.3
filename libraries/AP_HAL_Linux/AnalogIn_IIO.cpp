@@ -6,7 +6,7 @@
 
 // add by ZhaoYJ @2016-05-12
 #ifdef SMT_NEW_SENSORS_BOARD
-// #define IIO_DEBUG
+#define IIO_DEBUG
 float AIScales[IIO_ANALOG_IN_COUNT] = {
     0.01538090,
     0.00131836,
@@ -218,15 +218,16 @@ float AnalogIn_IIO::board_voltage(void)
 
     _board_volt_source->set_pin(BOARD_VOLT_PIN);
 #ifdef IIO_DEBUG
-// #define DUMP_AIS
+#define DUMP_AIS
 #ifdef DUMP_AIS
     static uint16_t cnt = 0;
     char sbuf[10];
     char buf[100];
     int fd;
     float val = 0.0;
-    if(!(cnt%100))
+    if(!(cnt%5))
     {
+        printf("=======================================================================================\n");
         for (int i=0; i < IIO_ANALOG_IN_COUNT; i++) {
             memset(sbuf, 0, sizeof(sbuf));
             // Construct the path by appending strings
@@ -236,7 +237,8 @@ float AnalogIn_IIO::board_voltage(void)
             fd = open(buf, O_RDONLY | O_NONBLOCK);
             pread(fd, sbuf, sizeof(sbuf)-1, 0);
             val = atoi(sbuf) * AIScales[i];
-            printf(" AI: %d, scale: %f, latest: %f\n", i, AIScales[i], val);
+            printf(" AI[%d], scale: %f, ADC value: %d, actual value: %f\n", i, AIScales[i], atoi(sbuf), val);
+            close(fd);
         }
     }
     cnt++;

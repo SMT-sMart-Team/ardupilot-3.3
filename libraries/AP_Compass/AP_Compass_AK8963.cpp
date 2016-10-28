@@ -83,6 +83,15 @@
 #define HAL_COMPASS_AK8963_I2C_ADDR 0xC
 #endif
 
+#define DEBUG_AK8963
+#ifdef DEBUG_AK8963
+#define debug(format,...) do { \
+                                hal.util->prt(format, ##__VA_ARGS__);\
+                        }while(0)
+#else
+#define debug(format,...) 
+#endif
+
 extern const AP_HAL::HAL& hal;
 
 AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass, AP_AK8963_SerialBus *bus) :
@@ -101,10 +110,12 @@ AP_Compass_Backend *AP_Compass_AK8963::detect_mpu9250(Compass &compass)
                                                   new AP_AK8963_SerialBus_MPU9250());
 
     if (sensor == nullptr) {
+        debug("ak8963: sensor null");
         return nullptr;
     }
 
     if (!sensor->init()) {
+        debug("ak8963: sensor init error");
         delete sensor;
         return nullptr;
     }
@@ -176,6 +187,7 @@ bool AP_Compass_AK8963::init()
     /* register the compass instance in the frontend */
     _compass_instance = register_compass();
     set_dev_id(_compass_instance, _bus->get_dev_id());
+    debug("ak8963 devid: %d", _bus->get_dev_id());
     hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_Compass_AK8963::_update, void));
 
     _bus_sem->give();
@@ -276,6 +288,7 @@ void AP_Compass_AK8963::_update()
         _accum_count = 5;
     }
 
+
     _last_update_timestamp = hal.scheduler->micros();
 fail:
     _sem_give();
@@ -290,6 +303,7 @@ bool AP_Compass_AK8963::_check_id()
         _bus->register_read(AK8963_WIA, &deviceid, 0x01); /* Read AK8963's id */
 
         if (deviceid == AK8963_Device_ID) {
+            debug("ak8963: prot_id 0x%x", deviceid);
             return true;
         }
     }
