@@ -8,11 +8,11 @@
 #ifdef SMT_NEW_SENSORS_BOARD
 // #define IIO_DEBUG
 float AIScales[IIO_ANALOG_IN_COUNT] = {
+    0.01538090,
     0.00131836,
     0.00131836,
-    0.00131836,
-    0.00131836,
-    0.00131836,
+    0.00087891,
+    0.00087891,
     0.00629883,
     0.00087891,
     0.00087891
@@ -146,7 +146,8 @@ float AnalogSource_IIO::read_latest()
 #endif
 
 #ifdef IIO_DEBUG
-    printf(" pin: %d, orig: %d, scale: %f, latest: %f\n", _pin, atoi(sbuf), AIScales[_pin], _latest);
+
+    // printf(" pin: %d, orig: %d, scale: %f, latest: %f\n", _pin, atoi(sbuf), AIScales[_pin], _latest);
 #endif
     _sum_value += _latest;
     _sum_count++;
@@ -217,7 +218,30 @@ float AnalogIn_IIO::board_voltage(void)
 
     _board_volt_source->set_pin(BOARD_VOLT_PIN);
 #ifdef IIO_DEBUG
-    printf(" board volt: %f\n", _board_volt_source->voltage_average());
+// #define DUMP_AIS
+#ifdef DUMP_AIS
+    static uint16_t cnt = 0;
+    char sbuf[10];
+    char buf[100];
+    int fd;
+    float val = 0.0;
+    if(!(cnt%100))
+    {
+        for (int i=0; i < IIO_ANALOG_IN_COUNT; i++) {
+            memset(sbuf, 0, sizeof(sbuf));
+            // Construct the path by appending strings
+            strncpy(buf, IIO_ANALOG_IN_DIR, sizeof(buf));
+            strncat(buf, AnalogSource_IIO::analog_sources[i], sizeof(buf) - strlen(buf) - 1);
+
+            fd = open(buf, O_RDONLY | O_NONBLOCK);
+            pread(fd, sbuf, sizeof(sbuf)-1, 0);
+            val = atoi(sbuf) * AIScales[i];
+            printf(" AI: %d, scale: %f, latest: %f\n", i, AIScales[i], val);
+        }
+    }
+    cnt++;
+#endif
+    // printf(" board volt: %f\n", _board_volt_source->voltage_average());
 #endif
 
     return _board_volt_source->voltage_average();
