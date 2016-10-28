@@ -83,6 +83,15 @@
 #define HAL_COMPASS_AK8963_I2C_ADDR 0xC
 #endif
 
+#define DEBUG_AK8963
+#ifdef DEBUG_AK8963
+#define debug(format,...) do { \
+                                hal.util->prt(format, ##__VA_ARGS__);\
+                        }while(0)
+#else
+#define debug(format,...) 
+#endif
+
 extern const AP_HAL::HAL& hal;
 
 AP_Compass_AK8963::AP_Compass_AK8963(Compass &compass, AP_AK8963_SerialBus *bus) :
@@ -101,13 +110,17 @@ AP_Compass_Backend *AP_Compass_AK8963::detect_mpu9250(Compass &compass)
                                                   new AP_AK8963_SerialBus_MPU9250());
 
     if (sensor == nullptr) {
+        debug("ak8963: sensor null");
         return nullptr;
     }
 
     if (!sensor->init()) {
+        debug("ak8963: sensor init error");
         delete sensor;
         return nullptr;
     }
+
+    hal.util->prt("[OK] AK8963 detected done");
 
     return sensor;
 }
