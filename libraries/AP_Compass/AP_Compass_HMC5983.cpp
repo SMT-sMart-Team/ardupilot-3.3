@@ -478,8 +478,8 @@ void AP_Compass_HMC5983::read()
 	_mag_x_accum = _mag_y_accum = _mag_z_accum = 0;
 
     // rotate to the desired orientation
-    // HMC5983 no ratation needed
-    field.rotate(ROTATION_YAW_90);
+    // 
+    field.rotate(ROTATION_YAW_270);
 
     publish_field(field, _compass_instance);
     _retry_time = 0;
