@@ -9,6 +9,8 @@
 
 // tuning - updates parameters based on the ch6 tuning knob's position
 //  should be called at 3.3hz
+//  AB ZhaoYJ@2016-11-03 for using rc_7 to tuning instead of rc_6(ch6)
+#define TUNING_CH7
 void Copter::tuning() {
 
     // exit immediately if not tuning of when radio failsafe is invoked so tuning values are not set to zero
@@ -16,10 +18,17 @@ void Copter::tuning() {
         return;
     }
 
+#ifdef TUNING_CH7
+    float tuning_value = (float)g.rc_7.control_in / 1000.0f;
+    g.rc_7.set_range(g.radio_tuning_low,g.radio_tuning_high);
+
+    Log_Write_Parameter_Tuning(g.radio_tuning, tuning_value, g.rc_7.control_in, g.radio_tuning_low, g.radio_tuning_high);
+#else
     float tuning_value = (float)g.rc_6.control_in / 1000.0f;
     g.rc_6.set_range(g.radio_tuning_low,g.radio_tuning_high);
 
     Log_Write_Parameter_Tuning(g.radio_tuning, tuning_value, g.rc_6.control_in, g.radio_tuning_low, g.radio_tuning_high);
+#endif
 
     switch(g.radio_tuning) {
 
@@ -93,7 +102,11 @@ void Copter::tuning() {
 
     case TUNING_WP_SPEED:
         // set waypoint navigation horizontal speed to 0 ~ 1000 cm/s
+#ifdef TUNING_CH7
+        wp_nav.set_speed_xy(g.rc_7.control_in);
+#else
         wp_nav.set_speed_xy(g.rc_6.control_in);
+#endif
         break;
 
     // Acro roll pitch gain
@@ -108,7 +121,11 @@ void Copter::tuning() {
 
 #if FRAME_CONFIG == HELI_FRAME
     case TUNING_HELI_EXTERNAL_GYRO:
+#ifdef TUNING_CH7
+        motors.ext_gyro_gain(g.rc_7.control_in);
+#else
         motors.ext_gyro_gain(g.rc_6.control_in);
+#endif
         break;
 
     case TUNING_RATE_PITCH_FF:
@@ -126,12 +143,20 @@ void Copter::tuning() {
 
     case TUNING_DECLINATION:
         // set declination to +-20degrees
+#ifdef TUNING_CH7
+        compass.set_declination(ToRad((2.0f * g.rc_7.control_in - g.radio_tuning_high)/100.0f), false);     // 2nd parameter is false because we do not want to save to eeprom because this would have a performance impact
+#else
         compass.set_declination(ToRad((2.0f * g.rc_6.control_in - g.radio_tuning_high)/100.0f), false);     // 2nd parameter is false because we do not want to save to eeprom because this would have a performance impact
+#endif
         break;
 
     case TUNING_CIRCLE_RATE:
         // set circle rate up to approximately 45 deg/sec in either direction
+#ifdef TUNING_CH7
+        circle_nav.set_rate((float)g.rc_7.control_in/25.0f-20.0f);
+#else
         circle_nav.set_rate((float)g.rc_6.control_in/25.0f-20.0f);
+#endif
         break;
 
     case TUNING_SONAR_GAIN:
@@ -159,7 +184,11 @@ void Copter::tuning() {
 
     case TUNING_RC_FEEL_RP:
         // roll-pitch input smoothing
+#ifdef TUNING_CH7
+        g.rc_feel_rp = g.rc_7.control_in / 10;
+#else
         g.rc_feel_rp = g.rc_6.control_in / 10;
+#endif
         break;
 
     case TUNING_RATE_PITCH_KP:

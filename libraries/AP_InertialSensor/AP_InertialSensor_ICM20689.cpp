@@ -24,8 +24,8 @@
 
 extern const AP_HAL::HAL& hal;
 
-// ICM20689 accelerometer scaling for 16g range: 2^15LSB/16g = 2048LSB/g, 1g = 9.8/2048 
-#define ICM20689_ACCEL_SCALE_1G    (GRAVITY_MSS / 2048.0f)
+
+
 
 #define MPUREG_XG_OFFS_TC                               0x00
 #define MPUREG_YG_OFFS_TC                               0x01
@@ -70,6 +70,7 @@ extern const AP_HAL::HAL& hal;
 #       define BITS_GYRO_YGYRO_SELFTEST                 0x40
 #       define BITS_GYRO_XGYRO_SELFTEST                 0x80
 #define MPUREG_ACCEL_CONFIG                             0x1C
+#define MPUREG_ACCEL_CONFIG2                            0x1D
 #define MPUREG_MOT_THR                                  0x1F    // detection threshold for Motion interrupt generation.  Motion is detected when the absolute value of any of the accelerometer measurements exceeds this
 #define MPUREG_MOT_DUR                                  0x20    // duration counter threshold for Motion interrupt generation. The duration counter ticks at 1 kHz, therefore MOT_DUR has a unit of 1 LSB = 1 ms
 #define MPUREG_ZRMOT_THR                                0x21    // detection threshold for Zero Motion interrupt generation.
@@ -151,11 +152,34 @@ extern const AP_HAL::HAL& hal;
 #define BITS_DLPF_CFG_2100HZ_NOLPF              0x07
 #define BITS_DLPF_CFG_MASK                              0x07
 
+// AB ZhaoYJ@2016-11-01 for debugging LPF
+// according to GYRO (also for ACCEL)
+// #define GYRO_SCALE_250DPS
+// #define EN_LPF
+#ifdef EN_LPF
+// #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_20HZ
+#define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_42HZ                              
+// #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_98HZ                              
+#endif
+
+#define ACCEL_SCALE_4G
+#ifdef ACCEL_SCALE_4G
+#define ICM20689_ACCEL_SCALE_1G    (GRAVITY_MSS / 8192.0f) // 4g
+#else
+// ICM20689 accelerometer scaling for 16g range: 2^15LSB/16g = 2048LSB/g, 1g = 9.8/2048 
+#define ICM20689_ACCEL_SCALE_1G    (GRAVITY_MSS / 2048.0f) // 16g
+#endif
+
 /*
  *  PS-MPU-9250A-00.pdf, page 8, lists LSB sensitivity of
  *  gyro as 16.4 LSB/DPS at scale factor of +/- 2000dps (FS_SEL==3)
  */
+
+#ifdef GYRO_SCALE_250DPS
+#define GYRO_SCALE (0.0174532f / 131.0f) // radis to degree per LSB
+#else
 #define GYRO_SCALE (0.0174532f / 16.4f) // radis to degree per LSB
+#endif
 
 /*
  *  PS-MPU-9250A-00.pdf, page 9, lists LSB sensitivity of
@@ -480,15 +504,32 @@ bool AP_InertialSensor_ICM20689::_hardware_init(void)
 
     // used no filter of 256Hz on the sensor, then filter using
     // the 2-pole software filter
+#ifdef  EN_LPF
+#define ACCEL_LPF_EN 0x8
+#define ACCEL_AVERAGE_SAMPLE 0x30 // 32 samples
+    _register_write(MPUREG_CONFIG, BITS_DLPF_CFG_HZ);
+    _register_write(MPUREG_ACCEL_CONFIG2, (ACCEL_LPF_EN | BITS_DLPF_CFG_HZ));
+    // _register_write(MPUREG_ACCEL_CONFIG2, (ACCEL_AVERAGE_SAMPLE | ACCEL_LPF_EN | BITS_DLPF_CFG_HZ));
+#else
     _register_write(MPUREG_CONFIG, BITS_DLPF_CFG_256HZ_NOLPF2);
+#endif
 
     // set sample rate to 1kHz, and use the 2 pole filter to give the
     // desired rate
     _register_write(MPUREG_SMPLRT_DIV, MPUREG_SMPLRT_1000HZ);
+#ifdef GYRO_SCALE_250DPS
+    _register_write(MPUREG_GYRO_CONFIG, BITS_GYRO_FS_250DPS);  // Gyro scale 250º/s
+#else
     _register_write(MPUREG_GYRO_CONFIG, BITS_GYRO_FS_2000DPS);  // Gyro scale 2000º/s
+#endif
 
+#ifdef ACCEL_SCALE_4G
+    // RM-MPU-9250A-00.pdf, pg. 15, select accel full scale 4g
+    _register_write(MPUREG_ACCEL_CONFIG,1<<3);
+#else
     // RM-MPU-9250A-00.pdf, pg. 15, select accel full scale 16g
     _register_write(MPUREG_ACCEL_CONFIG,3<<3);
+#endif
 
     // configure interrupt to fire when new data arrives
     _register_write(MPUREG_INT_ENABLE, BIT_RAW_RDY_EN);
