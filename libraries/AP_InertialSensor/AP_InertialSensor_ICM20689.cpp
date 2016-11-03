@@ -154,7 +154,7 @@ extern const AP_HAL::HAL& hal;
 
 // AB ZhaoYJ@2016-11-01 for debugging LPF
 // according to GYRO (also for ACCEL)
-// #define GYRO_SCALE_250DPS
+#define GYRO_SCALE_250DPS
 // #define EN_LPF
 #ifdef EN_LPF
 // #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_20HZ
