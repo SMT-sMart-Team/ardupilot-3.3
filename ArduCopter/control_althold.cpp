@@ -22,8 +22,10 @@ bool Copter::althold_init(bool ignore_checks)
     pos_control.set_accel_z(g.pilot_accel_z);
 
     // initialise position and desired velocity
-    pos_control.set_alt_target(inertial_nav.get_altitude());
-    pos_control.set_desired_velocity_z(inertial_nav.get_velocity_z());
+    if (!pos_control.is_active_z()) {
+        pos_control.set_alt_target_to_current_alt();
+        pos_control.set_desired_velocity_z(inertial_nav.get_velocity_z());
+    }
 
     // stop takeoff if running
     takeoff_stop();
@@ -38,6 +40,9 @@ void Copter::althold_run()
     AltHoldModeState althold_state;
     float takeoff_climb_rate = 0.0f;
 
+    // initialize vertical speeds and acceleration
+    pos_control.set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    pos_control.set_accel_z(g.pilot_accel_z);
     // apply SIMPLE mode transform to pilot inputs
     update_simple_mode();
 
