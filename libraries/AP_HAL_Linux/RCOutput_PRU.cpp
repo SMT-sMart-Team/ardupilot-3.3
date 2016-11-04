@@ -21,6 +21,9 @@ using namespace Linux;
 
 #define PWM_CHAN_COUNT 12
 
+// AB ZhaoYJ@2016-10-31 for debugging pwm_out
+#define DUMP_CH_EN 0
+
 static const uint8_t chan_pru_map[]= {10,8,11,9,7,6,5,4,3,2,1,0};                //chan_pru_map[CHANNEL_NUM] = PRU_REG_R30/31_NUM;
 static const uint8_t pru_chan_map[]= {11,10,9,8,7,6,5,4,1,3,0,2};                //pru_chan_map[PRU_REG_R30/31_NUM] = CHANNEL_NUM;
 
@@ -40,6 +43,7 @@ void LinuxRCOutput_PRU::init(void* machtnicht)
     {
         hal.scheduler->panic("Failed to mmap PRU1 SHM\n");
     }
+    memset((void *)sharedMem_cmd, 0x0, 0x1000);
     close(mem_fd);
 
     // all outputs default to 50Hz, the top level vehicle code
@@ -134,6 +138,14 @@ void LinuxRCOutput_PRU::set_magic_sync(void)
 // will be invoked 50Hz, meanwhile PRU will check alive 1Hz
 void LinuxRCOutput_PRU::rcout_keep_alive(void)
 {
+#if DUMP_CH_EN 
+    static uint32_t cnt  = 0;
+    if(!(cnt%40))
+    {
+        printf("CH_EN: 0x%04x\n", sharedMem_cmd->enmask);
+    }
+    cnt++;
+#endif
 #ifdef KEEP_ALIVE_WITH_PRU
     static unsigned int time_out = 0;
     static unsigned int wait_pru_time = 0;

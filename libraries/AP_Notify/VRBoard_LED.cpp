@@ -36,20 +36,20 @@ bool VRBoard_LED::hw_init(void){
     // setup the main LEDs as outputs
     hal.gpio->pinMode(HAL_GPIO_A_LED_PIN, HAL_GPIO_OUTPUT);
     hal.gpio->pinMode(HAL_GPIO_B_LED_PIN, HAL_GPIO_OUTPUT);
-    hal.gpio->pinMode(HAL_GPIO_C_LED_PIN, HAL_GPIO_OUTPUT);
+    // hal.gpio->pinMode(HAL_GPIO_C_LED_PIN, HAL_GPIO_OUTPUT);
 
     // turn all lights off
     hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_OFF);
     hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
-    hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
+    // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
 	return true;
 }
 bool VRBoard_LED::hw_set_rgb(uint8_t r, uint8_t g, uint8_t b){
 
     if(r > 0){
-    	hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
+    	// hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
     } else {
-    	hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
+    	// hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
     }
     if (g > 0) {
     	hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_ON);

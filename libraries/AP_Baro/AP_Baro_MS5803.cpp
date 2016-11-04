@@ -37,6 +37,38 @@ extern const AP_HAL::HAL& hal;
 #define CMD_CONVERT_D1_OSR4096 0x48   // Maximum resolution (oversampling)
 #define CMD_CONVERT_D2_OSR4096 0x58   // Maximum resolution (oversampling)
 
+// AB ZhaoYJ@2016-10-30 for merge AC3.4
+/* write to one of these addresses to start pressure conversion */
+#define ADDR_CMD_CONVERT_D1_OSR256  0x40
+#define ADDR_CMD_CONVERT_D1_OSR512  0x42
+#define ADDR_CMD_CONVERT_D1_OSR1024 0x44
+#define ADDR_CMD_CONVERT_D1_OSR2048 0x46
+#define ADDR_CMD_CONVERT_D1_OSR4096 0x48
+
+/* write to one of these addresses to start temperature conversion */
+#define ADDR_CMD_CONVERT_D2_OSR256  0x50
+#define ADDR_CMD_CONVERT_D2_OSR512  0x52
+#define ADDR_CMD_CONVERT_D2_OSR1024 0x54
+#define ADDR_CMD_CONVERT_D2_OSR2048 0x56
+#define ADDR_CMD_CONVERT_D2_OSR4096 0x58
+
+#define USEC_PER_MSEC 1000ULL
+
+#define CONVERSION_TIME_OSR_4096   9.04 * USEC_PER_MSEC
+#define CONVERSION_TIME_OSR_2048   4.54 * USEC_PER_MSEC
+#define CONVERSION_TIME_OSR_1024   2.28 * USEC_PER_MSEC
+#define CONVERSION_TIME_OSR_0512   1.17 * USEC_PER_MSEC
+#define CONVERSION_TIME_OSR_0256   0.60 * USEC_PER_MSEC
+
+/*
+  use an OSR of 1024 to reduce the self-heating effect of the
+sensor. Information from MS tells us that some individual sensors
+are quite sensitive to this effect and that reducing the OSR can
+make a big difference
+*/
+static const uint8_t ADDR_CMD_CONVERT_PRESSURE = ADDR_CMD_CONVERT_D1_OSR1024;
+static const uint8_t ADDR_CMD_CONVERT_TEMPERATURE = ADDR_CMD_CONVERT_D2_OSR1024;
+static const uint32_t CONVERSION_TIME = CONVERSION_TIME_OSR_1024;
 
 
 #define MS5803_TEMP_SCALE                                       (float)(100.0)
@@ -198,7 +230,7 @@ AP_Baro_MS58XX::AP_Baro_MS58XX(AP_Baro &baro, AP_SerialBus *serial, bool use_tim
     hal.util->prt("[OK] MS5803 detected done");
 
     // Send a command to read Temp first
-    _serial->write(CMD_CONVERT_D2_OSR4096);
+    _serial->write(ADDR_CMD_CONVERT_TEMPERATURE);
     _last_timer = hal.scheduler->micros();
     _state = 0;
 
@@ -270,7 +302,7 @@ bool AP_Baro_MS58XX::_check_crc(void)
 void AP_Baro_MS58XX::_timer(void)
 {
     // Throttle read rate to 100hz maximum.
-    if (hal.scheduler->micros() - _last_timer < 10000) {
+    if (hal.scheduler->micros() - _last_timer < CONVERSION_TIME) {
         return;
     }
 
@@ -293,7 +325,7 @@ void AP_Baro_MS58XX::_timer(void)
             }
         }
         _state++;
-        _serial->write(CMD_CONVERT_D1_OSR4096);      // Command to read pressure
+        _serial->write(ADDR_CMD_CONVERT_PRESSURE);      // Command to read pressure
     } else {
         uint32_t d1 = _serial->read_24bits(0);;
         if (d1 != 0) {
@@ -313,10 +345,10 @@ void AP_Baro_MS58XX::_timer(void)
         }
         _state++;
         if (_state == 5) {
-            _serial->write(CMD_CONVERT_D2_OSR4096); // Command to read temperature
+            _serial->write(ADDR_CMD_CONVERT_TEMPERATURE); // Command to read temperature
             _state = 0;
         } else {
-            _serial->write(CMD_CONVERT_D1_OSR4096); // Command to read pressure
+            _serial->write(ADDR_CMD_CONVERT_PRESSURE); // Command to read pressure
         }
     }
 

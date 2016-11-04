@@ -21,17 +21,15 @@ extern const AP_HAL::HAL& hal;
 
 bool AP_BoardLED::init(void)
 {
-#if 0
     // setup the main LEDs as outputs
     hal.gpio->pinMode(HAL_GPIO_A_LED_PIN, HAL_GPIO_OUTPUT);
     hal.gpio->pinMode(HAL_GPIO_B_LED_PIN, HAL_GPIO_OUTPUT);
-    hal.gpio->pinMode(HAL_GPIO_C_LED_PIN, HAL_GPIO_OUTPUT);
+    // hal.gpio->pinMode(HAL_GPIO_C_LED_PIN, HAL_GPIO_OUTPUT);
 
     // turn all lights off
     hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_OFF);
     hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
-    hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
-#endif
+    // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
     return true;
 }
 
@@ -40,7 +38,6 @@ bool AP_BoardLED::init(void)
  */
 void AP_BoardLED::update(void)
 {
-#if 0
     _counter++;
 
     // we never want to update LEDs at a higher than 16Hz rate
@@ -56,10 +53,10 @@ void AP_BoardLED::update(void)
         // blink LEDs A and C at 8Hz (full cycle) during initialisation
         if (counter2 & 1) {
             hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_ON);
-            hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
+            // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
         } else {
             hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_OFF);
-            hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
+            // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
         }
         return;
 	}
@@ -72,7 +69,7 @@ void AP_BoardLED::update(void)
         }
         switch(save_trim_counter) {
             case 0:
-                hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
+                // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
                 hal.gpio->write(HAL_GPIO_A_LED_PIN, HAL_GPIO_LED_ON);
                 break;
 
@@ -83,7 +80,7 @@ void AP_BoardLED::update(void)
 
             case 2:
                 hal.gpio->write(HAL_GPIO_B_LED_PIN, HAL_GPIO_LED_OFF);
-                hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
+                // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
                 break;
 
             default:
@@ -149,27 +146,26 @@ void AP_BoardLED::update(void)
     switch (AP_Notify::flags.gps_status) {
         case 0:
             // no GPS attached
-            hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
+            // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_OFF);
             break;
 
         case 1:
             // GPS attached but no lock, blink at 4Hz
             if ((counter2 & 0x3) == 0) {
-                hal.gpio->toggle(HAL_GPIO_C_LED_PIN);
+                // hal.gpio->toggle(HAL_GPIO_C_LED_PIN);
             }
             break;
 
         case 2:
             // GPS attached but 2D lock, blink more slowly (around 2Hz)
             if ((counter2 & 0x7) == 0) {
-                hal.gpio->toggle(HAL_GPIO_C_LED_PIN);
+                // hal.gpio->toggle(HAL_GPIO_C_LED_PIN);
             }
             break;
 
         default:
             // solid blue on gps lock
-            hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
+            // hal.gpio->write(HAL_GPIO_C_LED_PIN, HAL_GPIO_LED_ON);
             break;        
     }
-#endif
 }
