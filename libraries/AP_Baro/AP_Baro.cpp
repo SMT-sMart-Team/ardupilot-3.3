@@ -161,13 +161,6 @@ void AP_Baro::update_calibration()
         float last_temperature = sensors[i].ground_temperature;
         sensors[i].ground_temperature.set(get_calibration_temperature(i));
 
-        // don't notify the GCS too rapidly or we flood the link
-        uint32_t now = AP_HAL::millis();
-        if (now - _last_notify_ms > 10000) {
-            sensors[i].ground_pressure.notify();
-            sensors[i].ground_temperature.notify();
-            _last_notify_ms = now;
-        }
         if (fabsf(last_temperature - sensors[i].ground_temperature) > 3) {
             // reset _EAS2TAS to force it to recalculate. This happens
             // when a digital airspeed sensor comes online

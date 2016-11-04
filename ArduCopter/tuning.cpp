@@ -22,7 +22,7 @@ void Copter::tuning() {
 
     // set tuning range and then get new value
     g.rc_7.set_range(g.radio_tuning_low,g.radio_tuning_high);
-    float tuning_value = (float)g.rc_7.get_control_in() / 1000.0f;
+    float tuning_value = (float)g.rc_7.control_in / 1000.0f;
     // Tuning Value should never be outside the bounds of the specified low and high value
     tuning_value = constrain_float(tuning_value, g.radio_tuning_low/1000.0f, g.radio_tuning_high/1000.0f);
 
@@ -31,7 +31,7 @@ void Copter::tuning() {
 #else
     // set tuning range and then get new value
     g.rc_6.set_range(g.radio_tuning_low,g.radio_tuning_high);
-    float tuning_value = (float)g.rc_6.get_control_in() / 1000.0f;
+    float tuning_value = (float)g.rc_6.control_in / 1000.0f;
     // Tuning Value should never be outside the bounds of the specified low and high value
     tuning_value = constrain_float(tuning_value, g.radio_tuning_low/1000.0f, g.radio_tuning_high/1000.0f);
 
