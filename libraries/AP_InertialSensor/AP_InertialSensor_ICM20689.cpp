@@ -324,7 +324,7 @@ bool AP_InertialSensor_ICM20689::_init_sensor(void)
     _gyro_instance = _imu.register_gyro();
     _accel_instance = _imu.register_accel();
 
-    _product_id = 0; // ICM20689 has no prod_id
+    _product_id = 689; // ICM20689
 
     // start the timer process to read samples
     hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ICM20689::_poll_data, void));

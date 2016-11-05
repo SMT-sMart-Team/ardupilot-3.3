@@ -40,7 +40,8 @@ AP_InertialSensor_ADIS16365::AP_InertialSensor_ADIS16365(AP_InertialSensor &imu)
     _have_sample_available(false),
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
 #ifdef SMT_NEW_BOARD
-    _default_rotation(ROTATION_NONE)
+    _default_rotation(ROTATION_YAW_90)
+    // _default_rotation(ROTATION_NONE)
 #else
     _default_rotation(ROTATION_ROLL_180_YAW_270)
 #endif
@@ -118,7 +119,7 @@ bool AP_InertialSensor_ADIS16365::initialize_driver_state() {
         }
     }
 
-    hal.util->prt("ADIS16365: PROD_ID %d\n", id);
+    // hal.util->prt("ADIS16365: PROD_ID %d", id);
     
     // initially run the bus at low speed
     spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
@@ -177,7 +178,7 @@ bool AP_InertialSensor_ADIS16365::_init_sensor(void)
     _gyro_instance = _imu.register_gyro();
     _accel_instance = _imu.register_accel();
 
-    _product_id = 0;
+    _product_id = 365; // 16365
 
     // start the timer process to read samples
     hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_InertialSensor_ADIS16365::_poll_data, void));
@@ -207,7 +208,7 @@ bool AP_InertialSensor_ADIS16365::update( void )
 
     _have_sample_available = false;
 
-    // _read_data_transaction();
+    _read_data_transaction();
 
     accel.rotate(_default_rotation);
     gyro.rotate(_default_rotation);
@@ -235,7 +236,7 @@ bool AP_InertialSensor_ADIS16365::update( void )
  */
 void AP_InertialSensor_ADIS16365::_poll_data(void)
 {
-#if 1
+#if 0
     if (!_spi_sem->take_nonblocking()) {
         /*
           the semaphore being busy is an expected condition when the
@@ -256,7 +257,7 @@ void AP_InertialSensor_ADIS16365::_poll_data(void)
 #define SIGNED_FLOAT(value, mask_bit)  \
     ((value & (1 << (mask_bit - 1)))?( -1.0 * (~(value - 1) & (0xFFFF >> (16 - mask_bit)))) : (1.0 * (value & (0xFFFF >> (16 - mask_bit)))))
 #define SUPPLY_SCALE 2.418e-3 // V
-#define GYRO_SCALE   0.05 // deg/sec
+#define GYRO_SCALE  0.000872665 //  3.1415926/180 * 0.05 // rad/sec
 // #define ACCEL_SCALE  3.333e-3 // mg
 #define ACCEL_SCALE  0.0326856 // 3.333e-3*9.80665 // mg
 /*
@@ -338,6 +339,8 @@ void AP_InertialSensor_ADIS16365::_read_data_transaction()
 
     // update the shared buffer
     uint8_t idx = _shared_data_idx ^ 1;
+    _accel_filtered.x *= -1.0;
+    _gyro_filtered.x *= -1.0;
     _shared_data[idx]._accel_filtered = _accel_filtered;
     _shared_data[idx]._gyro_filtered = _gyro_filtered;
     _shared_data_idx = idx;
@@ -503,7 +506,7 @@ int16_t AP_InertialSensor_ADIS16365::_check_status(AP_HAL::SPIDeviceDriver *spi)
     return _register_read_16(spi, ADIS16400_DIAG_STAT);
 }
 
-#define ADIS_BURST 1
+#define ADIS_BURST 0
 #if ADIS_BURST
 #define BURST_TX_MSG_LEN 24 // 11 16bits = 22 bytes
 #else

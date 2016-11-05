@@ -1319,7 +1319,7 @@ check_sample:
         while (!gyro_available || !accel_available) {
             for (uint8_t i=0; i<_backend_count; i++) {
 #ifdef SMT_INS_ADIS16365
-                // _backends[i]->update();
+                _backends[i]->update();
 #endif
                 gyro_available |= _backends[i]->gyro_sample_available();
                 accel_available |= _backends[i]->accel_sample_available();
