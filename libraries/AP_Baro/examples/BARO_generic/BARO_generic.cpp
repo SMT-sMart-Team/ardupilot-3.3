@@ -64,21 +64,24 @@ void setup()
 void loop()
 {
     // run accumulate() at 50Hz and update() at 10Hz
-    if((hal.scheduler->micros() - timer) > 20*1000UL) {
+    uint32_t read_time = hal.scheduler->micros() - timer;
+    if((read_time) > 20*1000UL) {
         timer = hal.scheduler->micros();
-        barometer.accumulate();
+        // barometer.accumulate();
         if (counter++ < 5) {
             return;
         }
         counter = 0;
         barometer.update();
-        uint32_t read_time = hal.scheduler->micros() - timer;
         float alt = barometer.get_altitude();
+#if 0
         if (!barometer.healthy()) {
             hal.console->println("not healthy");
             return;
         }
-        hal.console->print("Pressure:");
+        hal.console->print("GRD Pressure:");
+        hal.console->print(barometer.get_ground_pressure());
+        hal.console->print(" Pressure:");
         hal.console->print(barometer.get_pressure());
         hal.console->print(" Temperature:");
         hal.console->print(barometer.get_temperature());
@@ -88,6 +91,7 @@ void loop()
                             barometer.get_climb_rate(),
                             (unsigned)read_time);
         hal.console->println();
+#endif
     }
 }
 

@@ -72,6 +72,8 @@ private:
 
     bool _use_timer;
 
+    // AP_HAL::Semaphore *_sem;
+
 protected:
     // Internal calibration registers
     uint16_t                 _C1,_C2,_C3,_C4,_C5,_C6;

@@ -23,6 +23,14 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AP_Baro.h"
 
+#define DUMP_D1 0
+#if DUMP_D1
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+
+#define DEBUG_FLOW 0
+
 extern const AP_HAL::HAL& hal;
 
 #define CMD_MS5803_RESET 0x1E
@@ -89,6 +97,7 @@ AP_SerialBus_SPI_MS5803::AP_SerialBus_SPI_MS5803(enum AP_HAL::SPIDevice device, 
 
 void AP_SerialBus_SPI_MS5803::init()
 {
+
     _spi = hal.spi->device(_device);
     if (_spi == NULL) {
         hal.scheduler->panic(PSTR("did not get valid SPI device driver!"));
@@ -205,6 +214,12 @@ AP_Baro_MS58XX::AP_Baro_MS58XX(AP_Baro &baro, AP_SerialBus *serial, bool use_tim
     _D1(0.0f),
     _D2(0.0f)
 {
+    // // AB ZhaoYJ@2016-11-06 for adding sem to avoid _timer start before update
+    // _sem = hal.util->new_semaphore();
+    // if (_sem == NULL) {
+    //     hal.scheduler->panic(PSTR("AP_Baro_MS5803: failed to create semaphore!"));
+    // }
+
     _instance = _frontend.register_sensor();
     _serial->init();
     if (!_serial->sem_take_blocking()){
@@ -299,10 +314,25 @@ bool AP_Baro_MS58XX::_check_crc(void)
   We read one time Temperature (state=1) and then 4 times Pressure (states 2-5)
   temperature does not change so quickly...
 */
+#if DUMP_D1
+#define DUMP_LEN 0x4000
+static uint32_t dump_d1[DUMP_LEN];
+static uint32_t dump_cnt = 0;
+#endif
 void AP_Baro_MS58XX::_timer(void)
 {
+#if DEBUG_FLOW 
+    static uint16_t cnt = 0;
+    if((0 == (cnt%10000)) || (1 == (cnt%10000)))
+    {
+        hal.util->prt("[ %d us] timer %d", hal.scheduler->micros(), cnt);
+    }
+    cnt++;
+#endif
     // Throttle read rate to 100hz maximum.
-    if (hal.scheduler->micros() - _last_timer < CONVERSION_TIME) {
+    // if (hal.scheduler->micros() - _last_timer < CONVERSION_TIME) {
+    // Throttle read rate to 50hz maximum.
+    if (hal.scheduler->micros() - _last_timer < 20000) {
         return;
     }
 
@@ -329,10 +359,37 @@ void AP_Baro_MS58XX::_timer(void)
     } else {
         uint32_t d1 = _serial->read_24bits(0);;
         if (d1 != 0) {
+#if DUMP_D1
+            if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
+            {
+                hal.util->prt("[%d us]: MS5803 dumpcnt %d", hal.scheduler->micros(), dump_cnt);
+            }
+            if(dump_cnt < DUMP_LEN)
+                dump_d1[dump_cnt++] = d1;
+            else if(DUMP_LEN == dump_cnt)
+            {
+                FILE *fd = fopen("/root/test/dump_d1.log", "w");
+                if(fd)
+                {
+                    for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
+                    {
+                        fprintf(fd, "%d\n", dump_d1[ii]);
+                    }
+                    fclose(fd);
+                    hal.util->prt("[OK] dump log done");
+                    exit(1);
+                }
+                else
+                {
+                    hal.util->prt("[Err] failed to open dump log");
+                }
+            }
+#endif
             // occasional zero values have been seen on the PXF
             // board. These may be SPI errors, but safest to ignore
             _s_D1 += d1;
             _d1_count++;
+            // hal.util->prt("[%d us]: MS5803 timer dumpcnt-%d, _d1_count-%d", hal.scheduler->micros(), dump_cnt, _d1_count);
             if (_d1_count == 128) {
                 // we have summed 128 values. This only happens
                 // when we stop reading the barometer for a long time
@@ -358,6 +415,15 @@ void AP_Baro_MS58XX::_timer(void)
 
 void AP_Baro_MS58XX::update()
 {
+#if DEBUG_FLOW 
+    static uint16_t cnt = 0;
+    if((0 == (cnt%100)) || (1 == (cnt%100)))
+    {
+        hal.util->prt("[ %d us] MS5803 update %d", hal.scheduler->micros(), cnt);
+    }
+    cnt++;
+#endif
+
     if (!_use_timer) {
         // if we're not using the timer then accumulate one more time
         // to cope with the calibration loop and minimise lag

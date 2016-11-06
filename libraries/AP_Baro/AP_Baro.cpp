@@ -91,7 +91,9 @@ void AP_Baro::calibrate()
     // let the barometer settle for a full second after startup
     // the MS5611 reads quite a long way off for the first second,
     // leading to about 1m of error if we don't wait
-    for (uint8_t i = 0; i < 10; i++) {
+    // for (uint8_t i = 0; i < 10; i++) {
+    // hal.util->prt("[ %d us] Baro calib wait", hal.scheduler->micros());
+    for (uint8_t i = 0; i < 20; i++) {
         uint32_t tstart = hal.scheduler->millis();
         do {
             update();
@@ -106,6 +108,7 @@ void AP_Baro::calibrate()
 
     // now average over 5 values for the ground pressure and
     // temperature settings
+    // hal.util->prt("[ %d us] Baro calib start", hal.scheduler->micros());
     float sum_pressure[BARO_MAX_INSTANCES] = {0};
     float sum_temperature[BARO_MAX_INSTANCES] = {0};
     uint8_t count[BARO_MAX_INSTANCES] = {0};
@@ -319,8 +322,18 @@ void AP_Baro::init(void)
 /*
   call update on all drivers
  */
+#define DEBUG_FLOW 0 
 void AP_Baro::update(void)
 {
+#if DEBUG_FLOW 
+    static uint16_t cnt = 0;
+    if((0 == (cnt%100)) || (1 == (cnt%100)))
+    {
+        hal.util->prt("[ %d us] update %d", hal.scheduler->micros(), cnt);
+        hal.util->prt(" grd_press: %f press: %f, relalt %f", get_ground_pressure(), sensors[0].pressure, get_altitude_difference(get_ground_pressure(), sensors[0].pressure));
+    }
+    cnt++;
+#endif
     if (!_hil_mode) {
         for (uint8_t i=0; i<_num_drivers; i++) {
             drivers[i]->update();

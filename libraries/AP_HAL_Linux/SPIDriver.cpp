@@ -33,14 +33,14 @@ LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
     // LinuxSPIDeviceDriver(1, 0, AP_HAL::SPIDevice_LSM9DS0_G,  SPI_MODE_3, 8, BBB_P8_9,   10*MHZ,10*MHZ),
     #ifdef SMT_NEW_SENSORS_BOARD
 	// LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5803,     SPI_MODE_3, 8, BBB_P9_28,  10*MHZ,10*MHZ),
-	LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5803,     SPI_MODE_3, 8, BBB_P8_12,  1*MHZ,10*MHZ),
+	LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MS5803,     SPI_MODE_3, 8, BBB_P8_12,  1*MHZ,4*MHZ),
     #else
 	// LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU6000,    SPI_MODE_3, 8, BBB_P9_28,  500*1000, 20*MHZ),
 	#endif
     /* MPU9250 is restricted to 1MHz for non-data and interrupt registers */
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU9250,    SPI_MODE_3, 8, BBB_P9_23,  1*MHZ, 10*MHZ),
 #ifdef SMT_INS_ICM20689
-    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_ICM20689,    SPI_MODE_3, 8, BBB_P8_14,  1*MHZ, 6*MHZ),
+    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_ICM20689,    SPI_MODE_3, 8, BBB_P8_14,  1*MHZ, 4*MHZ),
 #endif
 #ifdef SMT_COMPASS_HMC5983
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_HMC5983,    SPI_MODE_3, 8, BBB_P8_16,  1*MHZ, 4*MHZ),
