@@ -300,7 +300,26 @@ bool AP_GPS_NMEA::_term_complete()
                     make_gps_time(_new_date, _new_time * 10);
                     state.last_gps_time_ms = hal.scheduler->millis();
                     // To-Do: add support for proper reporting of 2D and 3D fix
-                    state.status           = AP_GPS::GPS_OK_FIX_3D;
+                    if(_solution == 'A')
+                    {
+                        state.status = AP_GPS::GPS_OK_FIX_3D;
+                    }
+                    else if(_solution == 'D')
+                    {
+                        state.status = AP_GPS::GPS_OK_FIX_3D_DGPS;
+                    }
+                    else if(_solution == 'T')
+                    {
+                        state.status = AP_GPS::GPS_OK_FIX_3D_RTK_FLOAT;
+                    }
+                    else if(_solution == 'X')
+                    {
+                        state.status = AP_GPS::GPS_OK_FIX_3D_RTK_FIX;
+                    }
+                    else
+                    {
+                        hal.util->prt("[Error] GPS_NEMA: unknown gps status");
+                    }
                     fill_3d_velocity();
                     break;
                 case _GPS_SENTENCE_GPGGA:
@@ -383,6 +402,20 @@ bool AP_GPS_NMEA::_term_complete()
             break;
         case _GPS_SENTENCE_GPRMC + 9: // Date (GPRMC)
             _new_date = atol(_term);
+            break;
+            
+        // AB ZhaoYJ @2016-11-06 for rtklib float and fix
+        case _GPS_SENTENCE_GPRMC + 12: // solution
+            _solution = _term[0];
+#ifdef DEBUG_RTK
+            static uint16_t cnt = 0;
+            if(!(cnt%20))
+            {
+                hal.util->prt("rtk solution is %c\n", _solution);
+            }
+            cnt++;
+#endif
+
             break;
 
         // location
