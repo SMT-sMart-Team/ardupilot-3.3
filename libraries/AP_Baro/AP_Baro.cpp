@@ -93,7 +93,7 @@ void AP_Baro::calibrate()
     // leading to about 1m of error if we don't wait
     // for (uint8_t i = 0; i < 10; i++) {
     // hal.util->prt("[ %d us] Baro calib wait", hal.scheduler->micros());
-    for (uint8_t i = 0; i < 20; i++) {
+    for (uint8_t i = 0; i < 50; i++) {
         uint32_t tstart = hal.scheduler->millis();
         do {
             update();
