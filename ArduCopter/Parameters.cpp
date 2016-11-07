@@ -963,7 +963,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
 
     // @Group: CROP 
     // @Path: ../libraries/AP_CropSprayer/AP_CropSprayer.cpp
-    GOBJECT(battery,                "CROP",         AP_CropSprayer),
+    GOBJECT(crop,                "CROP",         AP_CropSprayer),
 
     // @Group: BRD_
     // @Path: ../libraries/AP_BoardConfig/AP_BoardConfig.cpp

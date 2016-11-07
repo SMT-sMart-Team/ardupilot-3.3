@@ -106,6 +106,7 @@ public:
         k_param_angle_max,
         k_param_gps_hdop_good,
         k_param_battery,
+        k_param_crop,
         k_param_fs_batt_mah,
         k_param_angle_rate_max,         // remove
         k_param_rssi_range,
