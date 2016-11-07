@@ -40,6 +40,9 @@ public:
 
     virtual void prt(const char *fmt, ...) {};
 
+    // create a new semaphore
+    virtual Semaphore *new_semaphore(void) { return NULL; }
+
     enum safety_state {
         SAFETY_NONE, SAFETY_DISARMED, SAFETY_ARMED
     };

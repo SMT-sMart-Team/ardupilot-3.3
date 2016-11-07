@@ -6,6 +6,7 @@
 #include <AP_HAL/AP_HAL.h>
 #include "AP_HAL_Linux_Namespace.h"
 #include "ToneAlarmDriver.h"
+#include "Semaphores.h"
 
 class Linux::LinuxUtil : public AP_HAL::Util {
 public:
@@ -40,6 +41,9 @@ public:
     bool is_chardev_node(const char *path);
 
     void prt(const char *fmt, ... ); 
+
+    // create a new semaphore
+    AP_HAL::Semaphore *new_semaphore(void) override { return new Linux::LinuxSemaphore; }
 
 private:
     static Linux::ToneAlarm _toneAlarm;

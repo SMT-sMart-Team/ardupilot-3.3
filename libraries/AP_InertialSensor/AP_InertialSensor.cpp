@@ -15,6 +15,8 @@
  */
 #define TIMING_DEBUG 0
 
+bool start_cali = false;
+
 #if TIMING_DEBUG
 #include <stdio.h>
 #define timing_printf(fmt, args...)      do { printf("[timing] " fmt, ##args); } while(0)
@@ -850,8 +852,6 @@ AP_InertialSensor::_init_gyro()
         return;
     }
 
-    // record we are calibrating
-    _calibrating = true;
 
     // flash leds to tell user to keep the IMU still
     AP_Notify::flags.initialising = true;
@@ -859,6 +859,9 @@ AP_InertialSensor::_init_gyro()
     // cold start
     // hal.console->print_P(PSTR("Init Gyro"));
     // hal.util->prt("Init Gyro start...");
+    //
+    // record we are calibrating
+    _calibrating = true;
 
     /*
       we do the gyro calibration with no board rotation. This avoids
@@ -876,12 +879,15 @@ AP_InertialSensor::_init_gyro()
         converged[k] = false;
     }
 
-    for(int8_t c = 0; c < 5; c++) {
+    // make sure imu warm up down
+    for(int8_t c = 0; c < 20; c++) {
         hal.scheduler->delay(5);
         update();
     }
 
-    // hal.util->prt("Init Gyro: update");
+    start_cali = true;
+
+    // hal.util->prt("Init Gyro: start calibrating");
 
     // the strategy is to average 50 points over 0.5 seconds, then do it
     // again and see if the 2nd average is within a small margin of

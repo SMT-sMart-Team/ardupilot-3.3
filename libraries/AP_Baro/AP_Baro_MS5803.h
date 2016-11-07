@@ -72,7 +72,7 @@ private:
 
     bool _use_timer;
 
-    // AP_HAL::Semaphore *_sem;
+    AP_HAL::Semaphore *_sem;
 
 protected:
     // Internal calibration registers

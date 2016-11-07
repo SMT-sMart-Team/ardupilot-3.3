@@ -24,7 +24,20 @@
 
 extern const AP_HAL::HAL& hal;
 
+extern bool start_cali;
 
+
+#define DUMP 0
+#if DUMP
+#include <stdio.h>
+#include <stdlib.h>
+
+#define DUMP_LEN 0x10000
+static float dump[DUMP_LEN];
+static uint32_t dump_cnt = 0;
+#endif
+
+#define DEBUG_FLOW 0
 
 
 #define MPUREG_XG_OFFS_TC                               0x00
@@ -155,10 +168,10 @@ extern const AP_HAL::HAL& hal;
 // AB ZhaoYJ@2016-11-01 for debugging LPF
 // according to GYRO (also for ACCEL)
 #define GYRO_SCALE_250DPS
-// #define EN_LPF
+#define EN_LPF
 #ifdef EN_LPF
-// #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_20HZ
-#define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_42HZ                              
+#define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_20HZ
+// #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_42HZ                              
 // #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_98HZ                              
 #endif
 
@@ -212,6 +225,11 @@ AP_InertialSensor_ICM20689::AP_InertialSensor_ICM20689(AP_InertialSensor &imu) :
     _default_rotation(ROTATION_ROLL_180_YAW_90)
 #endif
 {
+    // // AB ZhaoYJ@2016-11-06 for adding sem to avoid _timer start before update
+    _sem = hal.util->new_semaphore();
+    if (_sem == NULL) {
+        hal.scheduler->panic(PSTR("ICM20689: failed to create semaphore!"));
+    }
 }
 
 
@@ -340,12 +358,27 @@ bool AP_InertialSensor_ICM20689::_init_sensor(void)
  */
 bool AP_InertialSensor_ICM20689::update( void )
 {
+    if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
+#if DEBUG_FLOW 
+        static uint16_t cnt = 0;
+        if((0 == (cnt%300)) || (1 == (cnt%300)))
+        {
+            // hal.util->prt("[ %d us] MS5803 update %d", hal.scheduler->micros(), cnt);
+            hal.util->prt("[ %d us] ICM20689 update %d ", hal.scheduler->micros(), cnt);
+        }
+        cnt++;
+#endif
+    }
+
+
     // pull the data from the timer shared data buffer
     uint8_t idx = _shared_data_idx;
     Vector3f gyro = _shared_data[idx]._gyro_filtered;
     Vector3f accel = _shared_data[idx]._accel_filtered;
 
     _have_sample_available = false;
+
+    _sem->give();
 
     // accel: g
     // gyro: degree/s
@@ -404,6 +437,15 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
         uint8_t v[14];
     } rx, tx = { cmd : MPUREG_INT_STATUS | 0x80, };
 
+#if DEBUG_FLOW 
+    static uint16_t cnt = 0;
+    if((0 == (cnt%3000)) || (1 == (cnt%3000)))
+    {
+        hal.util->prt("[ %d us] ICM20689 timer %d", hal.scheduler->micros(), cnt);
+    }
+    cnt++;
+#endif
+
     _spi->transaction((const uint8_t *)&tx, (uint8_t *)&rx, sizeof(rx));
 
 #define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx] << 8) | v[2*idx+1]))
@@ -415,13 +457,49 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     Vector3f _gyro_filtered = _gyro_filter.apply(Vector3f(int16_val(rx.v, 5),
                                                  int16_val(rx.v, 4),
                                                  -int16_val(rx.v, 6)));
-    // update the shared buffer
-    uint8_t idx = _shared_data_idx ^ 1;
-    _shared_data[idx]._accel_filtered = _accel_filtered;
-    _shared_data[idx]._gyro_filtered = _gyro_filtered;
-    _shared_data_idx = idx;
 
-    _have_sample_available = true;
+    if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
+        // update the shared buffer
+        uint8_t idx = _shared_data_idx ^ 1;
+        _shared_data[idx]._accel_filtered = _accel_filtered;
+        _shared_data[idx]._gyro_filtered = _gyro_filtered;
+        _shared_data_idx = idx;
+
+        _have_sample_available = true;
+        _sem->give();
+#if DUMP
+        if(start_cali)
+        {
+        if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
+        {
+            hal.util->prt("[ %d us] ICM20689 dumpcnt %d (%s)", hal.scheduler->micros(), dump_cnt, start_cali?"cali":"no cali");
+        }
+        if(dump_cnt < DUMP_LEN)
+        {
+            // dump[dump_cnt++] = _accel_filtered.z;
+            dump[dump_cnt++] = _gyro_filtered.z;
+        }
+        else if(DUMP_LEN == dump_cnt)
+        {
+            FILE *fd = fopen("/root/test/dump.log", "w");
+            if(fd)
+            {
+                for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
+                {
+                    fprintf(fd, "%f\n", dump[ii]);
+                }
+                fclose(fd);
+                hal.util->prt("[OK] dump log done");
+                exit(1);
+            }
+            else
+            {
+                hal.util->prt("[Err] failed to open dump log");
+            }
+        }
+        }
+#endif
+    }
 }
 
 /*

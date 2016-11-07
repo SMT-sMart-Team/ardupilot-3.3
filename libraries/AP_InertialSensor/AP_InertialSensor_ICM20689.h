@@ -58,6 +58,8 @@ private:
     AP_HAL::SPIDeviceDriver *_spi;
     AP_HAL::Semaphore *_spi_sem;
 
+    AP_HAL::Semaphore *_sem;
+
     // support for updating filter at runtime
     int16_t _last_gyro_filter_hz;
     int16_t _last_accel_filter_hz;
