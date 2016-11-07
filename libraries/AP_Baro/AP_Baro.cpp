@@ -26,6 +26,8 @@
 
 extern const AP_HAL::HAL& hal;
 
+bool start_cali_baro = false;
+
 // table of user settable parameters
 const AP_Param::GroupInfo AP_Baro::var_info[] PROGMEM = {
     // NOTE: Index numbers 0 and 1 were for the old integer
@@ -112,7 +114,9 @@ void AP_Baro::calibrate()
     float sum_pressure[BARO_MAX_INSTANCES] = {0};
     float sum_temperature[BARO_MAX_INSTANCES] = {0};
     uint8_t count[BARO_MAX_INSTANCES] = {0};
-    const uint8_t num_samples = 5;
+    const uint8_t num_samples = 20;
+
+    start_cali_baro = true;
 
     for (uint8_t c = 0; c < num_samples; c++) {
         uint32_t tstart = hal.scheduler->millis();
@@ -140,6 +144,8 @@ void AP_Baro::calibrate()
             sensors[i].ground_temperature.set_and_save(sum_temperature[i] / count[i]);
         }
     }
+
+    // hal.util->prt("[ %d us] Baro calib done, grd_press: %f, grd_temp: %f", hal.scheduler->micros(), get_ground_pressure(), get_ground_temperature());
 
     // panic if all sensors are not calibrated
     for (uint8_t i=0; i<_num_sensors; i++) {

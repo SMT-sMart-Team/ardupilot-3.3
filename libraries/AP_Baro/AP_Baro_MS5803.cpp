@@ -30,14 +30,17 @@
 #define DUMP_D1 0
 #define DUMP_D1_COUNT 0
 
-#define DUMP_LEN 0x800
+#define DUMP_LEN 0x4000
 static uint32_t dump[DUMP_LEN];
 static uint32_t dump_cnt = 0;
 #endif
 
 #define DEBUG_FLOW 0
 
+
 extern const AP_HAL::HAL& hal;
+
+extern bool start_cali_baro;
 
 #define CMD_MS5803_RESET 0x1E
 #define CMD_MS5803_PROM_Setup 0xA0
@@ -369,34 +372,37 @@ void AP_Baro_MS58XX::_timer(void)
                 _s_D1 += d1;
                 _d1_count++;
 #if DUMP_D1
-                if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
+                if(start_cali_baro)
                 {
-                    hal.util->prt("[ %d us]: MS5803 dumpcnt %d", hal.scheduler->micros(), dump_cnt);
-                }
-                if(dump_cnt < DUMP_LEN)
-                {
-#if DUMP_D1_COUNT
-                    dump[dump_cnt++] = _d1_count;
-#elif DUMP_D1
-                    dump[dump_cnt++] = d1;
-#endif
-                }
-                else if(DUMP_LEN == dump_cnt)
-                {
-                    FILE *fd = fopen("/root/test/dump.log", "w");
-                    if(fd)
+                    if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
                     {
-                        for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
-                        {
-                            fprintf(fd, "%d\n", dump[ii]);
-                        }
-                        fclose(fd);
-                        hal.util->prt("[OK] dump log done");
-                        exit(1);
+                        hal.util->prt("[ %d us]: MS5803 dumpcnt %d(%s)", hal.scheduler->micros(), dump_cnt, start_cali_baro?"cali":"uncali");
                     }
-                    else
+                    if(dump_cnt < DUMP_LEN)
                     {
-                        hal.util->prt("[Err] failed to open dump log");
+#if DUMP_D1_COUNT    
+                        dump[dump_cnt++] = _d1_count;
+#elif DUMP_D1
+                        dump[dump_cnt++] = d1;
+#endif
+                    }
+                    else if(DUMP_LEN == dump_cnt)
+                    {
+                        FILE *fd = fopen("/root/test/dump.log", "w");
+                        if(fd)
+                        {
+                            for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
+                            {
+                                fprintf(fd, "%d\n", dump[ii]);
+                            }
+                            fclose(fd);
+                            hal.util->prt("[OK] dump log done");
+                            exit(1);
+                        }
+                        else
+                        {
+                            hal.util->prt("[Err] failed to open dump log");
+                        }
                     }
                 }
 #endif
