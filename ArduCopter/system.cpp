@@ -122,6 +122,8 @@ void Copter::init_ardupilot()
 
     // initialise battery monitor
     battery.init();
+
+    crop.init();
     
     rssi_analog_source      = hal.analogin->channel(g.rssi_pin);
 

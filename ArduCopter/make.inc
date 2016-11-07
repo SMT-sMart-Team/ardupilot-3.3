@@ -56,6 +56,7 @@ LIBRARIES += AP_Scheduler
 LIBRARIES += AP_RCMapper
 LIBRARIES += AP_Notify
 LIBRARIES += AP_BattMonitor
+LIBRARIES += AP_CropSprayer
 LIBRARIES += AP_BoardConfig
 LIBRARIES += AP_Frsky_Telem
 LIBRARIES += AC_Sprayer

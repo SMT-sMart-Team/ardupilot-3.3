@@ -21,6 +21,7 @@ void Copter::userhook_FastLoop()
 void Copter::userhook_50Hz()
 {
     // put your 50Hz code here
+    crop.read();
 }
 #endif
 
