@@ -1344,15 +1344,17 @@ void GCS_MAVLINK::send_local_position(const AP_AHRS &ahrs) const
 /*
   send LOCAL_POSITION_NED message
  */
-void GCS_MAVLINK::send_vibration(const AP_InertialSensor &ins) const
+void GCS_MAVLINK::send_vibration(const AP_InertialSensor &ins, const AP_CropSprayer &crop) const
 {
 #if INS_VIBRATION_CHECK
     Vector3f vibration = ins.get_vibration_levels();
+    float crop_quantity = crop.quantity();
 
     mavlink_msg_vibration_send(
         chan,
         hal.scheduler->micros64(),
-        vibration.x,
+        // vibration.x,
+        crop_quantity,
         vibration.y,
         vibration.z,
         ins.get_accel_clip_count(0),

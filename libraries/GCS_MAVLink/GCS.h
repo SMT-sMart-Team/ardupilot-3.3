@@ -17,6 +17,7 @@
 #include "MAVLink_routing.h"
 #include <AP_SerialManager/AP_SerialManager.h>
 #include <AP_Mount/AP_Mount.h>
+#include <AP_CropSprayer/AP_CropSprayer.h>
 
 // check if a message will fit in the payload space available
 #define HAVE_PAYLOAD_SPACE(chan, id) (comm_get_txspace(chan) >= MAVLINK_NUM_NON_PAYLOAD_BYTES+MAVLINK_MSG_ID_ ## id ## _LEN)
@@ -152,7 +153,7 @@ public:
 #endif
     void send_autopilot_version(uint8_t major_version, uint8_t minor_version, uint8_t patch_version, uint8_t version_type) const;
     void send_local_position(const AP_AHRS &ahrs) const;
-    void send_vibration(const AP_InertialSensor &ins) const;
+    void send_vibration(const AP_InertialSensor &ins, const AP_CropSprayer &crop) const;
 
     // return a bitmap of active channels. Used by libraries to loop
     // over active channels to send to all active channels    

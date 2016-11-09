@@ -37,6 +37,12 @@ static uint32_t dump_cnt = 0;
 
 #define DEBUG_FLOW 0
 
+// 
+#define AVERAGE_PRESS 1
+#if AVERAGE_PRESS
+#define AVERAGE_WIN 16
+#endif
+
 
 extern const AP_HAL::HAL& hal;
 
@@ -336,7 +342,8 @@ void AP_Baro_MS58XX::_timer(void)
     // Throttle read rate to 100hz maximum.
     // if (hal.scheduler->micros() - _last_timer < CONVERSION_TIME) {
     // Throttle read rate to 100hz maximum.
-    if (hal.scheduler->micros() - _last_timer < 10000) {
+    // if (hal.scheduler->micros() - _last_timer < 10000) {
+    if (hal.scheduler->micros() - _last_timer < CONVERSION_TIME) {
         return;
     }
 
@@ -367,6 +374,29 @@ void AP_Baro_MS58XX::_timer(void)
             // AB ZhaoYJ@2016-11-07 for SPI error
             if ((d1 != 0) && (0xFFFFFF != d1)) 
             {
+#if AVERAGE_PRESS
+                static uint32_t sample[AVERAGE_WIN];
+                static uint16_t sample_idx = 0;
+                static bool first = true;
+                uint32_t d1_orig = d1;
+                sample[(sample_idx++)%AVERAGE_WIN] = d1;
+                if(!first)
+                {
+                    uint32_t sum = 0;
+                    for(uint16_t ii = 0; ii < AVERAGE_WIN; ii++)
+                    {
+                        sum += sample[ii];
+                    }
+                    d1 = sum/AVERAGE_WIN;
+                }
+                else
+                {
+                    if(AVERAGE_WIN == sample_idx)
+                    {
+                        first = false;
+                    }
+                }
+#endif
                 // occasional zero values have been seen on the PXF
                 // board. These may be SPI errors, but safest to ignore
                 _s_D1 += d1;
@@ -376,6 +406,7 @@ void AP_Baro_MS58XX::_timer(void)
                 {
                     if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
                     {
+                        // hal.util->prt("[ %d us]: MS5803 dumpcnt %d(%s) d1(%d)->average_d1(%d)", hal.scheduler->micros(), dump_cnt, start_cali_baro?"cali":"uncali", d1_orig, d1);
                         hal.util->prt("[ %d us]: MS5803 dumpcnt %d(%s)", hal.scheduler->micros(), dump_cnt, start_cali_baro?"cali":"uncali");
                     }
                     if(dump_cnt < DUMP_LEN)

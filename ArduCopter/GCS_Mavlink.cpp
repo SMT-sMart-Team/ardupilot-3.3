@@ -263,8 +263,7 @@ NOINLINE void Copter::send_extended_status1(mavlink_channel_t chan)
         battery_remaining,      // in %
         0, // comm drops %,
         0, // comm drops in pkts,
-        // 0, 0, 0, 0);
-        crop.quantity()*1000, 0, 0, 0);
+        0, 0, 0, 0);
 
 }
 
@@ -730,7 +729,7 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
 
     case MSG_VIBRATION:
         CHECK_PAYLOAD_SIZE(VIBRATION);
-        send_vibration(copter.ins);
+        send_vibration(copter.ins, copter.crop);
         break;
 
     case MSG_MISSION_ITEM_REACHED:
