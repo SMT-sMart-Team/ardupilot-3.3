@@ -358,7 +358,8 @@ bool AP_InertialSensor_ICM20689::_init_sensor(void)
  */
 bool AP_InertialSensor_ICM20689::update( void )
 {
-    if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
+    // if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) 
+        {
 #if DEBUG_FLOW 
         static uint16_t cnt = 0;
         if((0 == (cnt%300)) || (1 == (cnt%300)))
@@ -378,7 +379,7 @@ bool AP_InertialSensor_ICM20689::update( void )
 
     _have_sample_available = false;
 
-    _sem->give();
+    // _sem->give();
 
     // accel: g
     // gyro: degree/s
@@ -458,7 +459,8 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
                                                  int16_val(rx.v, 4),
                                                  -int16_val(rx.v, 6)));
 
-    if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
+    // if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) 
+        {
         // update the shared buffer
         uint8_t idx = _shared_data_idx ^ 1;
         _shared_data[idx]._accel_filtered = _accel_filtered;
@@ -466,7 +468,7 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
         _shared_data_idx = idx;
 
         _have_sample_available = true;
-        _sem->give();
+        // _sem->give();
 #if DUMP
         if(start_cali)
         {

@@ -38,7 +38,7 @@ static uint32_t dump_cnt = 0;
 #define DEBUG_FLOW 0
 
 // 
-#define AVERAGE_PRESS 1
+#define AVERAGE_PRESS 0
 #if AVERAGE_PRESS
 #define AVERAGE_WIN 16
 #endif
@@ -89,9 +89,9 @@ sensor. Information from MS tells us that some individual sensors
 are quite sensitive to this effect and that reducing the OSR can
 make a big difference
 */
-static const uint8_t ADDR_CMD_CONVERT_PRESSURE = ADDR_CMD_CONVERT_D1_OSR1024;
-static const uint8_t ADDR_CMD_CONVERT_TEMPERATURE = ADDR_CMD_CONVERT_D2_OSR1024;
-static const uint32_t CONVERSION_TIME = CONVERSION_TIME_OSR_1024;
+static const uint8_t ADDR_CMD_CONVERT_PRESSURE = ADDR_CMD_CONVERT_D1_OSR4096; // ADDR_CMD_CONVERT_D1_OSR1024;
+static const uint8_t ADDR_CMD_CONVERT_TEMPERATURE = ADDR_CMD_CONVERT_D2_OSR4096; // ADDR_CMD_CONVERT_D2_OSR1024;
+static const uint32_t CONVERSION_TIME = CONVERSION_TIME_OSR_4096; // CONVERSION_TIME_OSR_1024;
 
 
 #define MS5803_TEMP_SCALE                                       (float)(100.0)
@@ -372,7 +372,8 @@ void AP_Baro_MS58XX::_timer(void)
         } else {
             uint32_t d1 = _serial->read_24bits(0);
             // AB ZhaoYJ@2016-11-07 for SPI error
-            if ((d1 != 0) && (0xFFFFFF != d1)) 
+            // avoid pulse value
+            if ((d1 != 0) && (d1 < 10600000)) 
             {
 #if AVERAGE_PRESS
                 static uint32_t sample[AVERAGE_WIN];
