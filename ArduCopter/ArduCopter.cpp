@@ -529,7 +529,7 @@ void Copter::one_hz_loop()
     }
     else
     {
-        RC_Channel_aux::disable_aux_channel(RC10);
+        RC_Channel_aux::disable_aux_channel_one_shot(RC10);
         // hal.util->prt("disable ch10");
     }
 
