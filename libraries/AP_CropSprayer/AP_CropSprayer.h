@@ -47,6 +47,7 @@ public:
 
     float get_raw(uint8_t instance) const { return state.raw; }
     float quantity() const { return state.current_quantity; }
+    // float quantity() const { return 0.0;  }
 
 
     static const struct AP_Param::GroupInfo var_info[];

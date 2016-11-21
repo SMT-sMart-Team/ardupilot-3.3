@@ -84,7 +84,7 @@ void LinuxRCOutput_PRU::enable_ch(uint8_t ch)
 
 void LinuxRCOutput_PRU::disable_ch(uint8_t ch)
 {
-    sharedMem_cmd->enmask &= !(1U<<chan_pru_map[ch]);
+    sharedMem_cmd->enmask &= ~(1U<<chan_pru_map[ch]);
     set_magic_sync();
 }
 

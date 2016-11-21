@@ -61,6 +61,8 @@ void RC_Channel_aux::disable_aux_channel(uint8_t channel)
 {
     for (uint8_t i = 0; i < RC_AUX_MAX_CHANNELS; i++) {
         if (_aux_channels[i] && _aux_channels[i]->_ch_out == channel) {
+            _aux_channels[i]->disable_out();
+            // hal.util->prt(" disable CH%d", _aux_channels[i]->_ch_out + 1);
             _aux_channels[i] = NULL;
         }
     }    

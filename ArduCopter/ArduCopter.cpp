@@ -519,8 +519,19 @@ void Copter::one_hz_loop()
 #endif
     }
 
+    // AB ZhaoYJ@2016-11-21 for temporarily to disable crop_servo when armed but no crop water, but doesnot effect non-armed
+    // FIXME: need to seperate CROP_CONTROL CH10
+#define RC10 9 // 10-1
     // update assigned functions and enable auxiliar servos
-    RC_Channel_aux::enable_aux_servos();
+    if ((motors.armed() && (!is_zero(crop.quantity()))) || (!motors.armed())) 
+    {
+        RC_Channel_aux::enable_aux_servos();
+    }
+    else
+    {
+        RC_Channel_aux::disable_aux_channel(RC10);
+        // hal.util->prt("disable ch10");
+    }
 
     check_usb_mux();
 
