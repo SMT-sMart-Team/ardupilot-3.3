@@ -85,9 +85,19 @@ void LinuxRCInput_PRU::_timer_tick()
         // if we have reached the maximum supported channels then
         // mark as unsynchronised, so we wait for a wide pulse
         for (uint8_t i=0; i<MAX_RCIN_NUM; i++) {
-
-            // AB ZhaoYJ for inverse-order of pwm
-            uint16_t width_usec = ring_buffer->multi_pwm_out[i].high;
+#ifdef SMT_CROP_CONTROL
+            // AB ZhaoYJ for SY crop control: borrow rcin CH1(i=0) for pwm_out CH9
+            // AB ZhaoYJ for inverse-order of rcin: (7~2, 0) -> 0~6
+            //
+            uint16_t width_usec = 0;
+            if(i < 6)
+            {
+                width_usec = ring_buffer->multi_pwm_out[MAX_RCIN_NUM - 1 - i].high;
+            }
+            else if(6 == i)
+            {
+                width_usec = ring_buffer->multi_pwm_out[0].high;
+            }
 
             // valid pwm
             if (width_usec < 700 || width_usec > 2300) {
@@ -97,6 +107,19 @@ void LinuxRCInput_PRU::_timer_tick()
             }
             set_pwm_values(i, width_usec);
             chn_num++;
+
+#else
+            uint16_t width_usec = ring_buffer->multi_pwm_out[i].high;
+            // valid pwm
+            if (width_usec < 700 || width_usec > 2300) {
+                // take a reading for the current channel
+                // move to next channel
+                continue;
+            }
+            set_pwm_values(i, width_usec);
+            chn_num++;
+#endif
+
         }
 
 #ifdef TEST_MULTI_PWM

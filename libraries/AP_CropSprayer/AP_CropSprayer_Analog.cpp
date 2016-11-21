@@ -17,6 +17,9 @@ AP_CropSprayer_Analog::AP_CropSprayer_Analog(AP_CropSprayer &mon, AP_CropSprayer
 
     // always healthy
     _state.healthy = true;
+
+    // init DI pin
+    hal.gpio->pinMode(HAL_GPIO_QUANTITY_DI, HAL_GPIO_INPUT);
 }
 
 // read - read the voltage and current
@@ -29,11 +32,28 @@ AP_CropSprayer_Analog::read()
     // get voltage
     _state.current_quantity = _pin_analog_source->read_average() * _mon._multiplier + _mon._offset;
 
+    // adjust according to DI
+    static uint8_t wait = 0;
+    if(NO_WATER == hal.gpio->read(HAL_GPIO_QUANTITY_DI))
+    {
+        wait++;
+        if(wait > 1)
+        {
+            _state.current_quantity = 0.0;
+            // hal.util->prt("[Info] no water now");
+        }
+    }
+    else
+    {
+        wait = 0;
+    }
+
 #if DEBUG_FLOW 
         static uint16_t cnt = 0;
         if((0 == (cnt%100)) || (1 == (cnt%100)))
         {
             hal.util->prt("[ %d us] crop analog read: %f", hal.scheduler->micros(), _state.current_quantity);
+            hal.util->prt("[ %d us] crop digital read: %d", hal.scheduler->micros(), hal.gpio->read(HAL_GPIO_QUANTITY_DI));
         }
         cnt++;
 #endif

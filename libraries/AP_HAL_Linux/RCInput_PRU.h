@@ -14,7 +14,7 @@
 // frame of 12 bits per byte
 //
 // AB ZhaoYJ for multi-pwm to replace ppm-sum @2016-09-13
-#define MULTI_PWM
+// #define MULTI_PWM
 
 #ifdef MULTI_PWM
 #define MAX_RCIN_NUM 8
@@ -53,9 +53,7 @@ public:
     uint16_t _s0_time;
 
 
-#ifdef MULTI_PWM 
     uint8_t _direct_pwm;
-#endif
 };
 
 #endif // __AP_HAL_LINUX_RCINPUT_PRU_H__

@@ -256,6 +256,9 @@
 // add by ZhaoYJ@2016-10-21 for HMC5983
 #define SMT_COMPASS_HMC5983
 
+// add by ZhaoYJ for SY crop control in rc
+#define SMT_CROP_CONTROL
+
 // add by ZhaoYJ for debugging mag_cali on board @2016-10-10
 // #define SMT_MAG_CALI_DEBUG
 

@@ -22,6 +22,8 @@ extern const AP_HAL::HAL& hal;
 
 using namespace Linux;
 
+#define DUMP_SBUS 0
+
 LinuxRCInput::LinuxRCInput() :
     new_rc_input(false)
 {
@@ -166,11 +168,13 @@ void LinuxRCInput::_process_sbus_pulse(uint16_t width_s0, uint16_t width_s1)
 
     if (bits_s0 == 0 || bits_s1 == 0) {
         // invalid data
+        // hal.util->prt("[Warn]: SBUS s0/s1 zero: s0-%d s1-%d", bits_s0, bits_s1);
         goto reset;
     }
 	
     if (bits_s0+bit_ofs > 10) {
         // invalid data as last two bits must be stop bits
+        // hal.util->prt("[Warn]: SBUS bits_s1 > 10: s0-%d ofs-%d", bits_s0, bit_ofs);
         goto reset;
     }
 
@@ -184,6 +188,7 @@ void LinuxRCInput::_process_sbus_pulse(uint16_t width_s0, uint16_t width_s1)
     if (nlow + bit_ofs > 12) {
         nlow = 12 - bit_ofs;
     }
+
     bits_s1 -= nlow;
     sbus_state.bit_ofs += nlow;
 
@@ -215,19 +220,32 @@ void LinuxRCInput::_process_sbus_pulse(uint16_t width_s0, uint16_t width_s1)
         uint16_t values[LINUX_RC_INPUT_NUM_CHANNELS];
         uint16_t num_values=0;
         bool sbus_failsafe=false, sbus_frame_drop=false;
+#if DUMP_SBUS 
+        static uint16_t cnt = 0;
+#endif
         if (sbus_decode(bytes, values, &num_values, 
                         &sbus_failsafe, &sbus_frame_drop, 
                         LINUX_RC_INPUT_NUM_CHANNELS) && 
             num_values >= 5) {
             for (i=0; i<num_values; i++) {
                 _pwm_values[i] = values[i];
+#if DUMP_SBUS 
+                if(!(cnt%100))
+                {
+                    printf("SBUS-CH%d: %d\n");
+                }
+#endif
             }
+#if DUMP_SBUS 
+        cnt++;
+#endif
             _num_channels = num_values;
             new_rc_input = true;
         }
         goto reset;
     } else if (bits_s1 > 12) {
         // break
+        hal.util->prt("[Warn]: SBUS bits_s1 > 12: s0-%d s1-%d", bits_s0, bits_s1);
         goto reset;
     }
     return;
@@ -316,9 +334,10 @@ reset:
 /*
   process a RC input pulse of the given width
  */
+#define DUMP_RC 0
 void LinuxRCInput::_process_rc_pulse(uint16_t width_s0, uint16_t width_s1)
 {
-#if 0
+#if DUMP_RC 
     // useful for debugging
     static FILE *rclog;
     if (rclog == NULL) {

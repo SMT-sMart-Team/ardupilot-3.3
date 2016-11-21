@@ -66,7 +66,15 @@ void LinuxRCOutput_PRU::set_freq(uint32_t chmask, uint16_t freq_hz)            /
 
 uint16_t LinuxRCOutput_PRU::get_freq(uint8_t ch)
 {
-    return TICK_PER_S/sharedMem_cmd->periodhi[chan_pru_map[ch]][0];
+    if(sharedMem_cmd->hilo_read[chan_pru_map[ch]][0])
+    {
+        return TICK_PER_S/sharedMem_cmd->hilo_read[chan_pru_map[ch]][0];
+    }
+    else
+    {
+        // hal.util->prt("[Warn] PRU still not write back freq");
+        return 0;
+    }
 }
 
 void LinuxRCOutput_PRU::enable_ch(uint8_t ch)
@@ -83,6 +91,16 @@ void LinuxRCOutput_PRU::disable_ch(uint8_t ch)
 void LinuxRCOutput_PRU::write(uint8_t ch, uint16_t period_us)
 {
     sharedMem_cmd->periodhi[chan_pru_map[ch]][1] = TICK_PER_US*period_us;
+#if DUMP_CH_EN 
+    static uint32_t cnt  = 0;
+    if(9 == ch)
+    {
+    if(!(++cnt%800))
+    {
+        hal.util->prt("[Info] PRU-RC write: CH[%d] R30_bit[%d] - val:%d", ch, chan_pru_map[ch], period_us);
+    }
+    }
+#endif
 }
 
 void LinuxRCOutput_PRU::write(uint8_t ch, uint16_t* period_us, uint8_t len)
@@ -140,11 +158,16 @@ void LinuxRCOutput_PRU::rcout_keep_alive(void)
 {
 #if DUMP_CH_EN 
     static uint32_t cnt  = 0;
-    if(!(cnt%40))
+    if(!(++cnt%80))
     {
         printf("CH_EN: 0x%04x\n", sharedMem_cmd->enmask);
+        printf("CH9: duty: %d us, period: %d us\n", read(8), get_freq(8)); // sharedMem_cmd->enmask);
+        printf("CH11: duty: %d us, period: %d us\n", read(10), get_freq(10)); // sharedMem_cmd->enmask);
+        printf("CH10: duty: %d us, period: %d us\n", read(9), get_freq(9)); // sharedMem_cmd->enmask);
+        printf("CH4: duty: %d us, period: %d us\n", read(3), get_freq(3)); // sharedMem_cmd->enmask);
+        printf("CH5: duty: %d us, period: %d us\n", read(4), get_freq(4)); // sharedMem_cmd->enmask);
+        printf("CH6: duty: %d us, period: %d us\n", read(5), get_freq(5)); // sharedMem_cmd->enmask);
     }
-    cnt++;
 #endif
 #ifdef KEEP_ALIVE_WITH_PRU
     static unsigned int time_out = 0;

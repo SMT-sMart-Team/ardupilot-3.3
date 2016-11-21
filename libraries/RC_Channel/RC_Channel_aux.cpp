@@ -349,15 +349,22 @@ RC_Channel_aux::function_assigned(RC_Channel_aux::Aux_servo_function_t function)
   set servo_out and angle_min/max, then calc_pwm and output a
   value. This is used to move a AP_Mount servo
  */
+#define DEBUG_FLOW 0
 void
 RC_Channel_aux::move_servo(RC_Channel_aux::Aux_servo_function_t function,
 						   int16_t value, int16_t angle_min, int16_t angle_max)
 {
+#if DEBUG_FLOW
+    hal.util->prt("[Info] move servo in");
+#endif
     if (!function_assigned(function)) {
         return;
     }
     for (uint8_t i = 0; i < RC_AUX_MAX_CHANNELS; i++) {
         if (_aux_channels[i] && _aux_channels[i]->function.get() == function) {
+#if DEBUG_FLOW
+        hal.util->prt("[Info] move servo: CH%d - func%d", i, function);
+#endif
 			_aux_channels[i]->servo_out = value;
 			_aux_channels[i]->set_range(angle_min, angle_max);
 			_aux_channels[i]->calc_pwm();

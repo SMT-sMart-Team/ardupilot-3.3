@@ -8,9 +8,15 @@
 #include "AP_CropSprayer_Backend.h"
 
 #define ENABLE 1
-#define CROPSPRAYER_PIN_DEF 5
+#define CROPSPRAYER_PIN_DEF 1
 #define CROPSPRAYER_MULTI_DEF 1.0 
 #define CROPSPRAYER_CAP_DEF 20.0
+
+// 
+#define HAL_GPIO_QUANTITY_DI 9 
+#define HAVE_WATER 1 
+#define NO_WATER 0 
+
 
 
 class AP_CropSprayer_Analog : public AP_CropSprayer_Backend

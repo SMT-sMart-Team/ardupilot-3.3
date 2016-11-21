@@ -45,6 +45,7 @@ void LinuxRCOutput_PRU::init(void* machtnicht)
     this->write(1,1000);
     this->write(2,1000);
     this->write(3,1000);
+    this->write(8,1000);
 }
 
 void LinuxRCOutput_PRU::set_freq(uint32_t chmask, uint16_t freq_hz)            //LSB corresponds to CHAN_1
@@ -122,6 +123,7 @@ int main(void)
         prutest.enable_ch(1);
         prutest.enable_ch(2);
         prutest.enable_ch(3);
+        prutest.enable_ch(8);
         prutest.sharedMem_cmd->magic = PWM_CMD_MAGIC;
         srand((unsigned int)time(NULL));
     while(1)
@@ -129,7 +131,8 @@ int main(void)
 
         for(ii = 0; ii < MAX_PWMS; ii++)
         {
-            prutest.write(chan_pru_map[ii], rand()%1950);
+            // prutest.write(chan_pru_map[ii], rand()%1950);
+            prutest.write(chan_pru_map[ii], 2000);
         }
         prutest.sharedMem_cmd->magic = PWM_CMD_MAGIC;
         usleep(200);

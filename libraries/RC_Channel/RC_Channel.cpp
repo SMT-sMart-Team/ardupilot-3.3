@@ -444,8 +444,16 @@ RC_Channel::norm_output()
     return ret;
 }
 
+#define DEBUG_FLOW 0
 void RC_Channel::output() const
 {
+#if DEBUG_FLOW
+    static uint16_t cnt = 0;
+    if(!(cnt++%100))
+    {
+        hal.util->prt("[Info] RC_Channel: CH%d output - value%d", _ch_out, radio_out);
+    }
+#endif
     hal.rcout->write(_ch_out, radio_out);
 	hal.rcout->set_magic_sync();
 }

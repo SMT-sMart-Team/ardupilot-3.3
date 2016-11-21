@@ -41,7 +41,7 @@
 
 const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
-#define MAX_CHANNELS 14
+#define MAX_CHANNELS 8
 
 static uint8_t max_channels = 0;
 static uint16_t last_value[MAX_CHANNELS];
@@ -53,6 +53,9 @@ void setup(void)
     for(uint8_t i = 0; i < MAX_CHANNELS; i++) {
         hal.rcout->enable_ch(i);
     }
+
+    hal.rcout->set_freq(0xFFFFFFFF, 50);
+    hal.rcout->set_magic_sync();
 }
 
 void loop(void) 
@@ -64,20 +67,26 @@ void loop(void)
        nchannels = MAX_CHANNELS;
     }
 
-    for(uint8_t i = 0; i < nchannels; i++) {
-        uint16_t v = hal.rcin->read(i);
+       nchannels = MAX_CHANNELS;
+
+    for(uint8_t i = 0; i < MAX_CHANNELS; i++) {
+        uint16_t v = hal.rcin->read(2);
         if(last_value[i] != v) {
             hal.rcout->write(i, v);
             changed = true;
             last_value[i] = v;
         }
-        if(i > max_channels) {
-            max_channels = i;
-        }
     }
+
+    hal.rcout->set_magic_sync();
+
     if(changed) {
-        for(uint8_t i = 0; i < max_channels; i++) {
+        // for(uint8_t i = 2; i < 3; i++) {
+        for(uint8_t i = 0; i < MAX_CHANNELS; i++) {
+            hal.util->prt("freq:%2u:%04u (rd) ", (unsigned)i + 1,(unsigned)hal.rcout->get_freq(i) );
             hal.console->printf("%2u:%04u ", (unsigned)i + 1, (unsigned)last_value[i]);
+            hal.util->prt("%2u:%04u (wr) ", (unsigned)i + 1, (unsigned)last_value[i]);
+            hal.util->prt("%2u:%04u (rd)", (unsigned)i + 1, (unsigned)hal.rcout->read(i));
         }
         hal.console->println();
     }
