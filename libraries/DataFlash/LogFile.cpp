@@ -806,8 +806,13 @@ void DataFlash_Class::Log_Write_Baro(AP_Baro &baro)
 void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
 {
     uint64_t time_us = hal.scheduler->micros64();
+#ifdef SMT_CAPTURE_IMU_RAW
+    const Vector3f &gyro = ins.get_gyro_raw(0);
+    const Vector3f &accel = ins.get_accel_raw(0);
+#else
     const Vector3f &gyro = ins.get_gyro(0);
     const Vector3f &accel = ins.get_accel(0);
+#endif
     struct log_IMU pkt = {
         LOG_PACKET_HEADER_INIT(LOG_IMU_MSG),
         time_us : time_us,

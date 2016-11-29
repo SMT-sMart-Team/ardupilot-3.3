@@ -112,6 +112,11 @@ public:
     const Vector3f     &get_gyro(uint8_t i) const { return _gyro[i]; }
     const Vector3f     &get_gyro(void) const { return get_gyro(_primary_gyro); }
 
+#ifdef SMT_CAPTURE_IMU_RAW 
+    const Vector3f     &get_gyro_raw(uint8_t i) const { return _gyro[i]; }
+    const Vector3f     &get_gyro_raw(void) const { return get_gyro(_primary_gyro); }
+#endif
+
     // set gyro offsets in radians/sec
     const Vector3f &get_gyro_offsets(uint8_t i) const { return _gyro_offset[i]; }
     const Vector3f &get_gyro_offsets(void) const { return get_gyro_offsets(_primary_gyro); }
@@ -133,6 +138,11 @@ public:
     ///
     const Vector3f     &get_accel(uint8_t i) const { return _accel[i]; }
     const Vector3f     &get_accel(void) const { return get_accel(_primary_accel); }
+
+#ifdef SMT_CAPTURE_IMU_RAW
+    const Vector3f     &get_accel_raw(uint8_t i) const { return _accel[i]; }
+    const Vector3f     &get_accel_raw(void) const { return get_accel(_primary_accel); }
+#endif
 
     uint32_t get_gyro_error_count(uint8_t i) const { return _gyro_error_count[i]; }
     uint32_t get_accel_error_count(uint8_t i) const { return _accel_error_count[i]; }
@@ -231,6 +241,12 @@ public:
      */
     void set_accel(uint8_t instance, const Vector3f &accel);
     void set_gyro(uint8_t instance, const Vector3f &gyro);
+
+#ifdef SMT_CAPTURE_IMU_RAW
+    void set_accel_raw(uint8_t instance, const Vector3f &accel);
+    void set_gyro_raw(uint8_t instance, const Vector3f &gyro);
+#endif
+
     void set_delta_time(float delta_time);
     void set_delta_velocity(uint8_t instance, float deltavt, const Vector3f &deltav);
     void set_delta_angle(uint8_t instance, const Vector3f &deltaa);
@@ -287,6 +303,11 @@ private:
     Vector3f _gyro[INS_MAX_INSTANCES];
     Vector3f _delta_angle[INS_MAX_INSTANCES];
     bool _delta_angle_valid[INS_MAX_INSTANCES];
+
+#ifdef SMT_CAPTURE_IMU_RAW
+    Vector3f _accel_raw[INS_MAX_INSTANCES];
+    Vector3f _gyro_raw[INS_MAX_INSTANCES];
+#endif
 
     // product id
     AP_Int16 _product_id;

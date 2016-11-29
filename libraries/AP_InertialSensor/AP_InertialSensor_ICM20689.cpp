@@ -376,21 +376,30 @@ bool AP_InertialSensor_ICM20689::update( void )
     uint8_t idx = _shared_data_idx;
     Vector3f gyro = _shared_data[idx]._gyro_filtered;
     Vector3f accel = _shared_data[idx]._accel_filtered;
+#ifdef SMT_CAPTURE_IMU_RAW
+    Vector3f gyro_raw = _shared_data_raw[idx]._gyro_raw;
+    Vector3f accel_raw = _shared_data_raw[idx]._accel_raw;
+#endif
 
     _have_sample_available = false;
 
     // _sem->give();
 
     // accel: g
-    // gyro: degree/s
+    // gyro: radius/s
     accel *= ICM20689_ACCEL_SCALE_1G;
     gyro *= GYRO_SCALE;
+
 
     accel.rotate(_default_rotation);
     gyro.rotate(_default_rotation);
 
     _publish_gyro(_gyro_instance, gyro);
     _publish_accel(_accel_instance, accel);
+#ifdef SMT_CAPTURE_IMU_RAW
+    _publish_gyro_raw(_gyro_instance, gyro_raw);
+    _publish_accel_raw(_accel_instance, accel_raw);
+#endif
 
     if (_last_accel_filter_hz != _accel_filter_cutoff()) {
         _set_accel_filter(_accel_filter_cutoff());
@@ -465,7 +474,17 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
         uint8_t idx = _shared_data_idx ^ 1;
         _shared_data[idx]._accel_filtered = _accel_filtered;
         _shared_data[idx]._gyro_filtered = _gyro_filtered;
+
+#ifdef SMT_CAPTURE_IMU_RAW
+        _shared_data_raw[idx]._accel_raw = Vector3f(int16_val(rx.v, 1),
+                                                   int16_val(rx.v, 0),
+                                                   -int16_val(rx.v, 2));
+        _shared_data_raw[idx]._gyro_raw = Vector3f(int16_val(rx.v, 5),
+                                                 int16_val(rx.v, 4),
+                                                 -int16_val(rx.v, 6));
+#endif
         _shared_data_idx = idx;
+
 
         _have_sample_available = true;
         // _sem->give();

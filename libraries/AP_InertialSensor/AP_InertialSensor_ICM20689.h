@@ -55,6 +55,7 @@ private:
     bool                 _hardware_init(void);
     bool                 _sample_available();
 
+
     AP_HAL::SPIDeviceDriver *_spi;
     AP_HAL::Semaphore *_spi_sem;
 
@@ -77,6 +78,12 @@ private:
         Vector3f _gyro_filtered;
     } _shared_data[2];
     volatile uint8_t _shared_data_idx;
+#ifdef SMT_CAPTURE_IMU_RAW
+    struct {
+        Vector3f _accel_raw;
+        Vector3f _gyro_raw;
+    } _shared_data_raw[2];
+#endif
 
     // Low Pass filters for gyro and accel 
     LowPassFilter2pVector3f _accel_filter;

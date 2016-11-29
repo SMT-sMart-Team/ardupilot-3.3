@@ -289,6 +289,7 @@ void AP_InertialSensor_ADIS16365::_read_data_transaction()
     accel_sample.y = ACCEL_SCALE * SIGNED_FLOAT(ay, 14); 
     accel_sample.z = ACCEL_SCALE * SIGNED_FLOAT(az, 14); 
 
+
     gyro_sample.x = GYRO_SCALE * SIGNED_FLOAT(gx, 14); 
     gyro_sample.y = GYRO_SCALE * SIGNED_FLOAT(gy, 14);
     gyro_sample.z = GYRO_SCALE * SIGNED_FLOAT(gz, 14);

@@ -97,6 +97,25 @@ void AP_InertialSensor_Backend::_publish_accel(uint8_t instance, const Vector3f 
 
 }
 
+#ifdef SMT_CAPTURE_IMU_RAW
+void AP_InertialSensor_Backend::_publish_gyro_raw(uint8_t instance, const Vector3f &gyro, bool rotate_and_correct)
+{
+    _imu._gyro_raw[instance] = gyro;
+
+    if (rotate_and_correct) {
+        _rotate_and_correct_gyro(instance, _imu._gyro_raw[instance]);
+    }
+}
+void AP_InertialSensor_Backend::_publish_accel_raw(uint8_t instance, const Vector3f &accel, bool rotate_and_correct)
+{
+    _imu._accel_raw[instance] = accel;
+
+    if (rotate_and_correct) {
+        _rotate_and_correct_accel(instance, _imu._accel_raw[instance]);
+    }
+}
+#endif
+
 void AP_InertialSensor_Backend::_set_accel_max_abs_offset(uint8_t instance,
                                                           float max_offset)
 {
