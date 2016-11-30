@@ -215,7 +215,7 @@
 #define HAL_BOARD_TERRAIN_DIRECTORY "/var/APM/terrain"
 // for enable UART multiplex
 // add by ZhaoYJ@2015-11-16
-#define ENABLE_MUX 1
+#define ENABLE_MUX 0
 
 // to fix PWM CH un-sync issue, try to make sure APM output is synced with PRU-PWM
 #define SET_MAGIC_SYNC

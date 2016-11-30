@@ -32,7 +32,7 @@ ASOPTS          =   -x assembler-with-cpp
 #LISTOPTS        =   -adhlns=$(@:.o=.lst)
 #endif
 
-CPUFLAGS     = -D_GNU_SOURCE
+CPUFLAGS     = -D_GNU_SOURCE -mfpu=neon -mfloat-abi=hard
 CPULDFLAGS   = -g
 OPTFLAGS     ?= -O3 -g
 
