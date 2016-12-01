@@ -113,8 +113,8 @@ public:
     const Vector3f     &get_gyro(void) const { return get_gyro(_primary_gyro); }
 
 #ifdef SMT_CAPTURE_IMU_RAW 
-    const Vector3f     &get_gyro_raw(uint8_t i) const { return _gyro[i]; }
-    const Vector3f     &get_gyro_raw(void) const { return get_gyro(_primary_gyro); }
+    const Vector3f     &get_gyro_raw(uint8_t i) const { return _gyro_raw[i]; }
+    const Vector3f     &get_gyro_raw(void) const { return get_gyro_raw(_primary_gyro); }
 #endif
 
     // set gyro offsets in radians/sec
@@ -140,8 +140,8 @@ public:
     const Vector3f     &get_accel(void) const { return get_accel(_primary_accel); }
 
 #ifdef SMT_CAPTURE_IMU_RAW
-    const Vector3f     &get_accel_raw(uint8_t i) const { return _accel[i]; }
-    const Vector3f     &get_accel_raw(void) const { return get_accel(_primary_accel); }
+    const Vector3f     &get_accel_raw(uint8_t i) const { return _accel_raw[i]; }
+    const Vector3f     &get_accel_raw(void) const { return get_accel_raw(_primary_accel); }
 #endif
 
     uint32_t get_gyro_error_count(uint8_t i) const { return _gyro_error_count[i]; }

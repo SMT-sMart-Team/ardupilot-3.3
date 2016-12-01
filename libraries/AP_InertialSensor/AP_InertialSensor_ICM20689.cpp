@@ -26,6 +26,53 @@ extern const AP_HAL::HAL& hal;
 
 extern bool start_cali;
 
+// AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyI filter
+#if USER_FILTER == 1 // fc=10Hz
+const double b[N_ORDER+1] = {    8.691272803641e-06,3.476509121456e-05,5.214763682184e-05,3.476509121456e-05,
+      8.691272803641e-06};
+const double a[N_ORDER+1] = {1,   -3.826392004832,     5.51663577273,   -3.551112726954,
+         0.8610249873516};
+// const double b[N_ORDER+1] = {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620, 0.001035118616347};
+// const double a[N_ORDER+1] = {1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321};
+#elif USER_FILTER == 2 // 20Hz
+const double b[N_ORDER+1] = {  0.0001298496353869,0.0005193985415477,0.0007790978123215,0.0005193985415477,
+      0.0001298496353869};
+const double a[N_ORDER+1] = {1,   -3.607896169129,    4.979470803751,   -3.110763682983,
+         0.7415201473558};
+#elif USER_FILTER == 3 // 30Hz
+const double b[N_ORDER+1] = {0.000616501437002, 0.002466005748008, 0.003699008622012, 0.002466005748008,
+       0.000616501437002};
+const double a[N_ORDER+1] = { 1,   -3.349053546167,    4.410141438955,   -2.688883812984,
+         0.6388635360264};
+#elif USER_FILTER == 4 // 40Hz
+const double b[N_ORDER+1] = {0.001835550372011, 0.007342201488043,  0.01101330223206, 0.007342201488043,
+       0.001835550372011};
+const double a[N_ORDER+1] = {1,   -3.054339676407,    3.828999227491,   -2.292451729406,
+         0.5507445205809};
+// AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyII filter
+#elif USER_FILTER == 5 // fc=10Hz
+const double b[N_ORDER+1] = {  0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
+      0.0009877867510385};
+const double a[N_ORDER+1] = {1,   -3.878129734999,    5.641762572816,   -3.648875955419,
+         0.8852477379956};
+// const double b[N_ORDER+1] = {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620, 0.001035118616347};
+// const double a[N_ORDER+1] = {1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321};
+#elif USER_FILTER == 6 // 20Hz
+const double b[N_ORDER+1] = {   0.001066578484441,-0.003520583754742, 0.004979264107821,-0.003520583754742,
+       0.001066578484441};
+const double a[N_ORDER+1] = {1,    -3.75490235187,    5.294313666885,    -3.32185631444,
+     0.7825162529919};
+#elif USER_FILTER == 7 // 30Hz
+const double b[N_ORDER+1] = { 0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
+   0.001235431141961};
+const double a[N_ORDER+1] = {1,   -3.628903305608,    4.954076395023,   -3.014454340388,
+     0.6896343805619};
+#elif USER_FILTER == 8 // 40Hz
+const double b[N_ORDER+1] = {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
+       0.001504023202492};
+const double a[N_ORDER+1] = {1,   -3.498597652843,    4.617828546747,     -2.7230591526,
+          0.604937864995};
+#endif
 
 #define DUMP 0
 #if DUMP
@@ -448,25 +495,40 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     } rx, tx = { cmd : MPUREG_INT_STATUS | 0x80, };
 
 #if DEBUG_FLOW 
-    static uint16_t cnt = 0;
-    if((0 == (cnt%3000)) || (1 == (cnt%3000)))
+    static uint16_t cnt1 = 0;
+    if((0 == (cnt1%3000)) || (1 == (cnt1%3000)))
     {
-        hal.util->prt("[ %d us] ICM20689 timer %d", hal.scheduler->micros(), cnt);
+        hal.util->prt("[ %d us] ICM20689 timer %d", hal.scheduler->micros(), cnt1);
     }
-    cnt++;
+    cnt1++;
 #endif
 
     _spi->transaction((const uint8_t *)&tx, (uint8_t *)&rx, sizeof(rx));
 
 #define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx] << 8) | v[2*idx+1]))
 
-    Vector3f _accel_filtered = _accel_filter.apply(Vector3f(int16_val(rx.v, 1),
-                                                   int16_val(rx.v, 0),
-                                                   -int16_val(rx.v, 2)));
+    Vector3f imu_acc;
+    imu_acc.x = int16_val(rx.v, 1);
+    imu_acc.y = int16_val(rx.v, 0);
+    imu_acc.z = -int16_val(rx.v, 2);
 
-    Vector3f _gyro_filtered = _gyro_filter.apply(Vector3f(int16_val(rx.v, 5),
-                                                 int16_val(rx.v, 4),
-                                                 -int16_val(rx.v, 6)));
+    Vector3f imu_gyro;
+    imu_gyro.x = int16_val(rx.v, 5);
+    imu_gyro.y = int16_val(rx.v, 4);
+    imu_gyro.z = -int16_val(rx.v, 6);
+
+#if USER_FILTER
+
+
+    Vector3f _accel_filtered = _accel_user_filter(imu_acc);
+
+    Vector3f _gyro_filtered = _gyro_user_filter(imu_gyro);
+
+#else
+    Vector3f _accel_filtered = _accel_filter.apply(imu_acc);
+
+    Vector3f _gyro_filtered = _gyro_filter.apply(imu_gyro);
+#endif
 
     // if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) 
         {
@@ -476,12 +538,8 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
         _shared_data[idx]._gyro_filtered = _gyro_filtered;
 
 #ifdef SMT_CAPTURE_IMU_RAW
-        _shared_data_raw[idx]._accel_raw = Vector3f(int16_val(rx.v, 1),
-                                                   int16_val(rx.v, 0),
-                                                   -int16_val(rx.v, 2));
-        _shared_data_raw[idx]._gyro_raw = Vector3f(int16_val(rx.v, 5),
-                                                 int16_val(rx.v, 4),
-                                                 -int16_val(rx.v, 6));
+        _shared_data_raw[idx]._accel_raw = imu_acc;
+        _shared_data_raw[idx]._gyro_raw = imu_gyro; 
 #endif
         _shared_data_idx = idx;
 
@@ -664,5 +722,234 @@ void AP_InertialSensor_ICM20689::_dump_registers(AP_HAL::SPIDeviceDriver *spi)
 }
 #endif
 
+#if USER_FILTER 
+#define TEST_FILTER 0
+
+#define FORMER(curr, n) ((curr > n)?(curr - n):(curr + N_ORDER + 1 - n)%(N_ORDER + 1)) 
+Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in)
+{
+    static Vector3d filter_state[N_ORDER+1]; 
+    static Vector3d filter_out[N_ORDER+1]; 
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    Vector3f ret;
+    uint8_t ii = 0;
+#if TEST_FILTER 
+    static uint32_t incr = 0;
+    _accl_in.z = -8000;
+    incr +=2;
+    if(incr == 200000)
+    {
+        hal.util->prt("test done");
+        hal.scheduler->panic("test done");
+    }
+#endif
+    if(!first)
+    {
+        // update state
+        curr_idx %= N_ORDER + 1;
+        filter_state[curr_idx].x = _accl_in.x;
+        filter_state[curr_idx].y = _accl_in.y;
+        filter_state[curr_idx].z = _accl_in.z;
+        // filter x: 
+        filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
+            + b[1]*filter_state[FORMER(curr_idx, 1)].x 
+            - a[1]*filter_out[FORMER(curr_idx, 1)].x 
+            + b[2]*filter_state[FORMER(curr_idx, 2)].x 
+            - a[2]*filter_out[FORMER(curr_idx, 2)].x 
+            + b[3]*filter_state[FORMER(curr_idx, 3)].x 
+            - a[3]*filter_out[FORMER(curr_idx, 3)].x
+            + b[4]*filter_state[FORMER(curr_idx, 4)].x
+            - a[4]*filter_out[FORMER(curr_idx, 4)].x;
+
+        if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
+
+            filter_out[curr_idx].x = filter_state[curr_idx].x; 
+        }
+
+        // filter y
+        filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
+            + b[1]*filter_state[FORMER(curr_idx, 1)].y 
+            - a[1]*filter_out[FORMER(curr_idx, 1)].y 
+            + b[2]*filter_state[FORMER(curr_idx, 2)].y 
+            - a[2]*filter_out[FORMER(curr_idx, 2)].y 
+            + b[3]*filter_state[FORMER(curr_idx, 3)].y 
+            - a[3]*filter_out[FORMER(curr_idx, 3)].y
+            + b[4]*filter_state[FORMER(curr_idx, 4)].y
+            - a[4]*filter_out[FORMER(curr_idx, 4)].y;
+
+        if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
+
+            filter_out[curr_idx].y = filter_state[curr_idx].y; 
+        }
+
+        // filter z
+        filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
+            + b[1]*filter_state[FORMER(curr_idx, 1)].z 
+            - a[1]*filter_out[FORMER(curr_idx, 1)].z 
+            + b[2]*filter_state[FORMER(curr_idx, 2)].z 
+            - a[2]*filter_out[FORMER(curr_idx, 2)].z 
+            + b[3]*filter_state[FORMER(curr_idx, 3)].z 
+            - a[3]*filter_out[FORMER(curr_idx, 3)].z
+            + b[4]*filter_state[FORMER(curr_idx, 4)].z
+            - a[4]*filter_out[FORMER(curr_idx, 4)].z;
+
+        if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
+
+            filter_out[curr_idx].z = filter_state[curr_idx].z; 
+        }
+
+#if 0 
+        // if((0 == (cnt3%3000)) || (1 == (cnt3%3000)))
+        // if(cnt3 < 20)
+        if((filter_out[curr_idx].z + 7000) > 0.0001)
+        {
+                hal.util->prt("[ %d us] ICM20689 filtered az from %.15f -> %.15f ", hal.scheduler->micros(), 
+                            filter_state[curr_idx].z, filter_out[curr_idx].z);
+            for(uint8_t ord = 0; ord < (N_ORDER + 1); ord++)
+            {
+                hal.util->prt("[ %d us] --- %.15f", hal.scheduler->micros(), filter_out[ord].z);
+            }
+        }
+#endif
+
+        ret.x = filter_out[curr_idx].x;
+        ret.y = filter_out[curr_idx].y;
+        ret.z = filter_out[curr_idx].z;
+
+        // update filter postion
+        curr_idx++;
+        
+    }
+    else
+    {
+        filter_state[curr_idx].x = _accl_in.x;
+        filter_state[curr_idx].y = _accl_in.y;
+        filter_state[curr_idx].z = _accl_in.z;
+
+        filter_out[curr_idx].x = filter_state[curr_idx].x;
+        filter_out[curr_idx].y = filter_state[curr_idx].y;
+        filter_out[curr_idx].z = filter_state[curr_idx].z;
+
+        // update filter postion
+        curr_idx++;
+        if(!(curr_idx %= (N_ORDER + 1)))
+        {
+            first = false;
+        }
+    }
+
+
+    // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
+    return ret;
+}
+Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
+{
+    static Vector3d filter_state[N_ORDER+1]; 
+    static Vector3d filter_out[N_ORDER+1]; 
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    Vector3f ret;
+    uint8_t ii = 0;
+    if(!first)
+    {
+        // update state
+        curr_idx %= N_ORDER + 1;
+        filter_state[curr_idx].x = _gyro_in.x;
+        filter_state[curr_idx].y = _gyro_in.y;
+        filter_state[curr_idx].z = _gyro_in.z;
+        // filter x: 
+        filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
+            + b[1]*filter_state[FORMER(curr_idx, 1)].x 
+            - a[1]*filter_out[FORMER(curr_idx, 1)].x 
+            + b[2]*filter_state[FORMER(curr_idx, 2)].x 
+            - a[2]*filter_out[FORMER(curr_idx, 2)].x 
+            + b[3]*filter_state[FORMER(curr_idx, 3)].x 
+            - a[3]*filter_out[FORMER(curr_idx, 3)].x
+            + b[4]*filter_state[FORMER(curr_idx, 4)].x
+            - a[4]*filter_out[FORMER(curr_idx, 4)].x;
+
+        if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
+
+            filter_out[curr_idx].x = filter_state[curr_idx].x; 
+        }
+
+        // filter y
+        filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
+            + b[1]*filter_state[FORMER(curr_idx, 1)].y 
+            - a[1]*filter_out[FORMER(curr_idx, 1)].y 
+            + b[2]*filter_state[FORMER(curr_idx, 2)].y 
+            - a[2]*filter_out[FORMER(curr_idx, 2)].y 
+            + b[3]*filter_state[FORMER(curr_idx, 3)].y 
+            - a[3]*filter_out[FORMER(curr_idx, 3)].y
+            + b[4]*filter_state[FORMER(curr_idx, 4)].y
+            - a[4]*filter_out[FORMER(curr_idx, 4)].y;
+
+        if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
+
+            filter_out[curr_idx].y = filter_state[curr_idx].y; 
+        }
+
+        // filter z
+        filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
+            + b[1]*filter_state[FORMER(curr_idx, 1)].z 
+            - a[1]*filter_out[FORMER(curr_idx, 1)].z 
+            + b[2]*filter_state[FORMER(curr_idx, 2)].z 
+            - a[2]*filter_out[FORMER(curr_idx, 2)].z 
+            + b[3]*filter_state[FORMER(curr_idx, 3)].z 
+            - a[3]*filter_out[FORMER(curr_idx, 3)].z
+            + b[4]*filter_state[FORMER(curr_idx, 4)].z
+            - a[4]*filter_out[FORMER(curr_idx, 4)].z;
+
+        if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
+
+            filter_out[curr_idx].z = filter_state[curr_idx].z; 
+        }
+
+#if 0 
+        // if((0 == (cnt3%3000)) || (1 == (cnt3%3000)))
+        // if(cnt3 < 20)
+        if((filter_out[curr_idx].z + 7000) > 0.0001)
+        {
+                hal.util->prt("[ %d us] ICM20689 filtered az from %.15f -> %.15f ", hal.scheduler->micros(), 
+                            filter_state[curr_idx].z, filter_out[curr_idx].z);
+            for(uint8_t ord = 0; ord < (N_ORDER + 1); ord++)
+            {
+                hal.util->prt("[ %d us] --- %.15f", hal.scheduler->micros(), filter_out[ord].z);
+            }
+        }
+#endif
+
+        ret.x = filter_out[curr_idx].x;
+        ret.y = filter_out[curr_idx].y;
+        ret.z = filter_out[curr_idx].z;
+
+        // update filter postion
+        curr_idx++;
+        
+    }
+    else
+    {
+        filter_state[curr_idx].x = _gyro_in.x;
+        filter_state[curr_idx].y = _gyro_in.y;
+        filter_state[curr_idx].z = _gyro_in.z;
+
+        filter_out[curr_idx].x = filter_state[curr_idx].x;
+        filter_out[curr_idx].y = filter_state[curr_idx].y;
+        filter_out[curr_idx].z = filter_state[curr_idx].z;
+
+        // update filter postion
+        curr_idx++;
+        if(!(curr_idx %= (N_ORDER + 1)))
+        {
+            first = false;
+        }
+    }
+
+
+    // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
+    return ret;
+}
+#endif
 
 #endif // CONFIG_HAL_BOARD

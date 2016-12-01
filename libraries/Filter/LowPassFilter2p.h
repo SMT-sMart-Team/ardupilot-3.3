@@ -21,6 +21,9 @@
 /// @file   LowPassFilter2p.h
 /// @brief  A class to implement a second order low pass filter
 /// Author: Leonard Hall <LeonardTHall@gmail.com>
+//
+// AB ZhaoYJ@2016-11-30 for extending float to double
+typedef double float_type; //float;
 
 class DigitalBiquadFilter
 {
@@ -32,11 +35,11 @@ public:
     struct biquad_params {
         float cutoff_freq;
         float sample_freq;
-        float a1;
-        float a2;
-        float b0;
-        float b1;
-        float b2;
+        float_type a1;
+        float_type a2;
+        float_type b0;
+        float_type b1;
+        float_type b2;
     };
 
     float apply(float sample, const struct biquad_params &params);
@@ -46,8 +49,8 @@ public:
     static void compute_params(float sample_freq, float cutoff_freq, biquad_params &ret);
 
 private:
-    float _delay_element_1;
-    float _delay_element_2;
+    float_type _delay_element_1;
+    float_type _delay_element_2;
 };
 
 class LowPassFilter2p

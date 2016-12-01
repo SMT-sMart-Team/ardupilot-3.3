@@ -809,6 +809,11 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
 #ifdef SMT_CAPTURE_IMU_RAW
     const Vector3f &gyro = ins.get_gyro_raw(0);
     const Vector3f &accel = ins.get_accel_raw(0);
+    // static uint16_t cntlog = 0;
+    // if((0 == cntlog%1000) || (1 == cntlog%1000))
+    // {
+    //     hal.util->prt("accel raw: %f,%f,%f", accel.x, accel.y, accel.z);
+    // }
 #else
     const Vector3f &gyro = ins.get_gyro(0);
     const Vector3f &accel = ins.get_accel(0);

@@ -245,7 +245,7 @@
 #endif
 
 // add by ZhaoYJ for capturing raw data in imu
-#define SMT_CAPTURE_IMU_RAW
+// #define SMT_CAPTURE_IMU_RAW
 
 // add by ZhaoYJ for new flight mode switch: CH5 (2 pos) + CH6 (3 pos)
 #define SMT_CH5_CH6_SWITCH

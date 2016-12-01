@@ -29,7 +29,7 @@ float DigitalBiquadFilter::apply(float sample, const struct biquad_params &param
         return sample;
     }
 
-    float delay_element_0 = sample - _delay_element_1 * params.a1 - _delay_element_2 * params.a2;
+    float_type delay_element_0 = sample - _delay_element_1 * params.a1 - _delay_element_2 * params.a2;
     if (isnan(delay_element_0) || isinf(delay_element_0)) {
         delay_element_0 = sample;
     }
@@ -46,9 +46,9 @@ void DigitalBiquadFilter::compute_params(float sample_freq, float cutoff_freq, b
     ret.cutoff_freq = cutoff_freq;
     ret.sample_freq = sample_freq;
 
-    float fr = sample_freq/cutoff_freq;
-    float ohm = tanf(PI/fr);
-    float c = 1.0f+2.0f*cosf(PI/4.0f)*ohm + ohm*ohm;
+    float_type fr = sample_freq/cutoff_freq;
+    float_type ohm = tanf(PI/fr);
+    float_type c = 1.0f+2.0f*cosf(PI/4.0f)*ohm + ohm*ohm;
 
     ret.b0 = ohm*ohm/c;
     ret.b1 = 2.0f*ret.b0;
