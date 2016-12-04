@@ -530,6 +530,9 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
 
 #if USER_FILTER
 
+    // imu_acc = _accel_filter.apply(imu_acc);
+
+    // imu_gyro = _gyro_filter.apply(imu_gyro);
 
     Vector3f _accel_filtered = _accel_user_filter(imu_acc);
 
