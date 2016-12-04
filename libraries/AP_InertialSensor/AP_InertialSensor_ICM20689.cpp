@@ -26,64 +26,43 @@ extern const AP_HAL::HAL& hal;
 
 extern bool start_cali;
 
-// AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyI filter
-#if USER_FILTER == 1 // fc=10Hz
-const double b[N_ORDER+1] = {    8.691272803641e-06,3.476509121456e-05,5.214763682184e-05,3.476509121456e-05,
-      8.691272803641e-06};
-const double a[N_ORDER+1] = {1,   -3.826392004832,     5.51663577273,   -3.551112726954,
-         0.8610249873516};
-#elif USER_FILTER == 2 // 20Hz
-const double b[N_ORDER+1] = {  0.0001298496353869,0.0005193985415477,0.0007790978123215,0.0005193985415477,
-      0.0001298496353869};
-const double a[N_ORDER+1] = {1,   -3.607896169129,    4.979470803751,   -3.110763682983,
-         0.7415201473558};
-#elif USER_FILTER == 3 // 30Hz
-const double b[N_ORDER+1] = {0.000616501437002, 0.002466005748008, 0.003699008622012, 0.002466005748008,
-       0.000616501437002};
-const double a[N_ORDER+1] = { 1,   -3.349053546167,    4.410141438955,   -2.688883812984,
-         0.6388635360264};
-#elif USER_FILTER == 4 // 40Hz
-const double b[N_ORDER+1] = {0.001835550372011, 0.007342201488043,  0.01101330223206, 0.007342201488043,
-       0.001835550372011};
-const double a[N_ORDER+1] = {1,   -3.054339676407,    3.828999227491,   -2.292451729406,
-         0.5507445205809};
 // AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyII filter
-#elif USER_FILTER == 5 // fc=10Hz
-const double b[N_ORDER+1] = {  0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
-      0.0009877867510385};
-const double a[N_ORDER+1] = {1,   -3.878129734999,    5.641762572816,   -3.648875955419,
-         0.8852477379956};
-// const double b[N_ORDER+1] = {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620, 0.001035118616347};
-// const double a[N_ORDER+1] = {1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321};
-#elif USER_FILTER == 6 // 20Hz
-const double b[N_ORDER+1] = {   0.001066578484441,-0.003520583754742, 0.004979264107821,-0.003520583754742,
-       0.001066578484441};
-const double a[N_ORDER+1] = {1,    -3.75490235187,    5.294313666885,    -3.32185631444,
-     0.7825162529919};
-#elif USER_FILTER == 7 // 30Hz
-const double b[N_ORDER+1] = { 0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
-   0.001235431141961};
-const double a[N_ORDER+1] = {1,   -3.628903305608,    4.954076395023,   -3.014454340388,
-     0.6896343805619};
-#elif USER_FILTER == 8 // 40Hz
-const double b[N_ORDER+1] = {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
-       0.001504023202492};
-const double a[N_ORDER+1] = {1,   -3.498597652843,    4.617828546747,     -2.7230591526,
-          0.604937864995};
-#elif USER_FILTER == 9 // 1Hz-20Hz
-const double b[N_ORDER+1] = {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620, 0.001035118616347};
-const double a[N_ORDER+1] = {1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321};
-#elif USER_FILTER == 10 // 2Hz
-const double b[N_ORDER+1] = {  0.0009898590037292,-0.003951630671045, 0.005923551035664,-0.003951630671045,
-      0.0009898590037292};
-const double a[N_ORDER+1] = {1,   -3.975669032622,    5.927302681588,   -3.927596156134,
-         0.9759625148687};
-#elif USER_FILTER == 11 // 5Hz
-const double b[N_ORDER+1] = { 0.0009820297557845,-0.003880052678305, 0.005796341733976,-0.003880052678305,
-      0.0009820297557845};
-const double a[N_ORDER+1] = {1,   -3.939149044189,    5.819291999087,   -3.821104108943,
-         0.9409614499347};
-#endif
+#define FILTER_TYPE 7 // 7 filters, 4 order with b & a
+const double ba[FILTER_TYPE][5*2] = {
+    // 0: fc=10Hz
+    {0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
+    0.0009877867510385,
+    1,   -3.878129734999,    5.641762572816,   -3.648875955419,
+    0.8852477379956},
+    // 1: fc=20Hz
+    {0.001066578484441,-0.003520583754742, 0.004979264107821,-0.003520583754742,
+    0.001066578484441,
+    1,    -3.75490235187,    5.294313666885,    -3.32185631444,
+    0.7825162529919},
+    // 2: fc=30Hz
+    { 0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
+    0.001235431141961,
+    1,   -3.628903305608,    4.954076395023,   -3.014454340388,
+    0.6896343805619},
+    // 3: 40Hz
+    {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
+    0.001504023202492,
+    1,   -3.498597652843,    4.617828546747,     -2.7230591526,
+    0.604937864995},
+    // 4: 1Hz-20Hz
+    {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620,     0.001035118616347,
+    1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321},
+    // 5: 2Hz
+    {0.0009898590037292,-0.003951630671045, 0.005923551035664,-0.003951630671045,
+    0.0009898590037292,
+    1,-3.975669032622,    5.927302681588,   -3.927596156134,
+    0.9759625148687},
+    // 6: 5Hz
+    {0.0009820297557845,-0.003880052678305, 0.005796341733976,-0.003880052678305,
+    0.0009820297557845,
+    1,-3.939149044189,    5.819291999087,   -3.821104108943,
+    0.9409614499347}
+};
 
 #define DUMP 0
 #if DUMP
@@ -739,117 +718,209 @@ void AP_InertialSensor_ICM20689::_dump_registers(AP_HAL::SPIDeviceDriver *spi)
 #if USER_FILTER 
 #define TEST_FILTER 0
 
-#define FORMER(curr, n) ((curr > n)?(curr - n):(curr + N_ORDER + 1 - n)%(N_ORDER + 1)) 
+#define FORMER(curr, n, array_size) ((curr >= n)?(curr - n):(curr + array_size - n)) 
+
+static double median_filter(double *pimu_in, uint8_t median_len)
+{
+    int i,j;
+    double ret;  
+    double bTemp;  
+
+      
+    for (j = 0; j < median_len; j ++)  
+    {  
+        for (i = 0; i < median_len - j; i ++)  
+        {  
+            if (pimu_in[i] > pimu_in[i + 1])  
+            {  
+                bTemp = pimu_in[i];  
+                pimu_in[i] = pimu_in[i + 1];  
+                pimu_in[i + 1] = bTemp;  
+            }  
+        }  
+    }  
+
+    // 计算中值  
+    if ((median_len & 1) > 0)  
+    {  
+        // 数组有奇数个元素，返回中间一个元素  
+        ret = pimu_in[(median_len + 1) / 2];  
+    }  
+    else  
+    {  
+        // 数组有偶数个元素，返回中间两个元素平均值  
+        ret = (pimu_in[median_len / 2] + pimu_in[median_len / 2 + 1]) / 2;  
+    }  
+  
+    return ret;  
+
+}
+
+
 Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in)
 {
-    static Vector3d filter_state[N_ORDER+1]; 
-    static Vector3d filter_out[N_ORDER+1]; 
+    //  for ChebyII
+#define FILTER_MAX_TAP 8
+    static Vector3d filter_state[FILTER_MAX_TAP]; 
+    static Vector3d filter_out[FILTER_MAX_TAP]; 
+    // for median filter: circular buff 64
+#define MED_TAP 64
+    static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
     uint8_t ii = 0;
+    // Chebyshev II
+    uint8_t uf = _imu.get_accl_user_filter();
+    const double *b;
+    const double *a;
+
+    // test median filter
+#if TEST_FILTER 
+    static uint32_t test_idx = 0;
+    uint32_t test_data[] = {10, 12, 11, 25, 9, 10 ,9, 45, 13, 12, 10,11, 78, 12, 12, 13, 10, 9};
+    _accl_in.x = test_data[test_idx++%18];
+    if(test_idx  > 40) exit(1);
+#endif
+
+    if(0xF != uf)
+    {
+        if(uf >= FILTER_TYPE) 
+        {
+            hal.util->prt("[Err] acc filter type wrong: %d", uf);
+            return ret;
+        }
+
+        b = &ba[0][0] + (N_ORDER+1)*2*uf;
+        a = b + (N_ORDER+1);
+
 #if TEST_FILTER 
     static uint32_t incr = 0;
-    _accl_in.z = -8000;
-    incr +=2;
-    if(incr == 200000)
+    // if((0 == incr%4000) || (1 == incr%4000) || (2 == incr%4000))
     {
-        hal.util->prt("test done");
-        hal.scheduler->panic("test done");
-    }
-#endif
-    if(!first)
-    {
-        // update state
-        curr_idx %= N_ORDER + 1;
-        filter_state[curr_idx].x = _accl_in.x;
-        filter_state[curr_idx].y = _accl_in.y;
-        filter_state[curr_idx].z = _accl_in.z;
-        // filter x: 
-        filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
-            + b[1]*filter_state[FORMER(curr_idx, 1)].x 
-            - a[1]*filter_out[FORMER(curr_idx, 1)].x 
-            + b[2]*filter_state[FORMER(curr_idx, 2)].x 
-            - a[2]*filter_out[FORMER(curr_idx, 2)].x 
-            + b[3]*filter_state[FORMER(curr_idx, 3)].x 
-            - a[3]*filter_out[FORMER(curr_idx, 3)].x
-            + b[4]*filter_state[FORMER(curr_idx, 4)].x
-            - a[4]*filter_out[FORMER(curr_idx, 4)].x;
-
-        if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
-
-            filter_out[curr_idx].x = filter_state[curr_idx].x; 
-        }
-
-        // filter y
-        filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
-            + b[1]*filter_state[FORMER(curr_idx, 1)].y 
-            - a[1]*filter_out[FORMER(curr_idx, 1)].y 
-            + b[2]*filter_state[FORMER(curr_idx, 2)].y 
-            - a[2]*filter_out[FORMER(curr_idx, 2)].y 
-            + b[3]*filter_state[FORMER(curr_idx, 3)].y 
-            - a[3]*filter_out[FORMER(curr_idx, 3)].y
-            + b[4]*filter_state[FORMER(curr_idx, 4)].y
-            - a[4]*filter_out[FORMER(curr_idx, 4)].y;
-
-        if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
-
-            filter_out[curr_idx].y = filter_state[curr_idx].y; 
-        }
-
-        // filter z
-        filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
-            + b[1]*filter_state[FORMER(curr_idx, 1)].z 
-            - a[1]*filter_out[FORMER(curr_idx, 1)].z 
-            + b[2]*filter_state[FORMER(curr_idx, 2)].z 
-            - a[2]*filter_out[FORMER(curr_idx, 2)].z 
-            + b[3]*filter_state[FORMER(curr_idx, 3)].z 
-            - a[3]*filter_out[FORMER(curr_idx, 3)].z
-            + b[4]*filter_state[FORMER(curr_idx, 4)].z
-            - a[4]*filter_out[FORMER(curr_idx, 4)].z;
-
-        if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
-
-            filter_out[curr_idx].z = filter_state[curr_idx].z; 
-        }
-
-#if 0 
-        // if((0 == (cnt3%3000)) || (1 == (cnt3%3000)))
-        // if(cnt3 < 20)
-        if((filter_out[curr_idx].z + 7000) > 0.0001)
-        {
-                hal.util->prt("[ %d us] ICM20689 filtered az from %.15f -> %.15f ", hal.scheduler->micros(), 
-                            filter_state[curr_idx].z, filter_out[curr_idx].z);
-            for(uint8_t ord = 0; ord < (N_ORDER + 1); ord++)
+#if 0
+        hal.util->prt("acc filter: %d", _imu.get_accl_user_filter());
+        hal.util->prt("gyro filter: %d", _imu.get_gyro_user_filter());
+        hal.util->prt("mean filter former: %d", _imu.get_mean_filter_former());
+        hal.util->prt("mean filter latter: %d", _imu.get_mean_filter_latter());
+        hal.util->prt("sizeof ba: %d", sizeof(ba));
+        hal.util->prt("filter b: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                b[0], b[1], b[2], b[3], b[4]);
+        hal.util->prt("filter a: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                a[0], a[1], a[2], a[3], a[4]);
+        hal.util->prt("ChebyII filter idx: curr_idx %d, %d, %d, %d, %d", 
+                curr_idx,
+                FORMER(curr_idx, 1, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 2, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 3, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 4, FILTER_MAX_TAP)); 
+        uint8_t med_f_len = _imu.get_mean_filter_former() + _imu.get_mean_filter_latter();
+        hal.util->prt("Median filter idx: len: %d, curr_idx %d", med_f_len, curr_idx);
+            for(uint8_t med_idx = 0; med_idx < med_f_len; med_idx++)
             {
-                hal.util->prt("[ %d us] --- %.15f", hal.scheduler->micros(), filter_out[ord].z);
+                uint8_t jj = (med_f_len - med_idx);
+                hal.util->prt("in idx: <%d>", FORMER(curr_idx, jj, MED_TAP));
             }
-        }
 #endif
 
-        ret.x = filter_out[curr_idx].x;
-        ret.y = filter_out[curr_idx].y;
-        ret.z = filter_out[curr_idx].z;
-
-        // update filter postion
-        curr_idx++;
-        
     }
-    else
-    {
-        filter_state[curr_idx].x = _accl_in.x;
-        filter_state[curr_idx].y = _accl_in.y;
-        filter_state[curr_idx].z = _accl_in.z;
-
-        filter_out[curr_idx].x = filter_state[curr_idx].x;
-        filter_out[curr_idx].y = filter_state[curr_idx].y;
-        filter_out[curr_idx].z = filter_state[curr_idx].z;
-
-        // update filter postion
-        curr_idx++;
-        if(!(curr_idx %= (N_ORDER + 1)))
+    incr++;
+#endif
+        if(!first)
         {
-            first = false;
+            // update state
+            filter_state[curr_idx].x = _accl_in.x;
+            filter_state[curr_idx].y = _accl_in.y;
+            filter_state[curr_idx].z = _accl_in.z;
+            // filter x: 
+            filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].x 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].x 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].x 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].x 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].x 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].x
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].x
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].x;
+
+            if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
+
+                filter_out[curr_idx].x = filter_state[curr_idx].x; 
+            }
+
+            // filter y
+            filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].y 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].y 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].y 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].y 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].y 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].y
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].y
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].y;
+
+            if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
+
+                filter_out[curr_idx].y = filter_state[curr_idx].y; 
+            }
+
+            // filter z
+            filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].z 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].z 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].z 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].z 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].z 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].z
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].z
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].z;
+
+            if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
+
+                filter_out[curr_idx].z = filter_state[curr_idx].z; 
+            }
+
+            ret.x = filter_out[curr_idx].x;
+            ret.y = filter_out[curr_idx].y;
+            ret.z = filter_out[curr_idx].z;
+
+            // update filter postion
+            curr_idx++;
+            curr_idx &= FILTER_MAX_TAP - 1;
+            
+        }
+    }
+    else // mean filter
+    {
+        uint8_t former = _imu.get_mean_filter_former();
+        uint8_t latter = _imu.get_mean_filter_latter();
+        uint8_t med_len = former + latter + 1; // include current in
+        if(med_len > 0)
+        {
+            double med_in_x[med_len]; 
+            double med_in_y[med_len];
+            double med_in_z[med_len];
+            med_filter_in[curr_idx].x = _accl_in.x;
+            med_filter_in[curr_idx].y = _accl_in.y;
+            med_filter_in[curr_idx].z = _accl_in.z;
+            for(uint8_t med_idx = 0; med_idx < med_len; med_idx++)
+            {
+                uint8_t dist = med_len - 1 - med_idx;
+                med_in_x[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].x;
+                med_in_y[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].y;
+                med_in_z[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
+            }
+            ret.x = median_filter(med_in_x, med_len);  
+            // hal.util->prt("median x: <%f>", ret.x);
+            ret.y = median_filter(med_in_y, med_len);  
+            ret.z = median_filter(med_in_z, med_len);  
+            curr_idx++;
+            curr_idx &= MED_TAP - 1;
+        }
+        else
+        {
+            hal.util->prt("[Err] acc mean filter param wrong: ");
+            return ret;
         }
     }
 
@@ -859,104 +930,128 @@ Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in)
 }
 Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
 {
-    static Vector3d filter_state[N_ORDER+1]; 
-    static Vector3d filter_out[N_ORDER+1]; 
+    //  for ChebyII
+#define FILTER_MAX_TAP 8
+    static Vector3d filter_state[FILTER_MAX_TAP]; 
+    static Vector3d filter_out[FILTER_MAX_TAP]; 
+    // for median filter: circular buff 64
+#define MED_TAP 64
+    static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
     uint8_t ii = 0;
-    if(!first)
+    // Chebyshev II
+    uint8_t uf = _imu.get_gyro_user_filter();
+    const double *b;
+    const double *a;
+
+
+    if(0xF != uf)
     {
-        // update state
-        curr_idx %= N_ORDER + 1;
-        filter_state[curr_idx].x = _gyro_in.x;
-        filter_state[curr_idx].y = _gyro_in.y;
-        filter_state[curr_idx].z = _gyro_in.z;
-        // filter x: 
-        filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
-            + b[1]*filter_state[FORMER(curr_idx, 1)].x 
-            - a[1]*filter_out[FORMER(curr_idx, 1)].x 
-            + b[2]*filter_state[FORMER(curr_idx, 2)].x 
-            - a[2]*filter_out[FORMER(curr_idx, 2)].x 
-            + b[3]*filter_state[FORMER(curr_idx, 3)].x 
-            - a[3]*filter_out[FORMER(curr_idx, 3)].x
-            + b[4]*filter_state[FORMER(curr_idx, 4)].x
-            - a[4]*filter_out[FORMER(curr_idx, 4)].x;
-
-        if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
-
-            filter_out[curr_idx].x = filter_state[curr_idx].x; 
-        }
-
-        // filter y
-        filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
-            + b[1]*filter_state[FORMER(curr_idx, 1)].y 
-            - a[1]*filter_out[FORMER(curr_idx, 1)].y 
-            + b[2]*filter_state[FORMER(curr_idx, 2)].y 
-            - a[2]*filter_out[FORMER(curr_idx, 2)].y 
-            + b[3]*filter_state[FORMER(curr_idx, 3)].y 
-            - a[3]*filter_out[FORMER(curr_idx, 3)].y
-            + b[4]*filter_state[FORMER(curr_idx, 4)].y
-            - a[4]*filter_out[FORMER(curr_idx, 4)].y;
-
-        if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
-
-            filter_out[curr_idx].y = filter_state[curr_idx].y; 
-        }
-
-        // filter z
-        filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
-            + b[1]*filter_state[FORMER(curr_idx, 1)].z 
-            - a[1]*filter_out[FORMER(curr_idx, 1)].z 
-            + b[2]*filter_state[FORMER(curr_idx, 2)].z 
-            - a[2]*filter_out[FORMER(curr_idx, 2)].z 
-            + b[3]*filter_state[FORMER(curr_idx, 3)].z 
-            - a[3]*filter_out[FORMER(curr_idx, 3)].z
-            + b[4]*filter_state[FORMER(curr_idx, 4)].z
-            - a[4]*filter_out[FORMER(curr_idx, 4)].z;
-
-        if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
-
-            filter_out[curr_idx].z = filter_state[curr_idx].z; 
-        }
-
-#if 0 
-        // if((0 == (cnt3%3000)) || (1 == (cnt3%3000)))
-        // if(cnt3 < 20)
-        if((filter_out[curr_idx].z + 7000) > 0.0001)
+        if(uf >= FILTER_TYPE) 
         {
-                hal.util->prt("[ %d us] ICM20689 filtered az from %.15f -> %.15f ", hal.scheduler->micros(), 
-                            filter_state[curr_idx].z, filter_out[curr_idx].z);
-            for(uint8_t ord = 0; ord < (N_ORDER + 1); ord++)
-            {
-                hal.util->prt("[ %d us] --- %.15f", hal.scheduler->micros(), filter_out[ord].z);
+            hal.util->prt("[Err] gyro filter type wrong: %d", uf);
+            return ret;
+        }
+
+        b = &ba[0][0] + (N_ORDER+1)*2*uf;
+        a = b + (N_ORDER+1);
+
+        if(!first)
+        {
+            // update state
+            filter_state[curr_idx].x = _gyro_in.x;
+            filter_state[curr_idx].y = _gyro_in.y;
+            filter_state[curr_idx].z = _gyro_in.z;
+            // filter x: 
+            filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].x 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].x 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].x 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].x 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].x 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].x
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].x
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].x;
+
+            if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
+
+                filter_out[curr_idx].x = filter_state[curr_idx].x; 
             }
+
+            // filter y
+            filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].y 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].y 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].y 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].y 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].y 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].y
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].y
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].y;
+
+            if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
+
+                filter_out[curr_idx].y = filter_state[curr_idx].y; 
+            }
+
+            // filter z
+            filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].z 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].z 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].z 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].z 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].z 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].z
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].z
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].z;
+
+            if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
+
+                filter_out[curr_idx].z = filter_state[curr_idx].z; 
+            }
+
+            ret.x = filter_out[curr_idx].x;
+            ret.y = filter_out[curr_idx].y;
+            ret.z = filter_out[curr_idx].z;
+
+            // update filter postion
+            curr_idx++;
+            curr_idx &= FILTER_MAX_TAP - 1;
+            
         }
-#endif
-
-        ret.x = filter_out[curr_idx].x;
-        ret.y = filter_out[curr_idx].y;
-        ret.z = filter_out[curr_idx].z;
-
-        // update filter postion
-        curr_idx++;
-        
     }
-    else
+    else // mean filter
     {
-        filter_state[curr_idx].x = _gyro_in.x;
-        filter_state[curr_idx].y = _gyro_in.y;
-        filter_state[curr_idx].z = _gyro_in.z;
-
-        filter_out[curr_idx].x = filter_state[curr_idx].x;
-        filter_out[curr_idx].y = filter_state[curr_idx].y;
-        filter_out[curr_idx].z = filter_state[curr_idx].z;
-
-        // update filter postion
-        curr_idx++;
-        if(!(curr_idx %= (N_ORDER + 1)))
+        uint8_t former = _imu.get_mean_filter_former();
+        uint8_t latter = _imu.get_mean_filter_latter();
+        uint8_t med_len = former + latter + 1; // include current in
+        if(med_len > 0)
         {
-            first = false;
+            double med_in_x[med_len]; 
+            double med_in_y[med_len];
+            double med_in_z[med_len];
+            med_filter_in[curr_idx].x = _gyro_in.x;
+            med_filter_in[curr_idx].y = _gyro_in.y;
+            med_filter_in[curr_idx].z = _gyro_in.z;
+            for(uint8_t med_idx = 0; med_idx < med_len; med_idx++)
+            {
+                uint8_t dist = med_len - 1 - med_idx;
+                med_in_x[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].x;
+                med_in_y[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].y;
+                med_in_z[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
+            }
+            ret.x = median_filter(med_in_x, med_len);  
+            ret.y = median_filter(med_in_y, med_len);  
+            ret.z = median_filter(med_in_z, med_len);  
+            curr_idx++;
+            curr_idx &= MED_TAP - 1;
+        }
+        else
+        {
+            hal.util->prt("[Err] gyro mean filter param wrong: ");
+            return ret;
         }
     }
 

@@ -213,6 +213,12 @@ public:
     // get the gyro filter rate in Hz
     uint8_t get_gyro_filter_hz(void) const { return _gyro_filter_cutoff; }
 
+    // get ddd gyro filter rate in Hz
+    uint8_t get_accl_user_filter(void) const { return _accl_user_filter[0]; }
+    uint8_t get_gyro_user_filter(void) const { return _gyro_user_filter[0]; }
+    uint8_t get_mean_filter_former(void) const { return _mean_filter_former[0]; }
+    uint8_t get_mean_filter_latter(void) const { return _mean_filter_latter[0]; }
+
     // get the accel filter rate in Hz
     uint8_t get_accel_filter_hz(void) const { return _accel_filter_cutoff; }
 
@@ -329,6 +335,12 @@ private:
 
     // use for attitude, velocity, position estimates
     AP_Int8     _use[INS_MAX_INSTANCES];
+
+    // AB ZhaoYJ@2016-12-04 for user filter
+    AP_Int8 _accl_user_filter[INS_MAX_INSTANCES];
+    AP_Int8 _gyro_user_filter[INS_MAX_INSTANCES];
+    AP_Int8 _mean_filter_former[INS_MAX_INSTANCES];
+    AP_Int8 _mean_filter_latter[INS_MAX_INSTANCES];
 
     // board orientation from AHRS
     enum Rotation _board_orientation;
