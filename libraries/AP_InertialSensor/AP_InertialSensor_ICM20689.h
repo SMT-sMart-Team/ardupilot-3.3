@@ -15,7 +15,7 @@
 #define ICM20689_DEBUG 0
 
 // AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyI filter
-#define USER_FILTER 6
+#define USER_FILTER 1
 #define N_ORDER 4
 
 class AP_InertialSensor_ICM20689 : public AP_InertialSensor_Backend
@@ -74,8 +74,10 @@ private:
     void _set_gyro_filter(uint8_t filter_hz);
 
 #if USER_FILTER 
-    Vector3f _accel_user_filter(Vector3f _accl_in);
-    Vector3f _gyro_user_filter(Vector3f _gyro_in);
+    Vector3f _accel_user_filter(Vector3f _accl_in, uint8_t _uf);
+    Vector3f _gyro_user_filter(Vector3f _gyro_in, uint8_t _uf);
+    Vector3f _accel_median_filter(Vector3f _accl_in);
+    Vector3f _gyro_median_filter(Vector3f _gyro_in);
 #endif
 
     // This structure is used to pass data from the timer which reads

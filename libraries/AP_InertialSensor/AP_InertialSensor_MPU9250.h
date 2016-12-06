@@ -15,7 +15,7 @@
 #define MPU9250_DEBUG 0
 
 // AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyI filter
-#define USER_FILTER 6
+// #define USER_FILTER 6
 #define N_ORDER 4
 
 class AP_InertialSensor_MPU9250 : public AP_InertialSensor_Backend

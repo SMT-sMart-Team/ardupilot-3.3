@@ -512,10 +512,50 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     // imu_acc = _accel_filter.apply(imu_acc);
 
     // imu_gyro = _gyro_filter.apply(imu_gyro);
+    //
+    uint8_t acc_user_ft = _imu.get_accl_user_filter();
+    uint8_t gyro_user_ft = _imu.get_accl_user_filter();
 
-    Vector3f _accel_filtered = _accel_user_filter(imu_acc);
+    Vector3f _accel_filtered;
+    Vector3f _gyro_filtered;
 
-    Vector3f _gyro_filtered = _gyro_user_filter(imu_gyro);
+    if(acc_user_ft < 0xF) // ChebyII
+    {
+        _accel_filtered = _accel_user_filter(imu_acc, acc_user_ft);
+    }
+    else if(acc_user_ft == 0xF) // median
+    {
+        _accel_filtered = _accel_median_filter(imu_acc);
+    }
+    else if(acc_user_ft == 0x1F) // median + ChebyII(20Hz)
+    {
+        _accel_filtered = _accel_median_filter(imu_acc);
+        _accel_filtered = _accel_user_filter(_accel_filtered, 1);
+    }
+    else if(acc_user_ft == 0x2F) // ChebyII(20Hz) + median 
+    {
+        _accel_filtered = _accel_user_filter(imu_acc, 1);
+        _accel_filtered = _accel_median_filter(_accel_filtered);
+    }
+
+    if(gyro_user_ft < 0xF) // ChebyII
+    {
+        _gyro_filtered = _gyro_user_filter(imu_gyro, gyro_user_ft);
+    }
+    else if(gyro_user_ft == 0xF) // median
+    {
+        _gyro_filtered = _gyro_median_filter(imu_gyro);
+    }
+    else if(gyro_user_ft == 0x1F) // median + ChebyII(20Hz)
+    {
+        _gyro_filtered = _gyro_median_filter(imu_gyro);
+        _gyro_filtered = _gyro_user_filter(_gyro_filtered, 1);
+    }
+    else if(gyro_user_ft == 0x2F) // ChebyII(20Hz) + median 
+    {
+        _gyro_filtered = _gyro_user_filter(imu_gyro, 1);
+        _gyro_filtered = _gyro_median_filter(_gyro_filtered);
+    }
 
 #else
     Vector3f _accel_filtered = _accel_filter.apply(imu_acc);
@@ -757,41 +797,29 @@ static double median_filter(double *pimu_in, uint8_t median_len)
 }
 
 
-Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in)
+Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in, uint8_t _uf)
 {
     //  for ChebyII
 #define FILTER_MAX_TAP 8
     static Vector3d filter_state[FILTER_MAX_TAP]; 
     static Vector3d filter_out[FILTER_MAX_TAP]; 
-    // for median filter: circular buff 64
-#define MED_TAP 64
-    static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
     uint8_t ii = 0;
     // Chebyshev II
-    uint8_t uf = _imu.get_accl_user_filter();
     const double *b;
     const double *a;
 
-    // test median filter
-#if TEST_FILTER 
-    static uint32_t test_idx = 0;
-    uint32_t test_data[] = {10, 12, 11, 25, 9, 10 ,9, 45, 13, 12, 10,11, 78, 12, 12, 13, 10, 9};
-    _accl_in.x = test_data[test_idx++%18];
-    if(test_idx  > 40) exit(1);
-#endif
 
-    if(0xF != uf)
     {
-        if(uf >= FILTER_TYPE) 
+        if(_uf >= FILTER_TYPE) 
         {
-            hal.util->prt("[Err] acc filter type wrong: %d", uf);
+            hal.util->prt("[Err] acc filter type wrong: %d", _uf);
             return ret;
         }
 
-        b = &ba[0][0] + (N_ORDER+1)*2*uf;
+        b = &ba[0][0] + (N_ORDER+1)*2*_uf;
         a = b + (N_ORDER+1);
 
 #if TEST_FILTER 
@@ -890,7 +918,21 @@ Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in)
             
         }
     }
-    else // mean filter
+
+    // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
+    return ret;
+}
+
+Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
+{
+    // for median filter: circular buff 16
+#define MED_TAP 64
+    static Vector3d med_filter_in[MED_TAP];
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    Vector3f ret;
+    uint8_t ii = 0;
+
     {
         uint8_t former = _imu.get_mean_filter_former();
         uint8_t latter = _imu.get_mean_filter_latter();
@@ -928,36 +970,64 @@ Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in)
     // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
     return ret;
 }
-Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
+
+Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in, uint8_t _uf)
 {
     //  for ChebyII
 #define FILTER_MAX_TAP 8
     static Vector3d filter_state[FILTER_MAX_TAP]; 
     static Vector3d filter_out[FILTER_MAX_TAP]; 
-    // for median filter: circular buff 64
-#define MED_TAP 64
-    static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
     uint8_t ii = 0;
     // Chebyshev II
-    uint8_t uf = _imu.get_gyro_user_filter();
     const double *b;
     const double *a;
 
 
-    if(0xF != uf)
     {
-        if(uf >= FILTER_TYPE) 
+        if(_uf >= FILTER_TYPE) 
         {
-            hal.util->prt("[Err] gyro filter type wrong: %d", uf);
+            hal.util->prt("[Err] gyro filter type wrong: %d", _uf);
             return ret;
         }
 
-        b = &ba[0][0] + (N_ORDER+1)*2*uf;
+        b = &ba[0][0] + (N_ORDER+1)*2*_uf;
         a = b + (N_ORDER+1);
 
+#if TEST_FILTER 
+    static uint32_t incr = 0;
+    // if((0 == incr%4000) || (1 == incr%4000) || (2 == incr%4000))
+    {
+#if 0
+        hal.util->prt("acc filter: %d", _imu.get_accl_user_filter());
+        hal.util->prt("gyro filter: %d", _imu.get_gyro_user_filter());
+        hal.util->prt("mean filter former: %d", _imu.get_mean_filter_former());
+        hal.util->prt("mean filter latter: %d", _imu.get_mean_filter_latter());
+        hal.util->prt("sizeof ba: %d", sizeof(ba));
+        hal.util->prt("filter b: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                b[0], b[1], b[2], b[3], b[4]);
+        hal.util->prt("filter a: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                a[0], a[1], a[2], a[3], a[4]);
+        hal.util->prt("ChebyII filter idx: curr_idx %d, %d, %d, %d, %d", 
+                curr_idx,
+                FORMER(curr_idx, 1, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 2, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 3, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 4, FILTER_MAX_TAP)); 
+        uint8_t med_f_len = _imu.get_mean_filter_former() + _imu.get_mean_filter_latter();
+        hal.util->prt("Median filter idx: len: %d, curr_idx %d", med_f_len, curr_idx);
+            for(uint8_t med_idx = 0; med_idx < med_f_len; med_idx++)
+            {
+                uint8_t jj = (med_f_len - med_idx);
+                hal.util->prt("in idx: <%d>", FORMER(curr_idx, jj, MED_TAP));
+            }
+#endif
+
+    }
+    incr++;
+#endif
         if(!first)
         {
             // update state
@@ -1022,7 +1092,21 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
             
         }
     }
-    else // mean filter
+
+    // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
+    return ret;
+}
+
+Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
+{
+    // for median filter: circular buff 16
+#define MED_TAP 64
+    static Vector3d med_filter_in[MED_TAP];
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    Vector3f ret;
+    uint8_t ii = 0;
+
     {
         uint8_t former = _imu.get_mean_filter_former();
         uint8_t latter = _imu.get_mean_filter_latter();
@@ -1043,6 +1127,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
                 med_in_z[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
             }
             ret.x = median_filter(med_in_x, med_len);  
+            // hal.util->prt("median x: <%f>", ret.x);
             ret.y = median_filter(med_in_y, med_len);  
             ret.z = median_filter(med_in_z, med_len);  
             curr_idx++;
@@ -1050,7 +1135,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
         }
         else
         {
-            hal.util->prt("[Err] gyro mean filter param wrong: ");
+            hal.util->prt("[Err] acc mean filter param wrong: ");
             return ret;
         }
     }
@@ -1059,6 +1144,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in)
     // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
     return ret;
 }
+
 #endif
 
 #endif // CONFIG_HAL_BOARD
