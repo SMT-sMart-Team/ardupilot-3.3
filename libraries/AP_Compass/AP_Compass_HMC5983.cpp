@@ -213,8 +213,10 @@ void AP_Compass_HMC5983::accumulate(void)
         return;
     }
    uint32_t tnow = hal.scheduler->micros();
-   if (_accum_count != 0 && (tnow - _last_accum_time) < 13333) {
-	  // the compass gets new data at 75Hz
+   // if (_accum_count != 0 && (tnow - _last_accum_time) < 13333) {
+   // the compass gets new data 75Hz 
+   if (_accum_count != 0 && (tnow - _last_accum_time) < 5000) {
+	  // the compass gets new data at 200Hz
 	  return;
    }
 
@@ -347,7 +349,8 @@ AP_Compass_HMC5983::init()
 
         // set gains
         if (!write_register(ConfigRegB, calibration_gain) ||
-            !write_register(ModeRegister, SingleConversion))
+            // !write_register(ModeRegister, SingleConversion))
+            !write_register(ModeRegister, ContinuousConversion))
         {
             hal.util->prt("wr configB & mode error");
             continue;

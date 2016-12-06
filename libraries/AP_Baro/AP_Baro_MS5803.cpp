@@ -89,9 +89,9 @@ sensor. Information from MS tells us that some individual sensors
 are quite sensitive to this effect and that reducing the OSR can
 make a big difference
 */
-static const uint8_t ADDR_CMD_CONVERT_PRESSURE = ADDR_CMD_CONVERT_D1_OSR4096; // ADDR_CMD_CONVERT_D1_OSR1024;
-static const uint8_t ADDR_CMD_CONVERT_TEMPERATURE = ADDR_CMD_CONVERT_D2_OSR4096; // ADDR_CMD_CONVERT_D2_OSR1024;
-static const uint32_t CONVERSION_TIME = CONVERSION_TIME_OSR_4096; // CONVERSION_TIME_OSR_1024;
+static const uint8_t ADDR_CMD_CONVERT_PRESSURE = ADDR_CMD_CONVERT_D1_OSR1024; // ADDR_CMD_CONVERT_D1_OSR4096
+static const uint8_t ADDR_CMD_CONVERT_TEMPERATURE = ADDR_CMD_CONVERT_D2_OSR1024; // ADDR_CMD_CONVERT_D2_OSR4096;
+static const uint32_t CONVERSION_TIME = CONVERSION_TIME_OSR_1024; //CONVERSION_TIME_OSR_4096;
 
 
 #define MS5803_TEMP_SCALE                                       (float)(100.0)
