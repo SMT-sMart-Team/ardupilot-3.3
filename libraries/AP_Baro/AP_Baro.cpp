@@ -72,6 +72,7 @@ AP_Baro::AP_Baro() :
         _hil_mode(false)
 {
     memset(sensors, 0, sizeof(sensors));
+    memset(sensors_raw, 0, sizeof(sensors));
 
     AP_Param::setup_object_defaults(this, var_info);
 }

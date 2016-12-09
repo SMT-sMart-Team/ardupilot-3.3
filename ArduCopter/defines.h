@@ -273,6 +273,9 @@ enum FlipState {
 #define MASK_LOG_MOTBATT                (1UL<<17)
 #define MASK_LOG_IMU_FAST               (1UL<<18)
 #define MASK_LOG_IMU_RAW                (1UL<<19)
+// AB ZhaoYJ@2016-12-09 for raw compass and raw baro in about 200Hz
+#define MASK_LOG_BARO_200HZ_RAW                (1UL<<20)
+#define MASK_LOG_COMPASS_200HZ_RAW                (1UL<<21)
 #define MASK_LOG_ANY                    0xFFFF
 
 // DATA - event logging

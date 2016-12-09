@@ -24,6 +24,7 @@ protected:
     AP_Baro &_frontend;
 
     void _copy_to_frontend(uint8_t instance, float pressure, float temperature);
+    void _copy_to_frontend_raw(uint8_t instance, float pressure, float temperature);
 };
 
 #endif // __AP_BARO_BACKEND_H__
