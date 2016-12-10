@@ -958,7 +958,7 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
             static uint32_t cnt_xx = 0;
             if((0 == (cnt_xx%1000)) || (1 == (cnt_xx%1000)))
             {
-                hal.util->prt("median x: <%f>, med_len: %d", ret.x, med_len);
+                hal.util->prt("ffffmedian x: <%f>, med_len: %d", ret.x, med_len);
                 hal.util->prt("median x: before <%f>, current <%f>, average <%f>", med_in_x[med_len/2 - 1], med_in_x[med_len/2], (med_in_x[med_len/2 - 1]+med_in_x[med_len/2])/2);
             }
             cnt_xx++;

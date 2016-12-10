@@ -301,14 +301,14 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Description: User defined filter
     // @Values: 0:original,1:CI-10Hz
     // @User: Advanced
-    AP_GROUPINFO("ACC_UF", 23, AP_InertialSensor, _accl_user_filter[0],  6),
+    AP_GROUPINFO("ACC_UF", 23, AP_InertialSensor, _accl_user_filter[0],  47),
 
     // @Param: GYRO_USER_FILTER 
     // @DisplayName: 
     // @Description: User defined filter
     // @Values: 0:original,1:CI-10Hz
     // @User: Advanced
-    AP_GROUPINFO("GYRO_UF", 24, AP_InertialSensor, _gyro_user_filter[0],  6),
+    AP_GROUPINFO("GYRO_UF", 24, AP_InertialSensor, _gyro_user_filter[0],  47),
 
     // @Param: MEAN_FILTER_FORMER 
     //
@@ -316,7 +316,7 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Description: mean filter former num
     // @Values: 
     // @User: Advanced
-    AP_GROUPINFO("FORMER", 25, AP_InertialSensor, _mean_filter_former[0],  3),
+    AP_GROUPINFO("FORMER", 25, AP_InertialSensor, _mean_filter_former[0],  5),
 
     // @Param: MEAN_FILTER_LATTER
     //
@@ -324,7 +324,7 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @Description: mean filter latter num
     // @Values: 
     // @User: Advanced
-    AP_GROUPINFO("LATTER", 26, AP_InertialSensor, _mean_filter_latter[0],  2),
+    AP_GROUPINFO("LATTER", 26, AP_InertialSensor, _mean_filter_latter[0],  5),
 
     AP_GROUPEND
 };
@@ -910,7 +910,7 @@ AP_InertialSensor::_init_gyro()
     }
 
     // make sure imu warm up down
-    for(int8_t c = 0; c < 20; c++) {
+    for(int8_t c = 0; c < 30; c++) {
         hal.scheduler->delay(5);
         update();
     }
