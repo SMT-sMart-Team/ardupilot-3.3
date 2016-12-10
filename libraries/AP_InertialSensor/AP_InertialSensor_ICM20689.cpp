@@ -940,9 +940,9 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
         uint8_t med_len = former + latter + 1; // include current in
         if(med_len > 1)
         {
-            double med_in_x[med_len]; 
-            double med_in_y[med_len];
-            double med_in_z[med_len];
+            double med_in_x[MED_TAP]; 
+            double med_in_y[MED_TAP];
+            double med_in_z[MED_TAP];
             med_filter_in[curr_idx].x = _accl_in.x;
             med_filter_in[curr_idx].y = _accl_in.y;
             med_filter_in[curr_idx].z = _accl_in.z;
@@ -1133,9 +1133,9 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
         uint8_t med_len = former + latter + 1; // include current in
         if(med_len > 1)
         {
-            double med_in_x[med_len]; 
-            double med_in_y[med_len];
-            double med_in_z[med_len];
+            double med_in_x[MED_TAP]; 
+            double med_in_y[MED_TAP];
+            double med_in_z[MED_TAP];
             gyro_med_filter_in[curr_idx].x = _gyro_in.x;
             gyro_med_filter_in[curr_idx].y = _gyro_in.y;
             gyro_med_filter_in[curr_idx].z = _gyro_in.z;
