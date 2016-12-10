@@ -9,6 +9,8 @@
 #include "Compass.h"
 #include "AP_Compass_Backend.h"
 
+#define RT_TIMER 1 // add _timer(read_raw data) to rt_timer funcs
+
 class AP_HMC5983_SerialBus
 {
 public:
@@ -79,6 +81,7 @@ public:
     AP_Compass_HMC5983(Compass &compass, AP_HMC5983_SerialBus *bus);
     bool        init(void);
     void        read(void);
+    void        _timer(void);
     void        accumulate(void);
 
     // detect the sensor

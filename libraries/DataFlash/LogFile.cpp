@@ -782,7 +782,11 @@ void DataFlash_Class::Log_Write_Baro(AP_Baro &baro)
         LOG_PACKET_HEADER_INIT(LOG_BARO_MSG),
         time_us       : time_us,
         altitude      : baro.get_altitude(0),
+#ifdef SMT_CAPTURE_BARO_RAW
+        pressure      : baro.get_pressure_raw(0),
+#else
         pressure      : baro.get_pressure(0),
+#endif
         temperature   : (int16_t)(baro.get_temperature(0) * 100),
         climbrate     : baro.get_climb_rate()
     };
@@ -1337,7 +1341,11 @@ void DataFlash_Class::Log_Write_Current(const AP_BattMonitor &battery, int16_t t
 // Write a Compass packet
 void DataFlash_Class::Log_Write_Compass(const Compass &compass)
 {
+#ifdef SMT_CAPTURE_COMPASS_RAW
+    const Vector3f &mag_field = compass.get_field_raw(0);
+#else
     const Vector3f &mag_field = compass.get_field(0);
+#endif
     const Vector3f &mag_offsets = compass.get_offsets(0);
     const Vector3f &mag_motor_offsets = compass.get_motor_offsets(0);   
     struct log_Compass pkt = {

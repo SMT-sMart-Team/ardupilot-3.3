@@ -41,6 +41,28 @@ void AP_Compass_Backend::publish_field(const Vector3f &mag, uint8_t instance)
     state.last_update_usec = hal.scheduler->micros();
 }
 
+void AP_Compass_Backend::publish_field_raw(const Vector3f &mag, uint8_t instance) 
+{
+    Compass::mag_state &state = _compass._state[instance];
+
+    state.field_raw = mag;
+
+    // apply default board orientation for this compass type. This is
+    // a noop on most boards
+    state.field_raw.rotate(MAG_BOARD_ORIENTATION);
+
+    if (!state.external) {
+        // and add in AHRS_ORIENTATION setting if not an external compass
+        state.field_raw.rotate(_compass._board_orientation);
+    } else {
+        // add user selectable orientation
+        state.field_raw.rotate((enum Rotation)state.orientation.get());
+    }
+
+    apply_corrections(state.field_raw, instance);
+
+}
+
 /*
   register a new backend with frontend, returning instance which
   should be used in publish_field()

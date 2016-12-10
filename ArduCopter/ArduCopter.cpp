@@ -455,6 +455,19 @@ void Copter::full_rate_logging_loop()
     if (should_log(MASK_LOG_IMU_FAST) || should_log(MASK_LOG_IMU_RAW)) {
         DataFlash.Log_Write_IMUDT(ins);
     }
+
+    static uint8_t cnt = 0;
+    if(cnt&0x1)
+    {
+        if (should_log(MASK_LOG_BARO_200HZ_RAW)) {
+            DataFlash.Log_Write_Baro(barometer);
+        }
+
+        if (should_log(MASK_LOG_COMPASS_200HZ_RAW)) {
+            DataFlash.Log_Write_Compass(compass);
+        }
+    }
+    cnt++;
 }
 
 // three_hz_loop - 3.3hz loop

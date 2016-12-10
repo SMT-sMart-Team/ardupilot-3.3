@@ -402,6 +402,30 @@ void AP_Baro_MS58XX::_timer(void)
                 // board. These may be SPI errors, but safest to ignore
                 _s_D1 += d1;
                 _d1_count++;
+
+                // record raw pressure
+
+#ifdef SMT_CAPTURE_BARO_RAW
+                // if(_frontend.is_log_raw())
+                {
+	                // float dT = _D2 - (((uint32_t) _C5) << 8);
+	                // // TEMP = 2000 + (dT * _C6) / 8388608;
+	                // float OFF = (_C2 << 16) + (_C4 * dT) / 128;
+	                // float SENS = (_C1 << 15) + (_C3 * dT) / 256;
+                    // float pressure = (_D1*SENS/2097152 - OFF)/32768;
+                    // float temperature = (TEMP + 2000) * 0.01f;
+#if 0
+                    static uint32_t log_raw_cnt = 0;
+                    if((0 == (log_raw_cnt%1000)) || (1 == (log_raw_cnt%1000))) 
+                    {
+                        hal.util->prt("[%d us]: baro capture raw", hal.scheduler->micros());
+                    }
+                    log_raw_cnt++;
+#endif
+	                _copy_to_frontend_raw(_instance, d1, 0x88);
+                }
+#endif
+
 #if DUMP_D1
                 if(start_cali_baro)
                 {

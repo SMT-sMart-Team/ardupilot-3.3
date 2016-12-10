@@ -199,12 +199,38 @@ bool AP_Compass_HMC5983::read_raw()
     _mag_y =  ry;
     _mag_z = -rz;
 
+#ifdef SMT_CAPTURE_COMPASS_RAW
+#if 0
+    static uint32_t log_raw_cnt = 0;
+    if((0 == (log_raw_cnt%1000)) || (1 == (log_raw_cnt%1000))) 
+    {
+        hal.util->prt("[%d us]: compass capture raw", hal.scheduler->micros());
+    }
+    log_raw_cnt++;
+#endif
+    publish_field_raw(Vector3f(_mag_x, _mag_y, _mag_z), _compass_instance);
+#endif
+
     return true;
 }
 
 
 // accumulate a reading from the magnetometer
 void AP_Compass_HMC5983::accumulate(void)
+{
+    if (!_initialised) {
+        // someone has tried to enable a compass for the first time
+        // mid-flight .... we can't do that yet (especially as we won't
+        // have the right orientation!)
+        return;
+    }
+#if !RT_TIMER
+    _timer();
+#endif
+}
+
+// reading from the magnetometer
+void AP_Compass_HMC5983::_timer(void)
 {
     if (!_initialised) {
         // someone has tried to enable a compass for the first time
@@ -246,7 +272,6 @@ void AP_Compass_HMC5983::accumulate(void)
 	  _last_accum_time = tnow;
    }
 }
-
 
 /*
  *  re-initialise after a IO error
@@ -442,6 +467,10 @@ AP_Compass_HMC5983::init()
         // register the compass instance in the frontend
         _compass_instance = register_compass();
         set_dev_id(_compass_instance, _product_id);
+
+#if RT_TIMER
+    hal.scheduler->register_timer_process(FUNCTOR_BIND_MEMBER(&AP_Compass_HMC5983::_timer, void));
+#endif
     }
 
     return success;

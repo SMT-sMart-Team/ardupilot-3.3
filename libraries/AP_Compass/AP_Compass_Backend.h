@@ -46,6 +46,7 @@ public:
 protected:
     // publish a magnetic field vector to the frontend
     void publish_field(const Vector3f &mag, uint8_t instance);
+    void publish_field_raw(const Vector3f &mag, uint8_t instance);
 
     // register a new compass instance with the frontend
     uint8_t register_compass(void) const;

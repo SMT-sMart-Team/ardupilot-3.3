@@ -143,6 +143,8 @@ private:
     // what is the primary sensor at the moment?
     uint8_t _primary;
 
+    uint8_t _log_raw[BARO_MAX_DRIVERS];
+
     struct sensor {
         uint32_t last_update_ms;        // last update time in ms
         bool healthy:1;                 // true if sensor is healthy
