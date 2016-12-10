@@ -514,7 +514,7 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     // imu_gyro = _gyro_filter.apply(imu_gyro);
     //
     uint8_t acc_user_ft = _imu.get_accl_user_filter();
-    uint8_t gyro_user_ft = _imu.get_accl_user_filter();
+    uint8_t gyro_user_ft = _imu.get_gyro_user_filter();
 
     Vector3f _accel_filtered;
     Vector3f _gyro_filtered;
@@ -784,12 +784,12 @@ static double median_filter(double *pimu_in, uint8_t median_len)
     if ((median_len & 1) > 0)  
     {  
         // 数组有奇数个元素，返回中间一个元素  
-        ret = pimu_in[(median_len + 1) / 2];  
+        ret = pimu_in[median_len / 2];  
     }  
     else  
     {  
         // 数组有偶数个元素，返回中间两个元素平均值  
-        ret = (pimu_in[median_len / 2] + pimu_in[median_len / 2 + 1]) / 2;  
+        ret = (pimu_in[median_len / 2 - 1] + pimu_in[median_len / 2]) / 2;  
     }  
   
     return ret;  
@@ -929,15 +929,16 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
 #define MED_TAP 64
     static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     uint8_t ii = 0;
 
+    if(!first)
     {
         uint8_t former = _imu.get_mean_filter_former();
         uint8_t latter = _imu.get_mean_filter_latter();
         uint8_t med_len = former + latter + 1; // include current in
-        if(med_len > 0)
+        if(med_len > 1)
         {
             double med_in_x[med_len]; 
             double med_in_y[med_len];
@@ -953,7 +954,16 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
                 med_in_z[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
             }
             ret.x = median_filter(med_in_x, med_len);  
-            // hal.util->prt("median x: <%f>", ret.x);
+#if 0
+            static uint32_t cnt_xx = 0;
+            if((0 == (cnt_xx%1000)) || (1 == (cnt_xx%1000)))
+            {
+                hal.util->prt("median x: <%f>, med_len: %d", ret.x, med_len);
+                hal.util->prt("median x: before <%f>, current <%f>, average <%f>", med_in_x[med_len/2 - 1], med_in_x[med_len/2], (med_in_x[med_len/2 - 1]+med_in_x[med_len/2])/2);
+            }
+            cnt_xx++;
+#endif
+
             ret.y = median_filter(med_in_y, med_len);  
             ret.z = median_filter(med_in_z, med_len);  
             curr_idx++;
@@ -961,8 +971,18 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
         }
         else
         {
-            hal.util->prt("[Err] acc mean filter param wrong: ");
-            return ret;
+            // hal.util->prt("[Err] acc mean filter param wrong: ");
+            return _accl_in;
+        }
+    }
+    else
+    {
+        first = false;
+        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        {
+            med_filter_in[idx].x = 0.0d;
+            med_filter_in[idx].y = 0.0d;
+            med_filter_in[idx].z = 0.0d;
         }
     }
 
@@ -1101,33 +1121,32 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
 {
     // for median filter: circular buff 16
 #define MED_TAP 64
-    static Vector3d med_filter_in[MED_TAP];
+    static Vector3d gyro_med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     uint8_t ii = 0;
-
+    if(!first)
     {
         uint8_t former = _imu.get_mean_filter_former();
         uint8_t latter = _imu.get_mean_filter_latter();
         uint8_t med_len = former + latter + 1; // include current in
-        if(med_len > 0)
+        if(med_len > 1)
         {
             double med_in_x[med_len]; 
             double med_in_y[med_len];
             double med_in_z[med_len];
-            med_filter_in[curr_idx].x = _gyro_in.x;
-            med_filter_in[curr_idx].y = _gyro_in.y;
-            med_filter_in[curr_idx].z = _gyro_in.z;
+            gyro_med_filter_in[curr_idx].x = _gyro_in.x;
+            gyro_med_filter_in[curr_idx].y = _gyro_in.y;
+            gyro_med_filter_in[curr_idx].z = _gyro_in.z;
             for(uint8_t med_idx = 0; med_idx < med_len; med_idx++)
             {
                 uint8_t dist = med_len - 1 - med_idx;
-                med_in_x[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].x;
-                med_in_y[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].y;
-                med_in_z[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
+                med_in_x[med_idx] = gyro_med_filter_in[FORMER(curr_idx, dist, MED_TAP)].x;
+                med_in_y[med_idx] = gyro_med_filter_in[FORMER(curr_idx, dist, MED_TAP)].y;
+                med_in_z[med_idx] = gyro_med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
             }
             ret.x = median_filter(med_in_x, med_len);  
-            // hal.util->prt("median x: <%f>", ret.x);
             ret.y = median_filter(med_in_y, med_len);  
             ret.z = median_filter(med_in_z, med_len);  
             curr_idx++;
@@ -1135,8 +1154,18 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
         }
         else
         {
-            hal.util->prt("[Err] acc mean filter param wrong: ");
-            return ret;
+            // hal.util->prt("[Err] acc mean filter param wrong: ");
+            return _gyro_in;
+        }
+    }
+    else
+    {
+        first = false;
+        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        {
+            gyro_med_filter_in[idx].x = 0.0d;
+            gyro_med_filter_in[idx].y = 0.0d;
+            gyro_med_filter_in[idx].z = 0.0d;
         }
     }
 
