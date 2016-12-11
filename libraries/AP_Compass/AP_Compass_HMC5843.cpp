@@ -57,6 +57,7 @@ extern const AP_HAL::HAL& hal;
 #define DataOutputRate_30HZ   0x05
 #define DataOutputRate_75HZ   0x06
 
+
 // constructor
 AP_Compass_HMC5843::AP_Compass_HMC5843(Compass &compass):
     AP_Compass_Backend(compass),

@@ -32,8 +32,8 @@
 /* bit definitions for MPUREG_USER_CTRL */
 #define MPUREG_USER_CTRL                                0x6A
 /* Enable MPU to act as the I2C Master to external slave sensors */
-#       define BIT_USER_CTRL_I2C_MST_EN                 0x20
-#       define BIT_USER_CTRL_I2C_IF_DIS                 0x10
+#define BIT_USER_CTRL_I2C_MST_EN                 0x20
+#define BIT_USER_CTRL_I2C_IF_DIS                 0x10
 
 /* bit definitions for MPUREG_MST_CTRL */
 #define MPUREG_I2C_MST_CTRL                             0x24

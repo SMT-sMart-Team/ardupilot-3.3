@@ -351,6 +351,22 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("CAL_FIT", 30, Compass, _calibration_threshold, 8.0f),
 
+    // @Param: AVERAGE_ENABLE
+    // @DisplayName: Compass average en
+    // @Description: 
+    // @Range: 0 1
+    // @Values: 
+    // @User: Advanced
+    AP_GROUPINFO("AVER_EN", 31, Compass, _average_en, 0),
+
+    // @Param: AVERAGE_LEN
+    // @DisplayName: Compass average len
+    // @Description: 
+    // @Range: 1 63
+    // @Values: 
+    // @User: Advanced
+    AP_GROUPINFO("AVER_LEN", 32, Compass, _average_len, 3),
+
     AP_GROUPEND
 };
 

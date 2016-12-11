@@ -519,6 +519,11 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     Vector3f _accel_filtered;
     Vector3f _gyro_filtered;
 
+#define CHK_FT_TAP 0
+#if CHK_FT_TAP 
+    static uint32_t acc_gyro_cnt = 0;
+#endif
+
     if(acc_user_ft < 0xF) // ChebyII
     {
         _accel_filtered = _accel_user_filter(imu_acc, acc_user_ft);
@@ -534,6 +539,12 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     }
     else if(acc_user_ft == 0x2F) // ChebyII(20Hz) + median 
     {
+#if CHK_FT_TAP 
+        if((0 == (acc_gyro_cnt%4000)) || (1 == (acc_gyro_cnt%4000)))
+        {
+            hal.util->prt("acc ft: %d, med_tap: %d", acc_user_ft, _imu.get_med_tap_acc());
+        }
+#endif
         _accel_filtered = _accel_user_filter(imu_acc, 1);
         _accel_filtered = _accel_median_filter(_accel_filtered);
     }
@@ -553,9 +564,18 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     }
     else if(gyro_user_ft == 0x2F) // ChebyII(20Hz) + median 
     {
+#if CHK_FT_TAP 
+        if((0 == (acc_gyro_cnt%4000)) || (1 == (acc_gyro_cnt%4000)))
+        {
+            hal.util->prt("gyro ft: %d, med_tap: %d", gyro_user_ft, _imu.get_med_tap_gyro());
+        }
+#endif
         _gyro_filtered = _gyro_user_filter(imu_gyro, 1);
         _gyro_filtered = _gyro_median_filter(_gyro_filtered);
     }
+#if CHK_FT_TAP 
+    acc_gyro_cnt++;
+#endif
 
 #else
     Vector3f _accel_filtered = _accel_filter.apply(imu_acc);
@@ -935,9 +955,7 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
 
     if(!first)
     {
-        uint8_t former = _imu.get_mean_filter_former();
-        uint8_t latter = _imu.get_mean_filter_latter();
-        uint8_t med_len = former + latter + 1; // include current in
+        uint8_t med_len = _imu.get_med_tap_acc() + 1; // include current in
         if(med_len > 1)
         {
             double med_in_x[MED_TAP]; 
@@ -1128,9 +1146,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
     uint8_t ii = 0;
     if(!first)
     {
-        uint8_t former = _imu.get_mean_filter_former();
-        uint8_t latter = _imu.get_mean_filter_latter();
-        uint8_t med_len = former + latter + 1; // include current in
+        uint8_t med_len = _imu.get_med_tap_gyro() + 1; // include current in
         if(med_len > 1)
         {
             double med_in_x[MED_TAP]; 

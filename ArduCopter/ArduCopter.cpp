@@ -376,7 +376,7 @@ void Copter::update_batt_compass(void)
         compass.set_throttle(motors.get_throttle()/1000.0f);
         compass.read();
         // log compass information
-        if (should_log(MASK_LOG_COMPASS)) {
+        if (should_log(MASK_LOG_COMPASS) && !should_log(MASK_LOG_COMPASS_200HZ_RAW)) {
             DataFlash.Log_Write_Compass(compass);
         }
     }

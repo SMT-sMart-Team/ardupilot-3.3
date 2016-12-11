@@ -65,12 +65,12 @@ private:
 
     uint32_t            _retry_time; // when unhealthy the millis() value to retry at
 
-    int16_t			    _mag_x;
-    int16_t			    _mag_y;
-    int16_t			    _mag_z;
-    int16_t             _mag_x_accum;
-    int16_t             _mag_y_accum;
-    int16_t             _mag_z_accum;
+    float			    _mag_x;
+    float			    _mag_y;
+    float			    _mag_z;
+    float               _mag_x_accum;
+    float               _mag_y_accum;
+    float               _mag_z_accum;
     uint8_t			    _accum_count;
     uint32_t            _last_accum_time;
 

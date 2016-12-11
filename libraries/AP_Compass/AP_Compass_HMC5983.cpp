@@ -58,6 +58,13 @@ extern const AP_HAL::HAL& hal;
 #define DataOutputRate_75HZ   0x06
 #define DataOutputRate_220HZ  0x07 // AB ZhaoYJ@2016-10-19 for HMC5983 
 
+// AB ZhaoYJ@2016-12-11 for average compass value
+#define AVERAGE_MAG 1
+#define AVERAGE_WIN 64
+
+#define FORMER(curr, n, array_size) ((curr >= n)?(curr - n):(curr + array_size - n)) 
+
+
 // AB ZhaoYJ@2016-10-19 for HMC5983
 #define TEMP_COMPENSTATE_EN   0x80
 
@@ -242,7 +249,8 @@ void AP_Compass_HMC5983::_timer(void)
    // if (_accum_count != 0 && (tnow - _last_accum_time) < 13333) {
    // the compass gets new data 75Hz 
    if (_accum_count != 0 && (tnow - _last_accum_time) < 5000) {
-	  // the compass gets new data at 200Hz
+   // if (_accum_count != 0 && (tnow - _last_accum_time) < 6250) {
+	  // the compass gets new data at 200Hz 
 	  return;
    }
 
@@ -259,16 +267,85 @@ void AP_Compass_HMC5983::_timer(void)
 	  // for ease of calculation. We expect to do reads at 10Hz, and
 	  // we get new data at most 75Hz, so we don't expect to
 	  // accumulate more than 8 before a read
-	  _mag_x_accum += _mag_x;
-	  _mag_y_accum += _mag_y;
-	  _mag_z_accum += _mag_z;
-	  _accum_count++;
-	  if (_accum_count == 14) {
-		 _mag_x_accum /= 2;
-		 _mag_y_accum /= 2;
-		 _mag_z_accum /= 2;
-		 _accum_count = 7;
-	  }
+      if(_compass.is_average())
+      {
+            static Vector3f sample[AVERAGE_WIN];
+            static uint16_t sample_idx = 0;
+            static bool first = true;
+            sample[(sample_idx)].x = _mag_x;
+            sample[(sample_idx)].y = _mag_y;
+            sample[(sample_idx)].z = _mag_z;
+            uint16_t average_len = _compass.get_average_len();
+            Vector3f sum;
+            if(!first)
+            {
+                for(uint16_t ii = 0; ii < average_len ; ii++)
+                {
+                    sum.x += sample[FORMER(sample_idx, ii, AVERAGE_WIN)].x;
+                    sum.y += sample[FORMER(sample_idx, ii, AVERAGE_WIN)].y;
+                    sum.z += sample[FORMER(sample_idx, ii, AVERAGE_WIN)].z;
+                }
+            }
+            else
+            {
+                if(average_len == sample_idx)
+                {
+                    first = false;
+                }
+            }
+            sum = sum/average_len;
+
+	        _mag_x_accum = sum.x;
+	        _mag_y_accum = sum.y;
+	        _mag_z_accum = sum.z;
+	        _accum_count = 1;
+
+#define DEBUG_AVERAGE 0
+#if DEBUG_AVERAGE
+            static uint16_t cnt = 0;
+            if((0 == (cnt%3000)) || (1 == (cnt%3000)))
+            {
+                // hal.util->prt("[ %d us] MS5803 update %d", hal.scheduler->micros(), cnt);
+                hal.util->prt("[%d us] HMC5983 _timer %d ", hal.scheduler->micros(), cnt);
+                hal.util->prt(" HMC5983 _timer aver_len %d ", average_len);
+                hal.util->prt(" HMC5983 _timer X(aver: %f) val:  ", sum.x);
+                for(uint16_t ii = 0; ii < average_len ; ii++)
+                {
+                    hal.util->prt(" --- %f  ", sample[FORMER(sample_idx, ii, AVERAGE_WIN)].x);
+                }
+
+                hal.util->prt("[%d us] HMC5983 _timer Y(aver: %f) val:  ", average_len, sum.y);
+                for(uint16_t ii = 0; ii < average_len ; ii++)
+                {
+                    hal.util->prt(" --- %f  ", sample[FORMER(sample_idx, ii, AVERAGE_WIN)].y);
+                }
+
+                hal.util->prt("[%d us] HMC5983 _timer Z(aver: %f) val:  ", average_len, sum.z);
+                for(uint16_t ii = 0; ii < average_len ; ii++)
+                {
+                    hal.util->prt(" --- %f  ", sample[FORMER(sample_idx, ii, AVERAGE_WIN)].z);
+                }
+            }
+            cnt++;
+#endif
+            sample_idx++;
+            sample_idx &= AVERAGE_WIN - 1;
+
+      }
+      else
+      {
+	        _mag_x_accum += _mag_x;
+	        _mag_y_accum += _mag_y;
+	        _mag_z_accum += _mag_z;
+	        _accum_count++;
+      }
+
+	  // if (_accum_count == 14) {
+	  //    _mag_x_accum /= 2;
+	  //    _mag_y_accum /= 2;
+	  //    _mag_z_accum /= 2;
+	  //    _accum_count = 7;
+	  // }
 	  _last_accum_time = tnow;
    }
 }
@@ -281,6 +358,7 @@ bool AP_Compass_HMC5983::re_initialise()
     if (!write_register(ConfigRegA, _base_config) ||
         !write_register(ConfigRegB, magGain) ||
         !write_register(ModeRegister, ContinuousConversion))
+        // !write_register(ModeRegister, SingleConversion))
         return false;
     return true;
 }

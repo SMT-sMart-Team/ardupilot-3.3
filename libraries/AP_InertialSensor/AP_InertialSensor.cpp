@@ -310,21 +310,21 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("GYRO_UF", 24, AP_InertialSensor, _gyro_user_filter[0],  47),
 
-    // @Param: MEAN_FILTER_FORMER 
+    // @Param: ACC_MED_TAP
     //
     // @DisplayName: 
-    // @Description: mean filter former num
+    // @Description: accl mean filter former num
     // @Values: 
     // @User: Advanced
-    AP_GROUPINFO("FORMER", 25, AP_InertialSensor, _mean_filter_former[0],  5),
+    AP_GROUPINFO("ACC_MED_TAP", 25, AP_InertialSensor, _med_tap_acc[0],  14),
 
-    // @Param: MEAN_FILTER_LATTER
+    // @Param: GYRO_MED_TAP
     //
     // @DisplayName: 
-    // @Description: mean filter latter num
+    // @Description: gyro mean filter former num
     // @Values: 
     // @User: Advanced
-    AP_GROUPINFO("LATTER", 26, AP_InertialSensor, _mean_filter_latter[0],  5),
+    AP_GROUPINFO("GYRO_MED_TAP", 26, AP_InertialSensor, _med_tap_gyro[0],  14),
 
     AP_GROUPEND
 };

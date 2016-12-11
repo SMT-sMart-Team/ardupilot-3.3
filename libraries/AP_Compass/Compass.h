@@ -278,6 +278,9 @@ public:
     // return last update time in microseconds
     uint32_t last_update_usec(void) const { return _state[get_primary()].last_update_usec; }
 
+    bool is_average(void) const { return _average_en; }
+    uint8_t get_average_len(void) const { return _average_len; }
+
     static const struct AP_Param::GroupInfo var_info[];
 
     // HIL variables
@@ -380,6 +383,8 @@ private:
     bool _hil_mode:1;
 
     AP_Float _calibration_threshold;
+    AP_Int8  _average_en;
+    AP_Int8  _average_len;
 };
 
 #include "AP_Compass_Backend.h"
