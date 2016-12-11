@@ -929,7 +929,7 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
 #define MED_TAP 64
     static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = true;
+    static bool first = false;
     Vector3f ret;
     uint8_t ii = 0;
 
@@ -1123,7 +1123,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
 #define MED_TAP 64
     static Vector3d gyro_med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = true;
+    static bool first = false;
     Vector3f ret;
     uint8_t ii = 0;
     if(!first)

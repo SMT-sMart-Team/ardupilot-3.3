@@ -28,6 +28,4 @@ void AP_Baro_Backend::_copy_to_frontend_raw(uint8_t instance, float pressure, fl
         return;
     }
     _frontend.sensors_raw[instance].pressure = pressure;
-    _frontend.sensors_raw[instance].temperature = temperature;
-    _frontend.sensors_raw[instance].last_update_ms = hal.scheduler->millis();
 }
