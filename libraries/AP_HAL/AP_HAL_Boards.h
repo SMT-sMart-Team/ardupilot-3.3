@@ -245,7 +245,7 @@
 #endif
 
 // add by ZhaoYJ for capturing raw data in imu
-#define SMT_CAPTURE_IMU_RAW
+// #define SMT_CAPTURE_IMU_RAW
 //
 // add by ZhaoYJ@2016-12-10 for capturing raw data in baro 
 // #define SMT_CAPTURE_BARO_RAW
