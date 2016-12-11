@@ -63,7 +63,46 @@ extern const AP_HAL::HAL& hal;
 #define AVERAGE_WIN 64
 
 #define FORMER(curr, n, array_size) ((curr >= n)?(curr - n):(curr + array_size - n)) 
+#define N_ORDER 4
 
+
+// AB ZhaoYJ@2016-12-11 for user-defined 4 order chebyII filter
+#define FILTER_TYPE 7 // 7 filters, 4 order with b & a
+const double compass_ba[FILTER_TYPE][5*2] = {
+    // 0: fc=10Hz
+    {0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
+    0.0009877867510385,
+    1,   -3.878129734999,    5.641762572816,   -3.648875955419,
+    0.8852477379956},
+    // 1: fc=20Hz
+    {0.001066578484441,-0.003520583754742, 0.004979264107821,-0.003520583754742,
+    0.001066578484441,
+    1,    -3.75490235187,    5.294313666885,    -3.32185631444,
+    0.7825162529919},
+    // 2: fc=30Hz
+    { 0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
+    0.001235431141961,
+    1,   -3.628903305608,    4.954076395023,   -3.014454340388,
+    0.6896343805619},
+    // 3: 40Hz
+    {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
+    0.001504023202492,
+    1,   -3.498597652843,    4.617828546747,     -2.7230591526,
+    0.604937864995},
+    // 4: 1Hz-20Hz
+    {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620,     0.001035118616347,
+    1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321},
+    // 5: 2Hz
+    {0.0009898590037292,-0.003951630671045, 0.005923551035664,-0.003951630671045,
+    0.0009898590037292,
+    1,-3.975669032622,    5.927302681588,   -3.927596156134,
+    0.9759625148687},
+    // 6: 5Hz
+    {0.0009820297557845,-0.003880052678305, 0.005796341733976,-0.003880052678305,
+    0.0009820297557845,
+    1,-3.939149044189,    5.819291999087,   -3.821104108943,
+    0.9409614499347}
+};
 
 // AB ZhaoYJ@2016-10-19 for HMC5983
 #define TEMP_COMPENSTATE_EN   0x80
@@ -267,14 +306,51 @@ void AP_Compass_HMC5983::_timer(void)
 	  // for ease of calculation. We expect to do reads at 10Hz, and
 	  // we get new data at most 75Hz, so we don't expect to
 	  // accumulate more than 8 before a read
+      //
+      // ChebyII filter & median filter
+      //
+      uint8_t mag_user_ft = _compass.get_user_filter();
+      Vector3f mag_filtered = Vector3f(_mag_x, _mag_y, _mag_z);
+
+#define CHK_FT_TAP 1
+#if CHK_FT_TAP 
+    static uint32_t mag_cnt = 0;
+#endif
+
+      if(mag_user_ft < 0xF) // ChebyII
+      {
+          mag_filtered = _user_filter(mag_filtered, mag_user_ft);
+      }
+      else if(mag_user_ft == 0xF) // median
+      {
+          mag_filtered = _median_filter(mag_filtered);
+      }
+      else if(mag_user_ft == 0x1F) // median + ChebyII(20Hz)
+      {
+          mag_filtered = _median_filter(mag_filtered);
+          mag_filtered = _user_filter(mag_filtered, 1);
+      }
+      else if(mag_user_ft == 0x2F) // ChebyII(20Hz) + median 
+      {
+#if CHK_FT_TAP 
+          if((0 == (mag_cnt %4000)) || (1 == (mag_cnt%4000)))
+          {
+              hal.util->prt("[%d us] mag ft: %d, med_tap: %d", hal.scheduler->micros(), mag_user_ft, _compass.get_med_tap());
+          }
+#endif
+          mag_filtered = _user_filter(mag_filtered, 1);
+          mag_filtered = _median_filter(mag_filtered);
+      }
+#if CHK_FT_TAP 
+      mag_cnt++;
+#endif
+
       if(_compass.is_average())
       {
             static Vector3f sample[AVERAGE_WIN];
             static uint16_t sample_idx = 0;
             static bool first = true;
-            sample[(sample_idx)].x = _mag_x;
-            sample[(sample_idx)].y = _mag_y;
-            sample[(sample_idx)].z = _mag_z;
+            sample[(sample_idx)] = mag_filtered;
             uint16_t average_len = _compass.get_average_len();
             Vector3f sum;
             if(!first)
@@ -334,9 +410,9 @@ void AP_Compass_HMC5983::_timer(void)
       }
       else
       {
-	        _mag_x_accum += _mag_x;
-	        _mag_y_accum += _mag_y;
-	        _mag_z_accum += _mag_z;
+	        _mag_x_accum += mag_filtered.x;
+	        _mag_y_accum += mag_filtered.y;
+	        _mag_z_accum += mag_filtered.z;
 	        _accum_count++;
       }
 
@@ -596,4 +672,227 @@ void AP_Compass_HMC5983::read()
 
     publish_field(field, _compass_instance);
     _retry_time = 0;
+}
+
+#define TEST_FILTER 0
+
+#define FORMER(curr, n, array_size) ((curr >= n)?(curr - n):(curr + array_size - n)) 
+
+static double median_filter(double *pimu_in, uint8_t median_len)
+{
+    int i,j;
+    double ret;  
+    double bTemp;  
+
+      
+    for (j = 0; j < median_len; j ++)  
+    {  
+        for (i = 0; i < median_len - j; i ++)  
+        {  
+            if (pimu_in[i] > pimu_in[i + 1])  
+            {  
+                bTemp = pimu_in[i];  
+                pimu_in[i] = pimu_in[i + 1];  
+                pimu_in[i + 1] = bTemp;  
+            }  
+        }  
+    }  
+
+    // 计算中值  
+    if ((median_len & 1) > 0)  
+    {  
+        // 数组有奇数个元素，返回中间一个元素  
+        ret = pimu_in[median_len / 2];  
+    }  
+    else  
+    {  
+        // 数组有偶数个元素，返回中间两个元素平均值  
+        ret = (pimu_in[median_len / 2 - 1] + pimu_in[median_len / 2]) / 2;  
+    }  
+  
+    return ret;  
+
+}
+
+
+Vector3f AP_Compass_HMC5983::_user_filter(Vector3f _mag_in, uint8_t _uf)
+{
+    //  for ChebyII
+#define FILTER_MAX_TAP 8
+    static Vector3d filter_state[FILTER_MAX_TAP]; 
+    static Vector3d filter_out[FILTER_MAX_TAP]; 
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    Vector3f ret;
+    uint8_t ii = 0;
+    // Chebyshev II
+    const double *b;
+    const double *a;
+
+
+    {
+        if(_uf >= FILTER_TYPE) 
+        {
+            hal.util->prt("[Err] mag filter type wrong: %d", _uf);
+            return ret;
+        }
+
+        b = &compass_ba[0][0] + (N_ORDER+1)*2*_uf;
+        a = b + (N_ORDER+1);
+
+#if TEST_FILTER 
+    static uint32_t incr = 0;
+    // if((0 == incr%4000) || (1 == incr%4000) || (2 == incr%4000))
+    {
+#if 0
+        hal.util->prt("acc filter: %d", _imu.get_accl_user_filter());
+        hal.util->prt("gyro filter: %d", _imu.get_gyro_user_filter());
+        hal.util->prt("mean filter former: %d", _imu.get_mean_filter_former());
+        hal.util->prt("mean filter latter: %d", _imu.get_mean_filter_latter());
+        hal.util->prt("sizeof ba: %d", sizeof(ba));
+        hal.util->prt("filter b: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                b[0], b[1], b[2], b[3], b[4]);
+        hal.util->prt("filter a: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                a[0], a[1], a[2], a[3], a[4]);
+        hal.util->prt("ChebyII filter idx: curr_idx %d, %d, %d, %d, %d", 
+                curr_idx,
+                FORMER(curr_idx, 1, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 2, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 3, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 4, FILTER_MAX_TAP)); 
+        uint8_t med_f_len = _imu.get_mean_filter_former() + _imu.get_mean_filter_latter();
+        hal.util->prt("Median filter idx: len: %d, curr_idx %d", med_f_len, curr_idx);
+            for(uint8_t med_idx = 0; med_idx < med_f_len; med_idx++)
+            {
+                uint8_t jj = (med_f_len - med_idx);
+                hal.util->prt("in idx: <%d>", FORMER(curr_idx, jj, MED_TAP));
+            }
+#endif
+
+    }
+    incr++;
+#endif
+        if(!first)
+        {
+            // update state
+            filter_state[curr_idx].x = _mag_in.x;
+            filter_state[curr_idx].y = _mag_in.y;
+            filter_state[curr_idx].z = _mag_in.z;
+            // filter x: 
+            filter_out[curr_idx].x = b[0]*filter_state[curr_idx].x 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].x 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].x 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].x 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].x 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].x 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].x
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].x
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].x;
+
+            if (isnan(filter_out[curr_idx].x) || isinf(filter_out[curr_idx].x)) {
+
+                filter_out[curr_idx].x = filter_state[curr_idx].x; 
+            }
+
+            // filter y
+            filter_out[curr_idx].y = b[0]*filter_state[curr_idx].y 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].y 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].y 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].y 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].y 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].y 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].y
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].y
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].y;
+
+            if (isnan(filter_out[curr_idx].y) || isinf(filter_out[curr_idx].y)) {
+
+                filter_out[curr_idx].y = filter_state[curr_idx].y; 
+            }
+
+            // filter z
+            filter_out[curr_idx].z = b[0]*filter_state[curr_idx].z 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)].z 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)].z 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)].z 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)].z 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)].z 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)].z
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)].z
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)].z;
+
+            if (isnan(filter_out[curr_idx].z) || isinf(filter_out[curr_idx].z)) {
+
+                filter_out[curr_idx].z = filter_state[curr_idx].z; 
+            }
+
+            ret.x = filter_out[curr_idx].x;
+            ret.y = filter_out[curr_idx].y;
+            ret.z = filter_out[curr_idx].z;
+
+            // update filter postion
+            curr_idx++;
+            curr_idx &= FILTER_MAX_TAP - 1;
+            
+        }
+    }
+
+    // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
+    return ret;
+}
+
+Vector3f AP_Compass_HMC5983::_median_filter(Vector3f _mag_in)
+{
+    // for median filter: circular buff 16
+#define MED_TAP 64
+    static Vector3d med_filter_in[MED_TAP];
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    Vector3f ret;
+    uint8_t ii = 0;
+
+    if(!first)
+    {
+        uint8_t med_len = _compass.get_med_tap() + 1; // include current in
+        if(med_len > 1)
+        {
+            double med_in_x[MED_TAP]; 
+            double med_in_y[MED_TAP];
+            double med_in_z[MED_TAP];
+            med_filter_in[curr_idx].x = _mag_in.x;
+            med_filter_in[curr_idx].y = _mag_in.y;
+            med_filter_in[curr_idx].z = _mag_in.z;
+            for(uint8_t med_idx = 0; med_idx < med_len; med_idx++)
+            {
+                uint8_t dist = med_len - 1 - med_idx;
+                med_in_x[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].x;
+                med_in_y[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].y;
+                med_in_z[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)].z;
+            }
+            ret.x = median_filter(med_in_x, med_len);  
+            ret.y = median_filter(med_in_y, med_len);  
+            ret.z = median_filter(med_in_z, med_len);  
+            curr_idx++;
+            curr_idx &= MED_TAP - 1;
+        }
+        else
+        {
+            // hal.util->prt("[Err] mag mean filter param wrong: ");
+            return _mag_in;
+        }
+    }
+    else
+    {
+        first = false;
+        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        {
+            med_filter_in[idx].x = 0.0d;
+            med_filter_in[idx].y = 0.0d;
+            med_filter_in[idx].z = 0.0d;
+        }
+    }
+
+
+    // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
+    return ret;
 }

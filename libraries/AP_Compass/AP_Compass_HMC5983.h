@@ -83,6 +83,8 @@ public:
     void        read(void);
     void        _timer(void);
     void        accumulate(void);
+    Vector3f    _median_filter(Vector3f _mag_in);
+    Vector3f    _user_filter(Vector3f _mag_in, uint8_t _uf);
 
     // detect the sensor
     static AP_Compass_Backend *detect(Compass &compass);

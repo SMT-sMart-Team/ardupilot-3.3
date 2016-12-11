@@ -280,6 +280,8 @@ public:
 
     bool is_average(void) const { return _average_en; }
     uint8_t get_average_len(void) const { return _average_len; }
+    uint8_t get_user_filter(void) const { return _user_filter; }
+    uint8_t get_med_tap(void) const { return _med_tap; }
 
     static const struct AP_Param::GroupInfo var_info[];
 
@@ -385,6 +387,8 @@ private:
     AP_Float _calibration_threshold;
     AP_Int8  _average_en;
     AP_Int8  _average_len;
+    AP_Int8  _user_filter;
+    AP_Int8  _med_tap;
 };
 
 #include "AP_Compass_Backend.h"

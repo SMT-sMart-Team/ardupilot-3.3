@@ -367,6 +367,21 @@ const AP_Param::GroupInfo Compass::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("AVER_LEN", 32, Compass, _average_len, 3),
 
+    // @Param: MAG_UF
+    // @DisplayName: 
+    // @Description: User defined filter
+    // @Values: 0:original,1:CI-10Hz
+    // @User: Advanced
+    AP_GROUPINFO("MAG_UF", 33, Compass, _user_filter,  47),
+
+    // @Param: MED_TAP
+    //
+    // @DisplayName: 
+    // @Description: accl mean filter former num
+    // @Values: 
+    // @User: Advanced
+    AP_GROUPINFO("MED_TAP", 34, Compass, _med_tap,  14),
+
     AP_GROUPEND
 };
 
