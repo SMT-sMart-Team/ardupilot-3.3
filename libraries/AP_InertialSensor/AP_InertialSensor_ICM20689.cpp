@@ -532,12 +532,12 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     {
         _accel_filtered = _accel_median_filter(imu_acc);
     }
-    else if(acc_user_ft == 0x1F) // median + ChebyII(20Hz)
+    else if(acc_user_ft & 0x10) // median + ChebyII(Hz)
     {
         _accel_filtered = _accel_median_filter(imu_acc);
-        _accel_filtered = _accel_user_filter(_accel_filtered, 1);
+        _accel_filtered = _accel_user_filter(_accel_filtered, acc_user_ft & 0xF);
     }
-    else if(acc_user_ft == 0x2F) // ChebyII(20Hz) + median 
+    else if(acc_user_ft & 0x20) // ChebyII(Hz) + median 
     {
 #if CHK_FT_TAP 
         if((0 == (acc_gyro_cnt%4000)) || (1 == (acc_gyro_cnt%4000)))
@@ -545,7 +545,7 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
             hal.util->prt("acc ft: %d, med_tap: %d", acc_user_ft, _imu.get_med_tap_acc());
         }
 #endif
-        _accel_filtered = _accel_user_filter(imu_acc, 1);
+        _accel_filtered = _accel_user_filter(imu_acc, acc_user_ft & 0xF);
         _accel_filtered = _accel_median_filter(_accel_filtered);
     }
 
@@ -557,12 +557,12 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     {
         _gyro_filtered = _gyro_median_filter(imu_gyro);
     }
-    else if(gyro_user_ft == 0x1F) // median + ChebyII(20Hz)
+    else if(gyro_user_ft & 0x10) // median + ChebyII(Hz)
     {
         _gyro_filtered = _gyro_median_filter(imu_gyro);
-        _gyro_filtered = _gyro_user_filter(_gyro_filtered, 1);
+        _gyro_filtered = _gyro_user_filter(_gyro_filtered, gyro_user_ft & 0xF);
     }
-    else if(gyro_user_ft == 0x2F) // ChebyII(20Hz) + median 
+    else if(gyro_user_ft & 0x20) // ChebyII(20Hz) + median 
     {
 #if CHK_FT_TAP 
         if((0 == (acc_gyro_cnt%4000)) || (1 == (acc_gyro_cnt%4000)))
@@ -570,7 +570,7 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
             hal.util->prt("gyro ft: %d, med_tap: %d", gyro_user_ft, _imu.get_med_tap_gyro());
         }
 #endif
-        _gyro_filtered = _gyro_user_filter(imu_gyro, 1);
+        _gyro_filtered = _gyro_user_filter(imu_gyro, gyro_user_ft & 0xF);
         _gyro_filtered = _gyro_median_filter(_gyro_filtered);
     }
 #if CHK_FT_TAP 

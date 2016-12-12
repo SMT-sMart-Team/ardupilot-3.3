@@ -38,10 +38,7 @@ static uint32_t dump_cnt = 0;
 #define DEBUG_FLOW 0
 
 // 
-#define AVERAGE_PRESS 0
-#if AVERAGE_PRESS
-#define AVERAGE_WIN 16
-#endif
+#define AVERAGE_WIN 64
 
 
 extern const AP_HAL::HAL& hal;
@@ -101,6 +98,51 @@ static const uint32_t CONVERSION_TIME = CONVERSION_TIME_OSR_1024; //CONVERSION_T
 #define MS5803_MIN_TEMP                                         ((float)(-40.0) * MS5803_TEMP_SCALE)
 #define MS5803_MAX_TEMP                                         ((float)(85.0) * MS5803_TEMP_SCALE)
 // SPI Device //////////////////////////////////////////////////////////////////
+//
+#define FORMER(curr, n, array_size) ((curr >= n)?(curr - n):(curr + array_size - n)) 
+#define N_ORDER 4
+
+
+// AB ZhaoYJ@2016-12-11 for user-defined 4 order chebyII filter
+#define FILTER_TYPE 7 // 7 filters, 4 order with b & a
+// fs: 200Hz
+const double baro_ba[FILTER_TYPE][(N_ORDER+1)*2] = {
+    // 0: fc=10Hz
+    {0.001066578484441,-0.003520583754742, 0.004979264107821,-0.003520583754742,
+    0.001066578484441,
+    1,    -3.75490235187,    5.294313666885,    -3.32185631444,
+    0.7825162529919},
+    // 1: 20Hz
+    {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
+    0.001504023202492,
+    1,   -3.498597652843,    4.617828546747,     -2.7230591526,
+    0.604937864995},
+    // 2: fc=30Hz
+    {0.002440006636488,-0.001243697363317, 0.003428681549348,-0.001243697363317,
+    0.002440006636488,
+    1,   -3.217868090935,    3.945654810763,   -2.177266033495,
+    0.4553006137634},
+    // 3: fc=40Hz
+    {0.004259816772569, 0.002810421933046, 0.006247310625167, 0.002810421933046,
+    0.004259816772569,
+    1,   -2.894721965841,    3.256463919134,   -1.668134292247,
+    0.3267801269904},
+    // 4: 5Hz-20Hz
+    {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
+    0.001504023202492,
+    1,   -3.498597652843,    4.617828546747,     -2.7230591526,
+    0.604937864995},
+    // 5: 2Hz
+    {0.0009836753866896,-0.003903796945646, 0.005840364964036,-0.003903796945646,
+    0.0009836753866896,
+    1,   -3.951327305119,    5.855163083587,   -3.856327448311,
+    0.9524917916895},
+    // 6: 5Hz
+    {0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
+    0.0009877867510385,
+    1,   -3.878129734999,    5.641762572816,   -3.648875955419,
+    0.8852477379956}
+};
 
 AP_SerialBus_SPI_MS5803::AP_SerialBus_SPI_MS5803(enum AP_HAL::SPIDevice device, enum AP_HAL::SPIDeviceDriver::bus_speed speed) :
     _device(device),
@@ -331,6 +373,11 @@ bool AP_Baro_MS58XX::_check_crc(void)
 */
 void AP_Baro_MS58XX::_timer(void)
 {
+    // for average
+    static float sample[AVERAGE_WIN];
+    static uint16_t sample_idx = 0;
+    static bool first = true;
+
 #if DEBUG_FLOW 
     static uint16_t cnt = 0;
     if((0 == (cnt%10000)) || (1 == (cnt%10000)))
@@ -375,29 +422,64 @@ void AP_Baro_MS58XX::_timer(void)
             // avoid pulse value
             if ((d1 != 0) && (d1 < 10600000)) 
             {
-#if AVERAGE_PRESS
-                static uint32_t sample[AVERAGE_WIN];
-                static uint16_t sample_idx = 0;
-                static bool first = true;
-                uint32_t d1_orig = d1;
-                sample[(sample_idx++)%AVERAGE_WIN] = d1;
-                if(!first)
+                uint8_t baro_user_ft = _frontend.get_user_filter();
+                float baro_filtered = float(d1)/1000.0f; // zoom in 1000 for val is too big
+
+#define CHK_FT_TAP 0
+#if CHK_FT_TAP 
+                static uint32_t baro_cnt = 0;
+#endif          
+
+                if(baro_user_ft < 0xF) // ChebyII
                 {
-                    uint32_t sum = 0;
-                    for(uint16_t ii = 0; ii < AVERAGE_WIN; ii++)
-                    {
-                        sum += sample[ii];
-                    }
-                    d1 = sum/AVERAGE_WIN;
+                    baro_filtered = _user_filter(baro_filtered, baro_user_ft);
                 }
-                else
+                else if(baro_user_ft == 0xF) // median
                 {
-                    if(AVERAGE_WIN == sample_idx)
+                    baro_filtered = _median_filter(baro_filtered);
+                }
+                else if(baro_user_ft & 0x10) // median + ChebyII( &0xF Hz)
+                {
+                    baro_filtered = _median_filter(baro_filtered);
+                    baro_filtered = _user_filter(baro_filtered, baro_user_ft & 0xF);
+                }
+                else if(baro_user_ft & 0x20) // ChebyII(Hz) + median 
+                {
+#if CHK_FT_TAP 
+                    if((0 == (baro_cnt %4000)) || (1 == (baro_cnt%4000)))
                     {
-                        first = false;
+                        hal.util->prt("[%d us] baro ft: %d (cheby %d), med_tap: %d", hal.scheduler->micros(), baro_user_ft, baro_user_ft&0xF, _frontend.get_med_tap());
+                    }
+#endif          
+                    baro_filtered = _user_filter(baro_filtered, baro_user_ft & 0xF);
+                    baro_filtered = _median_filter(baro_filtered);
+                }
+#if CHK_FT_TAP 
+                baro_cnt++;
+#endif          
+
+                if(_frontend.is_average())
+                {
+                    sample[(sample_idx++)%AVERAGE_WIN] = baro_filtered;
+                    uint16_t average_len = _frontend.get_average_len();
+                    if(!first)
+                    {
+                        float sum = 0;
+                        for(uint16_t ii = 0; ii < average_len; ii++)
+                        {
+                            sum += sample[ii];
+                        }
+                        // zoom out back
+                        d1 = (uint32_t)(sum*1000.0f/average_len);
+                    }
+                    else
+                    {
+                        if(average_len == sample_idx)
+                        {
+                            first = false;
+                        }
                     }
                 }
-#endif
                 // occasional zero values have been seen on the PXF
                 // board. These may be SPI errors, but safest to ignore
                 _s_D1 += d1;
@@ -642,4 +724,173 @@ void AP_Baro_MS58XX::accumulate(void)
         // it in accumulate()
         _timer();
     }
+}
+
+float AP_Baro_MS58XX::_user_filter(float _in, uint8_t _uf)
+{
+    //  for ChebyII
+#define FILTER_MAX_TAP 8
+    static double filter_state[FILTER_MAX_TAP]; 
+    static double filter_out[FILTER_MAX_TAP]; 
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    float ret = 0.0f;
+    // Chebyshev II
+    const double *b;
+    const double *a;
+
+    {
+        if(_uf >= FILTER_TYPE) 
+        {
+            hal.util->prt("[Err] baro filter type wrong: %d", _uf);
+            return ret;
+        }
+
+        b = &baro_ba[0][0] + (N_ORDER+1)*2*_uf;
+        a = b + (N_ORDER+1);
+
+#if TEST_FILTER 
+    static uint32_t incr = 0;
+    // if((0 == incr%4000) || (1 == incr%4000) || (2 == incr%4000))
+    {
+#if 0
+        hal.util->prt("acc filter: %d", _imu.get_accl_user_filter());
+        hal.util->prt("gyro filter: %d", _imu.get_gyro_user_filter());
+        hal.util->prt("mean filter former: %d", _imu.get_mean_filter_former());
+        hal.util->prt("mean filter latter: %d", _imu.get_mean_filter_latter());
+        hal.util->prt("sizeof ba: %d", sizeof(ba));
+        hal.util->prt("filter b: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                b[0], b[1], b[2], b[3], b[4]);
+        hal.util->prt("filter a: %.19f, %.19f, %.19f, %.19f, %.19f", 
+                a[0], a[1], a[2], a[3], a[4]);
+        hal.util->prt("ChebyII filter idx: curr_idx %d, %d, %d, %d, %d", 
+                curr_idx,
+                FORMER(curr_idx, 1, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 2, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 3, FILTER_MAX_TAP), 
+                FORMER(curr_idx, 4, FILTER_MAX_TAP)); 
+        uint8_t med_f_len = _imu.get_mean_filter_former() + _imu.get_mean_filter_latter();
+        hal.util->prt("Median filter idx: len: %d, curr_idx %d", med_f_len, curr_idx);
+            for(uint8_t med_idx = 0; med_idx < med_f_len; med_idx++)
+            {
+                uint8_t jj = (med_f_len - med_idx);
+                hal.util->prt("in idx: <%d>", FORMER(curr_idx, jj, MED_TAP));
+            }
+#endif
+
+    }
+    incr++;
+#endif
+        if(!first)
+        {
+            // update state
+            filter_state[curr_idx] = _in;
+            // filter x: 
+            filter_out[curr_idx] = b[0]*filter_state[curr_idx] 
+                + b[1]*filter_state[FORMER(curr_idx, 1, FILTER_MAX_TAP)] 
+                - a[1]*filter_out[FORMER(curr_idx, 1, FILTER_MAX_TAP)] 
+                + b[2]*filter_state[FORMER(curr_idx, 2, FILTER_MAX_TAP)] 
+                - a[2]*filter_out[FORMER(curr_idx, 2, FILTER_MAX_TAP)] 
+                + b[3]*filter_state[FORMER(curr_idx, 3, FILTER_MAX_TAP)] 
+                - a[3]*filter_out[FORMER(curr_idx, 3, FILTER_MAX_TAP)]
+                + b[4]*filter_state[FORMER(curr_idx, 4, FILTER_MAX_TAP)]
+                - a[4]*filter_out[FORMER(curr_idx, 4, FILTER_MAX_TAP)];
+
+            if (isnan(filter_out[curr_idx]) || isinf(filter_out[curr_idx])) {
+
+                filter_out[curr_idx] = filter_state[curr_idx]; 
+            }
+
+            ret = filter_out[curr_idx];
+
+            // update filter postion
+            curr_idx++;
+            curr_idx &= FILTER_MAX_TAP - 1;
+            
+        }
+    }
+
+    // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
+    return ret;
+}
+
+static double median_filter(double *pimu_in, uint8_t median_len)
+{
+    int i,j;
+    double ret = 0.0f;  
+    double bTemp;  
+
+      
+    for (j = 0; j < median_len; j ++)  
+    {  
+        for (i = 0; i < median_len - j; i ++)  
+        {  
+            if (pimu_in[i] > pimu_in[i + 1])  
+            {  
+                bTemp = pimu_in[i];  
+                pimu_in[i] = pimu_in[i + 1];  
+                pimu_in[i + 1] = bTemp;  
+            }  
+        }  
+    }  
+
+    // 计算中值  
+    if ((median_len & 1) > 0)  
+    {  
+        // 数组有奇数个元素，返回中间一个元素  
+        ret = pimu_in[median_len / 2];  
+    }  
+    else  
+    {  
+        // 数组有偶数个元素，返回中间两个元素平均值  
+        ret = (pimu_in[median_len / 2 - 1] + pimu_in[median_len / 2]) / 2;  
+    }  
+  
+    return ret;  
+
+}
+
+float AP_Baro_MS58XX::_median_filter(float _in)
+{
+    // for median filter: circular buff 16
+#define MED_TAP 64
+    static double med_filter_in[MED_TAP];
+    static uint8_t curr_idx = 0;
+    static bool first = false;
+    float ret = 0.0f;
+
+    if(!first)
+    {
+        uint8_t med_len = _frontend.get_med_tap() + 1; // include current in
+        if(med_len > 1)
+        {
+            double med_in[MED_TAP]; 
+            med_filter_in[curr_idx] = _in;
+            for(uint8_t med_idx = 0; med_idx < med_len; med_idx++)
+            {
+                uint8_t dist = med_len - 1 - med_idx;
+                med_in[med_idx] = med_filter_in[FORMER(curr_idx, dist, MED_TAP)];
+            }
+            ret = median_filter(med_in, med_len);  
+            curr_idx++;
+            curr_idx &= MED_TAP - 1;
+        }
+        else
+        {
+            // hal.util->prt("[Err] mag mean filter param wrong: ");
+            return _in;
+        }
+    }
+    else
+    {
+        first = false;
+        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        {
+            med_filter_in[idx] = 0.0d;
+        }
+    }
+
+
+    // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
+    return ret;
 }

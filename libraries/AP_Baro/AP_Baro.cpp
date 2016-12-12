@@ -55,6 +55,37 @@ const AP_Param::GroupInfo AP_Baro::var_info[] PROGMEM = {
     // @Increment: 1
     AP_GROUPINFO("ALT_OFFSET", 4, AP_Baro, _alt_offset, 0),
 
+    // @Param: AVERAGE_ENABLE
+    // @DisplayName: Baro average en
+    // @Description: 
+    // @Range: 0 1
+    // @Values: 
+    // @User: Advanced
+    AP_GROUPINFO("AVER_EN", 5, AP_Baro, _average_en, 0),
+
+    // @Param: AVERAGE_LEN
+    // @DisplayName: average len
+    // @Description: 
+    // @Range: 1 63
+    // @Values: 
+    // @User: Advanced
+    AP_GROUPINFO("AVER_LEN", 6, AP_Baro, _average_len, 3),
+
+    // @Param: BARO_UF
+    // @DisplayName: 
+    // @Description: User defined filter
+    // @Values: 0:original,1:CI-10Hz
+    // @User: Advanced
+    AP_GROUPINFO("BARO_UF", 7, AP_Baro, _user_filter,  64),
+
+    // @Param: MED_TAP
+    //
+    // @DisplayName: 
+    // @Description: accl mean filter former num
+    // @Values: 
+    // @User: Advanced
+    AP_GROUPINFO("MED_TAP", 8, AP_Baro, _med_tap,  6),
+
     AP_GROUPEND
 };
 

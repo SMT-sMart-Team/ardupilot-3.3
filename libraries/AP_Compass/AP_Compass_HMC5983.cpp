@@ -68,40 +68,43 @@ extern const AP_HAL::HAL& hal;
 
 // AB ZhaoYJ@2016-12-11 for user-defined 4 order chebyII filter
 #define FILTER_TYPE 7 // 7 filters, 4 order with b & a
-const double compass_ba[FILTER_TYPE][5*2] = {
+// fs: 200Hz
+const double compass_ba[FILTER_TYPE][(N_ORDER+1)*2] = {
     // 0: fc=10Hz
-    {0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
-    0.0009877867510385,
-    1,   -3.878129734999,    5.641762572816,   -3.648875955419,
-    0.8852477379956},
-    // 1: fc=20Hz
     {0.001066578484441,-0.003520583754742, 0.004979264107821,-0.003520583754742,
     0.001066578484441,
     1,    -3.75490235187,    5.294313666885,    -3.32185631444,
     0.7825162529919},
-    // 2: fc=30Hz
-    { 0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
-    0.001235431141961,
-    1,   -3.628903305608,    4.954076395023,   -3.014454340388,
-    0.6896343805619},
-    // 3: 40Hz
+    // 1: 20Hz
     {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
     0.001504023202492,
     1,   -3.498597652843,    4.617828546747,     -2.7230591526,
     0.604937864995},
-    // 4: 1Hz-20Hz
-    {0.001035118616347, -0.003591819842621, 0.005152284049452, -0.003591819842620,     0.001035118616347,
-    1.000000000000000, -3.790224337093825, 5.392406406613549, -3.412836705803140, 0.810693517880321},
+    // 2: fc=30Hz
+    {0.002440006636488,-0.001243697363317, 0.003428681549348,-0.001243697363317,
+    0.002440006636488,
+    1,   -3.217868090935,    3.945654810763,   -2.177266033495,
+    0.4553006137634},
+    // 3: fc=40Hz
+    {0.004259816772569, 0.002810421933046, 0.006247310625167, 0.002810421933046,
+    0.004259816772569,
+    1,   -2.894721965841,    3.256463919134,   -1.668134292247,
+    0.3267801269904},
+    // 4: 5Hz-20Hz
+    {0.001504023202492,-0.002833704229474, 0.003768968353254,-0.002833704229474,
+    0.001504023202492,
+    1,   -3.498597652843,    4.617828546747,     -2.7230591526,
+    0.604937864995},
     // 5: 2Hz
-    {0.0009898590037292,-0.003951630671045, 0.005923551035664,-0.003951630671045,
-    0.0009898590037292,
-    1,-3.975669032622,    5.927302681588,   -3.927596156134,
-    0.9759625148687},
+    {0.0009836753866896,-0.003903796945646, 0.005840364964036,-0.003903796945646,
+    0.0009836753866896,
+    1,   -3.951327305119,    5.855163083587,   -3.856327448311,
+    0.9524917916895},
     // 6: 5Hz
-    {0.0009820297557845,-0.003880052678305, 0.005796341733976,-0.003880052678305,
-    0.0009820297557845,
-    1,-3.939149044189,    5.819291999087,   -3.821104108943,
-    0.9409614499347}
+    {0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
+    0.0009877867510385,
+    1,   -3.878129734999,    5.641762572816,   -3.648875955419,
+    0.8852477379956}
 };
 
 // AB ZhaoYJ@2016-10-19 for HMC5983
@@ -278,6 +281,11 @@ void AP_Compass_HMC5983::accumulate(void)
 // reading from the magnetometer
 void AP_Compass_HMC5983::_timer(void)
 {
+    // for average
+    static Vector3f sample[AVERAGE_WIN];
+    static uint16_t sample_idx = 0;
+    static bool first = true;
+
     if (!_initialised) {
         // someone has tried to enable a compass for the first time
         // mid-flight .... we can't do that yet (especially as we won't
@@ -312,7 +320,7 @@ void AP_Compass_HMC5983::_timer(void)
       uint8_t mag_user_ft = _compass.get_user_filter();
       Vector3f mag_filtered = Vector3f(_mag_x, _mag_y, _mag_z);
 
-#define CHK_FT_TAP 1
+#define CHK_FT_TAP 0
 #if CHK_FT_TAP 
     static uint32_t mag_cnt = 0;
 #endif
@@ -325,20 +333,20 @@ void AP_Compass_HMC5983::_timer(void)
       {
           mag_filtered = _median_filter(mag_filtered);
       }
-      else if(mag_user_ft == 0x1F) // median + ChebyII(20Hz)
+      else if(mag_user_ft & 0x10) // median + ChebyII(Hz)
       {
           mag_filtered = _median_filter(mag_filtered);
-          mag_filtered = _user_filter(mag_filtered, 1);
+          mag_filtered = _user_filter(mag_filtered, mag_user_ft & 0xF);
       }
-      else if(mag_user_ft == 0x2F) // ChebyII(20Hz) + median 
+      else if(mag_user_ft & 0x20) // ChebyII(20Hz) + median 
       {
 #if CHK_FT_TAP 
           if((0 == (mag_cnt %4000)) || (1 == (mag_cnt%4000)))
           {
-              hal.util->prt("[%d us] mag ft: %d, med_tap: %d", hal.scheduler->micros(), mag_user_ft, _compass.get_med_tap());
+                hal.util->prt("[%d us] mag ft: %d (cheby %d), med_tap: %d", hal.scheduler->micros(), mag_user_ft, mag_user_ft&0xF, _compass.get_med_tap());
           }
 #endif
-          mag_filtered = _user_filter(mag_filtered, 1);
+          mag_filtered = _user_filter(mag_filtered, mag_user_ft & 0xF);
           mag_filtered = _median_filter(mag_filtered);
       }
 #if CHK_FT_TAP 
@@ -347,9 +355,6 @@ void AP_Compass_HMC5983::_timer(void)
 
       if(_compass.is_average())
       {
-            static Vector3f sample[AVERAGE_WIN];
-            static uint16_t sample_idx = 0;
-            static bool first = true;
             sample[(sample_idx)] = mag_filtered;
             uint16_t average_len = _compass.get_average_len();
             Vector3f sum;
@@ -724,7 +729,6 @@ Vector3f AP_Compass_HMC5983::_user_filter(Vector3f _mag_in, uint8_t _uf)
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
-    uint8_t ii = 0;
     // Chebyshev II
     const double *b;
     const double *a;
@@ -849,7 +853,6 @@ Vector3f AP_Compass_HMC5983::_median_filter(Vector3f _mag_in)
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
-    uint8_t ii = 0;
 
     if(!first)
     {

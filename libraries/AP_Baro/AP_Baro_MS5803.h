@@ -53,6 +53,8 @@ public:
     AP_Baro_MS58XX(AP_Baro &baro, AP_SerialBus *serial, bool use_timer);
     void update();
     void accumulate();
+    float _median_filter(float _in);
+    float _user_filter(float _in, uint8_t _uf);
 
 private:
     virtual void _calculate() = 0;

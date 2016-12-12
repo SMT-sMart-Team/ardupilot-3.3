@@ -52,6 +52,11 @@ public:
     float get_pressure(uint8_t instance) const { return sensors[instance].pressure; }
     float get_pressure_raw(uint8_t instance) const { return sensors_raw[instance].pressure; }
 
+    bool is_average(void) const { return _average_en; }
+    uint8_t get_average_len(void) const { return _average_len; }
+    uint8_t get_user_filter(void) const { return _user_filter; }
+    uint8_t get_med_tap(void) const { return _med_tap; }
+
     // temperature in degrees C
     float get_temperature(void) const { return get_temperature(_primary); }
     float get_temperature(uint8_t instance) const { return sensors[instance].temperature; }
@@ -144,6 +149,10 @@ private:
     uint8_t _primary;
 
     uint8_t _log_raw[BARO_MAX_DRIVERS];
+    AP_Int8  _average_en;
+    AP_Int8  _average_len;
+    AP_Int8  _user_filter;
+    AP_Int8  _med_tap;
 
     struct sensor {
         uint32_t last_update_ms;        // last update time in ms
