@@ -374,7 +374,7 @@ void AP_Compass_HMC5983::_timer(void)
                     first = false;
                 }
             }
-            sum = sum/average_len;
+            sum = sum/(float)average_len;
 
 	        _mag_x_accum = sum.x;
 	        _mag_y_accum = sum.y;
@@ -686,13 +686,13 @@ void AP_Compass_HMC5983::read()
 static double median_filter(double *pimu_in, uint8_t median_len)
 {
     int i,j;
-    double ret;  
+    double ret = 0.0f;  
     double bTemp;  
 
       
-    for (j = 0; j < median_len; j ++)  
+    for (j = 0; j < (median_len - 1); j++)  
     {  
-        for (i = 0; i < median_len - j; i ++)  
+        for (i = 0; i < (median_len - j - 1); i++)  
         {  
             if (pimu_in[i] > pimu_in[i + 1])  
             {  
@@ -727,7 +727,7 @@ Vector3f AP_Compass_HMC5983::_user_filter(Vector3f _mag_in, uint8_t _uf)
     static Vector3d filter_state[FILTER_MAX_TAP]; 
     static Vector3d filter_out[FILTER_MAX_TAP]; 
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     // Chebyshev II
     const double *b;
@@ -839,6 +839,23 @@ Vector3f AP_Compass_HMC5983::_user_filter(Vector3f _mag_in, uint8_t _uf)
             curr_idx &= FILTER_MAX_TAP - 1;
             
         }
+        else
+        {
+            filter_state[curr_idx].x = _mag_in.x;
+            filter_state[curr_idx].y = _mag_in.y;
+            filter_state[curr_idx].z = _mag_in.z;
+            filter_out[curr_idx].x = _mag_in.x;
+            filter_out[curr_idx].y = _mag_in.y;
+            filter_out[curr_idx].z = _mag_in.z;
+
+            curr_idx++;
+            if(curr_idx == FILTER_MAX_TAP)
+            {
+                first = false;
+                curr_idx = 0;
+            }
+            ret = _mag_in;
+        }
     }
 
     // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
@@ -851,7 +868,7 @@ Vector3f AP_Compass_HMC5983::_median_filter(Vector3f _mag_in)
 #define MED_TAP 64
     static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
 
     if(!first)
@@ -886,15 +903,17 @@ Vector3f AP_Compass_HMC5983::_median_filter(Vector3f _mag_in)
     }
     else
     {
-        first = false;
-        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        med_filter_in[curr_idx].x = _mag_in.x;
+        med_filter_in[curr_idx].y = _mag_in.y;
+        med_filter_in[curr_idx].z = _mag_in.z;
+        curr_idx++;
+        if(curr_idx == MED_TAP)
         {
-            med_filter_in[idx].x = 0.0d;
-            med_filter_in[idx].y = 0.0d;
-            med_filter_in[idx].z = 0.0d;
+            first = false;
+            curr_idx = 0;
         }
+        return _mag_in;
     }
-
 
     // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
     return ret;

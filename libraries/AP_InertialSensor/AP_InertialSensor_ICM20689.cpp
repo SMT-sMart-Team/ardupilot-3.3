@@ -786,10 +786,9 @@ static double median_filter(double *pimu_in, uint8_t median_len)
     double ret;  
     double bTemp;  
 
-      
-    for (j = 0; j < median_len; j ++)  
+    for (j = 0; j < (median_len - 1); j++)  
     {  
-        for (i = 0; i < median_len - j; i ++)  
+        for (i = 0; i < (median_len - j - 1); i++)  
         {  
             if (pimu_in[i] > pimu_in[i + 1])  
             {  
@@ -824,7 +823,7 @@ Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in, uint8
     static Vector3d filter_state[FILTER_MAX_TAP]; 
     static Vector3d filter_out[FILTER_MAX_TAP]; 
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     uint8_t ii = 0;
     // Chebyshev II
@@ -937,6 +936,24 @@ Vector3f AP_InertialSensor_ICM20689::_accel_user_filter(Vector3f _accl_in, uint8
             curr_idx &= FILTER_MAX_TAP - 1;
             
         }
+        else
+        {
+
+            filter_state[curr_idx].x = _accl_in.x;
+            filter_state[curr_idx].y = _accl_in.y;
+            filter_state[curr_idx].z = _accl_in.z;
+            filter_out[curr_idx].x = _accl_in.x;
+            filter_out[curr_idx].y = _accl_in.y;
+            filter_out[curr_idx].z = _accl_in.z;
+
+            curr_idx++;
+            if(curr_idx == FILTER_MAX_TAP)
+            {
+                first = false;
+                curr_idx = 0;
+            }
+            ret = _accl_in;
+        }
     }
 
     // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
@@ -949,7 +966,7 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
 #define MED_TAP 64
     static Vector3d med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     uint8_t ii = 0;
 
@@ -995,13 +1012,17 @@ Vector3f AP_InertialSensor_ICM20689::_accel_median_filter(Vector3f _accl_in)
     }
     else
     {
-        first = false;
-        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        med_filter_in[curr_idx].x = _accl_in.x;
+        med_filter_in[curr_idx].y = _accl_in.y;
+        med_filter_in[curr_idx].z = _accl_in.z;
+
+        curr_idx++;
+        if(curr_idx == MED_TAP)
         {
-            med_filter_in[idx].x = 0.0d;
-            med_filter_in[idx].y = 0.0d;
-            med_filter_in[idx].z = 0.0d;
+            first = false;
+            curr_idx = 0;
         }
+        ret = _accl_in;
     }
 
 
@@ -1016,7 +1037,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in, uint8_
     static Vector3d filter_state[FILTER_MAX_TAP]; 
     static Vector3d filter_out[FILTER_MAX_TAP]; 
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     uint8_t ii = 0;
     // Chebyshev II
@@ -1129,6 +1150,22 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_user_filter(Vector3f _gyro_in, uint8_
             curr_idx &= FILTER_MAX_TAP - 1;
             
         }
+        else
+        {
+            filter_state[curr_idx].x = _gyro_in.x;
+            filter_state[curr_idx].y = _gyro_in.y;
+            filter_state[curr_idx].z = _gyro_in.z;
+            filter_out[curr_idx].x = _gyro_in.x;
+            filter_out[curr_idx].y = _gyro_in.y;
+            filter_out[curr_idx].z = _gyro_in.z;
+            curr_idx++;
+            if(curr_idx == FILTER_MAX_TAP)
+            {
+                first = false;
+                curr_idx = 0;
+            }
+            ret = _gyro_in;
+        }
     }
 
     // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
@@ -1141,7 +1178,7 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
 #define MED_TAP 64
     static Vector3d gyro_med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     Vector3f ret;
     uint8_t ii = 0;
     if(!first)
@@ -1176,13 +1213,17 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
     }
     else
     {
-        first = false;
-        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        gyro_med_filter_in[curr_idx].x = _gyro_in.x;
+        gyro_med_filter_in[curr_idx].y = _gyro_in.y;
+        gyro_med_filter_in[curr_idx].z = _gyro_in.z;
+
+        curr_idx++;
+        if(curr_idx == MED_TAP)
         {
-            gyro_med_filter_in[idx].x = 0.0d;
-            gyro_med_filter_in[idx].y = 0.0d;
-            gyro_med_filter_in[idx].z = 0.0d;
+            first = false;
+            curr_idx = 0;
         }
+        ret = _gyro_in;
     }
 
 

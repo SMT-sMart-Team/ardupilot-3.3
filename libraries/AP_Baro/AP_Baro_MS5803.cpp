@@ -423,7 +423,7 @@ void AP_Baro_MS58XX::_timer(void)
             if ((d1 != 0) && (d1 < 10600000)) 
             {
                 uint8_t baro_user_ft = _frontend.get_user_filter();
-                float baro_filtered = float(d1)/1000.0f; // zoom in 1000 for val is too big
+                float baro_filtered = float(d1)/100.0f; // zoom in 100 for val is too big
 
 #define CHK_FT_TAP 0
 #if CHK_FT_TAP 
@@ -454,23 +454,39 @@ void AP_Baro_MS58XX::_timer(void)
                     baro_filtered = _user_filter(baro_filtered, baro_user_ft & 0xF);
                     baro_filtered = _median_filter(baro_filtered);
                 }
-#if CHK_FT_TAP 
-                baro_cnt++;
-#endif          
 
                 if(_frontend.is_average())
                 {
-                    sample[(sample_idx++)%AVERAGE_WIN] = baro_filtered;
+                    sample[(sample_idx)%AVERAGE_WIN] = baro_filtered;
                     uint16_t average_len = _frontend.get_average_len();
+                    float sum = 0;
                     if(!first)
                     {
-                        float sum = 0;
                         for(uint16_t ii = 0; ii < average_len; ii++)
                         {
-                            sum += sample[ii];
+                            sum += sample[FORMER(sample_idx, ii, AVERAGE_WIN)];
+#if CHK_FT_TAP 
+                            if((0 == (baro_cnt %4000)) || (1 == (baro_cnt%4000)))
+                            {
+                                hal.util->prt("[%d us] baro sum val: %f", hal.scheduler->micros(), 
+                                        sample[FORMER(sample_idx, ii, AVERAGE_WIN)]);
+                            }
+#endif
                         }
-                        // zoom out back
-                        d1 = (uint32_t)(sum*1000.0f/average_len);
+
+#if CHK_FT_TAP 
+                    if((0 == (baro_cnt %4000)) || (1 == (baro_cnt%4000)))
+                    {
+                        hal.util->prt("[%d us] baro aver before", hal.scheduler->micros());
+                    }
+#endif
+                        baro_filtered = (sum/average_len);
+#if CHK_FT_TAP 
+                    if((0 == (baro_cnt %4000)) || (1 == (baro_cnt%4000)))
+                    {
+                        hal.util->prt("[%d us] baro aver after", hal.scheduler->micros());
+                    }
+#endif
                     }
                     else
                     {
@@ -479,10 +495,26 @@ void AP_Baro_MS58XX::_timer(void)
                             first = false;
                         }
                     }
+                    sample_idx++;
+                    sample_idx &= AVERAGE_WIN - 1;
+#if CHK_FT_TAP 
+                    if((0 == (baro_cnt %4000)) || (1 == (baro_cnt%4000)))
+                    {
+                        hal.util->prt("[%d us] baro sum: total %f (len: %d), aver %f", hal.scheduler->micros(), sum, average_len, baro_filtered);
+                    }
+#endif
                 }
+
+#if CHK_FT_TAP 
+                if((0 == (baro_cnt %4000)) || (1 == (baro_cnt%4000)))
+                {
+                    hal.util->prt("[%d us] baro val: %d -> %d (%f)", hal.scheduler->micros(), d1, (uint32_t)(baro_filtered*100.0f), baro_filtered);
+                }
+                baro_cnt++;
+#endif          
                 // occasional zero values have been seen on the PXF
                 // board. These may be SPI errors, but safest to ignore
-                _s_D1 += d1;
+                _s_D1 += (uint32_t)(baro_filtered*100.0f);
                 _d1_count++;
 
                 // record raw pressure
@@ -682,16 +714,16 @@ void AP_Baro_MS5803::_calculate()
 	// us to take advantage of the averaging of D1 and D1 over
 	// multiple samples, giving us more precision
 	dT = _D2 - (((uint32_t) _C5) << 8);
-	TEMP = 2000 + (dT * _C6) / 8388608;
-	OFF = _C2 * 65536.0f + (_C4 * dT) / 128;
-	SENS = _C1 * 32768.0f + (_C3 * dT) / 256;
+	TEMP = 2000.0f + (dT * _C6 ) * (1.1920929e-7); //  / 8388608;
+	OFF = _C2 * 65536.0f + (_C4 * dT) * 0.0078125f; // / 128;
+	SENS = _C1 * 32768.0f + (_C3 * dT) * 0.00390625f; // / 256;
 
 	if (TEMP < VALUE_OF_20C) {
 		// second order temperature compensation when under 20 degrees C
-		T2 = (dT * dT) / 0x80000000;
+		T2 = (dT * dT) *  0.000465661f * 0.000001f; // / 0x80000000;
 		Aux = (TEMP - 2000) * (TEMP - 2000);
 		OFF2 = 3.0f * Aux;
-		SENS2 = (7.0f * Aux) / 8;
+		SENS2 = (7.0f * Aux) * 0.125f; // / 8;
 		if (TEMP < VALUE_OF_UNDER_15C) {
 			SENS2 = SENS2 + 2 * ((TEMP + 1500) * (TEMP + 1500));
 		}
@@ -701,13 +733,13 @@ void AP_Baro_MS5803::_calculate()
 		OFF2 = 0;
 		SENS2 = 0;
 		if (TEMP > VALUE_OF_45C)
-			SENS2 = SENS2 - (((TEMP - 4500) * (TEMP - 4500)) / 8);
+			SENS2 = SENS2 - (((TEMP - 4500) * (TEMP - 4500)) * 0.125f);
 	}
 	TEMP = TEMP - T2;
 	OFF = OFF - OFF2;
 	SENS = SENS - SENS2;
 
-	float pressure = (_D1 * SENS / 2097152 - OFF) / 32768;
+	float pressure = (_D1 * SENS * 0.00476837f * 0.0001f /* / 2097152*/ - OFF) * 0.000030517578125f; // / 32768;
 	float temperature = TEMP * 0.01f;
 	_copy_to_frontend(_instance, pressure, temperature);
 }
@@ -733,13 +765,12 @@ float AP_Baro_MS58XX::_user_filter(float _in, uint8_t _uf)
     static double filter_state[FILTER_MAX_TAP]; 
     static double filter_out[FILTER_MAX_TAP]; 
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     float ret = 0.0f;
     // Chebyshev II
     const double *b;
     const double *a;
 
-    {
         if(_uf >= FILTER_TYPE) 
         {
             hal.util->prt("[Err] baro filter type wrong: %d", _uf);
@@ -808,7 +839,18 @@ float AP_Baro_MS58XX::_user_filter(float _in, uint8_t _uf)
             curr_idx &= FILTER_MAX_TAP - 1;
             
         }
-    }
+        else
+        {
+            filter_state[curr_idx]  = _in; 
+            filter_out[curr_idx]  = _in; 
+            curr_idx++;
+            if(curr_idx == FILTER_MAX_TAP)
+            {
+                first = false;
+                curr_idx = 0;
+            }
+            ret = _in;
+        }
 
     // hal.util->prt("[ %d us] mag filter end", hal.scheduler->micros()); 
     return ret;
@@ -821,9 +863,9 @@ static double median_filter(double *pimu_in, uint8_t median_len)
     double bTemp;  
 
       
-    for (j = 0; j < median_len; j ++)  
+    for (j = 0; j < (median_len - 1); j++)  
     {  
-        for (i = 0; i < median_len - j; i ++)  
+        for (i = 0; i < (median_len - j - 1); i++)  
         {  
             if (pimu_in[i] > pimu_in[i + 1])  
             {  
@@ -856,7 +898,7 @@ float AP_Baro_MS58XX::_median_filter(float _in)
 #define MED_TAP 64
     static double med_filter_in[MED_TAP];
     static uint8_t curr_idx = 0;
-    static bool first = false;
+    static bool first = true;
     float ret = 0.0f;
 
     if(!first)
@@ -883,11 +925,14 @@ float AP_Baro_MS58XX::_median_filter(float _in)
     }
     else
     {
-        first = false;
-        for(uint8_t idx = 0; idx < MED_TAP; idx++)
+        med_filter_in[curr_idx] = _in; 
+        curr_idx++;
+        if(curr_idx == MED_TAP)
         {
-            med_filter_in[idx] = 0.0d;
+            first = false;
+            curr_idx = 0;
         }
+        ret = _in;
     }
 
 
