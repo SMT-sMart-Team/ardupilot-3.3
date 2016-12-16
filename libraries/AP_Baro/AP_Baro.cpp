@@ -241,7 +241,7 @@ float AP_Baro::get_altitude_difference(float base_pressure, float pressure) cons
     {
         hal.util->prt("[% us]: Baro hgt: last %fm, curr %fm", hal.scheduler->micros(), last_hgt_f, ret);
     }
-    return 2.0f;
+    // return 2.0f;
 #endif
 
     if(delta_hgt > HGT_MAX_GLITCH)
