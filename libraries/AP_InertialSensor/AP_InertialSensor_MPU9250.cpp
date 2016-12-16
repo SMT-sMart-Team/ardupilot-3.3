@@ -625,7 +625,6 @@ Vector3f AP_InertialSensor_MPU9250::_accel_user_filter(Vector3f _accl_in)
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
-    uint8_t ii = 0;
 #if TEST_FILTER 
     static uint32_t incr = 0;
     _accl_in.z = -8000;
@@ -742,7 +741,6 @@ Vector3f AP_InertialSensor_MPU9250::_gyro_user_filter(Vector3f _gyro_in)
     static uint8_t curr_idx = 0;
     static bool first = false;
     Vector3f ret;
-    uint8_t ii = 0;
     if(!first)
     {
         // update state

@@ -227,7 +227,36 @@ float AP_Baro::get_altitude_difference(float base_pressure, float pressure) cons
     // This is an exact calculation that is within +-2.5m of the standard atmosphere tables
     // in the troposphere (up to 11,000 m amsl).
 	ret = 153.8462f * temp * (1.0f - expf(0.190259f * logf(scaling)));
+    // AB ZhaoYJ@2016--12-16 for avoid baro glitch
+#define HGT_MAX_GLITCH 10 // 10m
+    static int32_t last_hgt = (int32_t)ret;
+    static float last_hgt_f = ret;
+    int32_t ret_int = (int32_t)ret;
+    int32_t delta_hgt = (ret_int>last_hgt)?(ret_int-last_hgt):(last_hgt-ret_int);
+#define TEST_VAL 0
+#if TEST_VAL 
+    static uint16_t cnt = 0;
+    cnt++;
+    if((0 == (cnt%30)) || (1 == (cnt%30)))
+    {
+        hal.util->prt("[% us]: Baro hgt: last %fm, curr %fm", hal.scheduler->micros(), last_hgt_f, ret);
+    }
+    return 2.0f;
 #endif
+
+    if(delta_hgt > HGT_MAX_GLITCH)
+    {
+        // ignore curr glitch value
+        ret = last_hgt_f;
+    }
+    else
+    {
+        // update last value
+        last_hgt = ret_int;
+        last_hgt_f = ret;
+    }
+#endif
+
     return ret;
 }
 
