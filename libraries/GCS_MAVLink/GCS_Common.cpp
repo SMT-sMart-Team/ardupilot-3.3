@@ -1033,6 +1033,22 @@ void GCS_MAVLINK::send_raw_imu(const AP_InertialSensor &ins, const Compass &comp
     } else {
         mag.zero();
     }
+#define TEST_SEND_RAW_IMU 0
+#if TEST_SEND_RAW_IMU
+    static uint32_t log_raw_cnt = 0;
+
+    if(is_zero(mag.x)
+     || is_zero(mag.y)
+     || is_zero(mag.z)
+     || isnan(mag.x)
+     || isnan(mag.y)
+     || isnan(mag.z))
+    {
+        hal.util->prt("[%d us] GCS send raw: field is <%f, %f, %f>, ", hal.scheduler->micros(), mag.x, mag.y, mag.z);
+    }
+    log_raw_cnt++;
+
+#endif
 
     mavlink_msg_raw_imu_send(
         chan,

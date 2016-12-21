@@ -714,18 +714,18 @@ void AP_Baro_MS5803::_calculate()
 	// us to take advantage of the averaging of D1 and D1 over
 	// multiple samples, giving us more precision
 	dT = _D2 - (((uint32_t) _C5) << 8);
-	TEMP = 2000.0f + (dT * _C6 ) * (1.1920929e-7); //  / 8388608;
+	TEMP = 2000.0f + (dT * (float)_C6) / 8388608.0f; // * (1.1920929e-7); //  / 8388608;
 	OFF = _C2 * 65536.0f + (_C4 * dT) * 0.0078125f; // / 128;
 	SENS = _C1 * 32768.0f + (_C3 * dT) * 0.00390625f; // / 256;
 
 	if (TEMP < VALUE_OF_20C) {
 		// second order temperature compensation when under 20 degrees C
 		T2 = (dT * dT) *  0.000465661f * 0.000001f; // / 0x80000000;
-		Aux = (TEMP - 2000) * (TEMP - 2000);
+		Aux = (TEMP - 2000.0f) * (TEMP - 2000.0f);
 		OFF2 = 3.0f * Aux;
 		SENS2 = (7.0f * Aux) * 0.125f; // / 8;
 		if (TEMP < VALUE_OF_UNDER_15C) {
-			SENS2 = SENS2 + 2 * ((TEMP + 1500) * (TEMP + 1500));
+			SENS2 = SENS2 + 2.0f * ((TEMP + 1500.0f) * (TEMP + 1500.0f));
 		}
 
 	} else {
@@ -733,15 +733,15 @@ void AP_Baro_MS5803::_calculate()
 		OFF2 = 0;
 		SENS2 = 0;
 		if (TEMP > VALUE_OF_45C)
-			SENS2 = SENS2 - (((TEMP - 4500) * (TEMP - 4500)) * 0.125f);
+			SENS2 = SENS2 - (((TEMP - 4500.0f) * (TEMP - 4500.0f)) * 0.125f);
 	}
 	TEMP = TEMP - T2;
 	OFF = OFF - OFF2;
 	SENS = SENS - SENS2;
 
-	float pressure = (_D1 * SENS * 0.00476837f * 0.0001f /* / 2097152*/ - OFF) * 0.000030517578125f; // / 32768;
+	double pressure = (_D1 * SENS * 0.00476837f * 0.0001f /* / 2097152*/ - OFF) * 0.000030517578125f; // / 32768;
 	float temperature = TEMP * 0.01f;
-	_copy_to_frontend(_instance, pressure, temperature);
+	_copy_to_frontend(_instance, (float)pressure, temperature);
 }
 
 /*

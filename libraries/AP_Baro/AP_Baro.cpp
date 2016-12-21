@@ -227,34 +227,65 @@ float AP_Baro::get_altitude_difference(float base_pressure, float pressure) cons
     // This is an exact calculation that is within +-2.5m of the standard atmosphere tables
     // in the troposphere (up to 11,000 m amsl).
 	ret = 153.8462f * temp * (1.0f - expf(0.190259f * logf(scaling)));
-    // AB ZhaoYJ@2016--12-16 for avoid baro glitch
-#define HGT_MAX_GLITCH 10 // 10m
-    static int32_t last_hgt = (int32_t)ret;
-    static float last_hgt_f = ret;
-    int32_t ret_int = (int32_t)ret;
-    int32_t delta_hgt = (ret_int>last_hgt)?(ret_int-last_hgt):(last_hgt-ret_int);
-#define TEST_VAL 0
-#if TEST_VAL 
-    static uint16_t cnt = 0;
-    cnt++;
-    if((0 == (cnt%30)) || (1 == (cnt%30)))
+    // AB ZhaoYJ@2016-12-16 for avoid baro glitch
+    // AB ZhaoYJ@2016-12-19 for avoid baro glitch
+    // delay one sample for detecting glitch
+#define HGT_MAX_GLITCH  0.5f // climb rate: 5m/s
+#define MAX_TAP 3
+#define FORMER(curr, n, array_size) ((curr >= n)?(curr - n):(curr + array_size - n)) 
+    static float hgt_state[MAX_TAP];
+    static uint16_t curr_idx = 0;
+    static bool first = true;
+#define DEBUG 0
+#if DEBUG
+    float test_data[10] = {-135, -120, 0.01, 1, 3, 2, 5, 8, 4, -1};
+    static uint16_t test_id = 0;
+#endif
+    if(!first)
     {
-        hal.util->prt("[% us]: Baro hgt: last %fm, curr %fm", hal.scheduler->micros(), last_hgt_f, ret);
-    }
-    // return 2.0f;
+#if DEBUG
+        ret = test_data[test_id++%10];
+#endif
+        hgt_state[curr_idx] = ret;
+        float former = hgt_state[FORMER(curr_idx, 2, MAX_TAP)];
+        float current = hgt_state[FORMER(curr_idx, 1, MAX_TAP)];
+        float latter = ret;
+        
+        bool baro_glitch = (((current + HGT_MAX_GLITCH) < former) && ((current + HGT_MAX_GLITCH) < latter))  || (((current - HGT_MAX_GLITCH) > former) && ((current - HGT_MAX_GLITCH) > latter));
+
+        if(baro_glitch)
+        {
+            ret = (former+latter)/2.0f;
+        }
+        else
+        {
+            ret = current;
+        }
+
+#if DEBUG
+        hal.util->prt("[%d us] baro glitch detector: former: %f, current: %f, latter: %f, then: %f", hal.scheduler->micros(), former, current, latter, ret); 
+        if(test_id == 10)
+        {
+            hal.util->prt("[% us] test done", hal.scheduler->micros()); 
+            exit(1);
+        }
 #endif
 
-    if(delta_hgt > HGT_MAX_GLITCH)
-    {
-        // ignore curr glitch value
-        ret = last_hgt_f;
+        if((++curr_idx) == MAX_TAP)
+        {
+            curr_idx = 0;
+        }
     }
     else
     {
-        // update last value
-        last_hgt = ret_int;
-        last_hgt_f = ret;
+        hgt_state[curr_idx++] = ret;
+        if(curr_idx == MAX_TAP)
+        {
+            first = false;
+            curr_idx = 0;
+        }
     }
+
 #endif
 
     return ret;

@@ -40,7 +40,7 @@ const double ba[FILTER_TYPE][5*2] = {
     1,    -3.75490235187,    5.294313666885,    -3.32185631444,
     0.7825162529919},
     // 2: fc=30Hz
-    { 0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
+    {0.001235431141961,-0.003233484708145, 0.004349236721367,-0.003233484708145,
     0.001235431141961,
     1,   -3.628903305608,    4.954076395023,   -3.014454340388,
     0.6896343805619},
@@ -511,8 +511,32 @@ bool AP_InertialSensor_ICM20689::update( void )
 /**
  * Timer process to poll for new data from the ICM20689.
  */
+// AB ZhaoYJ@2016-12-20 for fix polling interval
+#define FIX_PERIOD_POLL 0
+#define PERIOD_POLL 2500 // 2500 us 
+
+// average 1.2ms 
 void AP_InertialSensor_ICM20689::_poll_data(void)
 {
+#if FIX_PERIOD_POLL
+    static uint64_t last_poll = hal.scheduler->micros64();
+    static uint8_t poll_control = 0; 
+    // if ((hal.scheduler->micros64() - last_poll) < PERIOD_POLL) {
+    if (poll_control++&0x1) {
+        return;
+    }
+    // update poll time 
+    // last_poll = hal.scheduler->micros64();
+
+#if 0
+    static uint16_t cnt2 = 0;
+    if((0 == (cnt2%3000)) || (1 == (cnt2%3000)))
+    {
+        hal.util->prt("[ %llu us] ICM20689 timer %d", hal.scheduler->micros64(), cnt2);
+    }
+    cnt2++;
+#endif
+#endif
     if (!_spi_sem->take_nonblocking()) {
         /*
           the semaphore being busy is an expected condition when the
@@ -543,7 +567,7 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
     static uint16_t cnt1 = 0;
     if((0 == (cnt1%3000)) || (1 == (cnt1%3000)))
     {
-        hal.util->prt("[ %d us] ICM20689 timer %d", hal.scheduler->micros(), cnt1);
+        hal.util->prt("[%d us] ICM20689 timer %d", hal.scheduler->micros(), cnt1);
     }
     cnt1++;
 #endif

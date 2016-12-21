@@ -69,6 +69,9 @@
 # define MAIN_LOOP_RATE    400
 # define MAIN_LOOP_SECONDS 0.0025f
 # define MAIN_LOOP_MICROS  2500
+// # define MAIN_LOOP_RATE    100
+// # define MAIN_LOOP_SECONDS 0.01f
+// # define MAIN_LOOP_MICROS  10000
 
 //////////////////////////////////////////////////////////////////////////////
 // FRAME_CONFIG

@@ -9,7 +9,7 @@
 #include "Compass.h"
 #include "AP_Compass_Backend.h"
 
-#define RT_TIMER 1 // add _timer(read_raw data) to rt_timer funcs
+#define RT_TIMER 0 // add _timer(read_raw data) to rt_timer funcs
 
 class AP_HMC5983_SerialBus
 {
@@ -71,7 +71,7 @@ private:
     float               _mag_x_accum;
     float               _mag_y_accum;
     float               _mag_z_accum;
-    uint8_t			    _accum_count;
+    uint16_t			_accum_count;
     uint32_t            _last_accum_time;
 
     uint8_t             _compass_instance;
