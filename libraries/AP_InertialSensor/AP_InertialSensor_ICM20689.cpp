@@ -260,9 +260,10 @@ static uint32_t dump_cnt = 0;
 // AB ZhaoYJ@2016-11-01 for debugging LPF
 // according to GYRO (also for ACCEL)
 #define GYRO_SCALE_250DPS
-// #define EN_LPF
+#define EN_LPF
 #ifdef EN_LPF
-#define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_20HZ
+// #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_20HZ
+#define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_188HZ
 // #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_42HZ                              
 // #define BITS_DLPF_CFG_HZ BITS_DLPF_CFG_98HZ                              
 #endif
