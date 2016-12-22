@@ -66,7 +66,7 @@ uint8_t AP_Compass_Backend::register_compass(void) const
  */
 //AB ZhaoYJ@2016-12-20 for mot-comp
 #if HAL_COMPASS_DEFAULT == HAL_COMPASS_HMC5983
-#define COMP_MOT_KX_B 0
+#define COMP_MOT_KX_B 1
 #endif
 #if COMP_MOT_KX_B 
 const Vector3f K_VAL(262.0f, -122.0f, -175.0f);
