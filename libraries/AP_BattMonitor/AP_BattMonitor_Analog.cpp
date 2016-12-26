@@ -26,7 +26,7 @@ AP_BattMonitor_Analog::read()
     _volt_pin_analog_source->set_pin(_mon._volt_pin[_state.instance]);
 
     // get voltage
-    _state.voltage = _volt_pin_analog_source->voltage_average() * _mon._volt_multiplier[_state.instance];
+    _state.voltage = _volt_pin_analog_source->voltage_average() * _mon._volt_multiplier[_state.instance] + _mon._volt_offset[_state.instance];
 
     // read current
     if (_mon.has_current(_state.instance)) {

@@ -109,7 +109,21 @@ const AP_Param::GroupInfo AP_BattMonitor::var_info[] PROGMEM = {
     // @User: Standard
     AP_GROUPINFO("2_CAPACITY", 17, AP_BattMonitor, _pack_capacity[1], AP_BATT_CAPACITY_DEFAULT),
 
+    // @Param: 2_VOLT_OFFSET
+    // @DisplayName: 2 voltage offset 
+    // @Description: Voltage offset 
+    // @Units: Volts
+    // @User: Standard
+    AP_GROUPINFO("2_VOLT_OFF", 18, AP_BattMonitor, _volt_offset[1], 0),
+
 #endif // AP_BATT_MONITOR_MAX_INSTANCES > 1
+
+    // @Param: 1_VOLT_OFFSET
+    // @DisplayName: 1 voltage offset 
+    // @Description: Voltage offset 
+    // @Units: Volts
+    // @User: Standard
+    AP_GROUPINFO("1_VOLT_OFF", 19, AP_BattMonitor, _volt_offset[0], 0),
 
     AP_GROUPEND
 };
