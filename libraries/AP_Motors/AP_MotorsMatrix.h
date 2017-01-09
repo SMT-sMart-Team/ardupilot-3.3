@@ -11,8 +11,17 @@
 #include <RC_Channel/RC_Channel.h>     // RC Channel Library
 #include "AP_MotorsMulticopter.h"
 
+// AB ZhaoYJ@2017-01-09 for CCW-CW inversing to adapter with DJI & ZERO-TECH
+#define CCW_CW_INV 1
+#if CCW_CW_INV 
+#define AP_MOTORS_MATRIX_YAW_FACTOR_CW   1
+#define AP_MOTORS_MATRIX_YAW_FACTOR_CCW   -1
+#else
 #define AP_MOTORS_MATRIX_YAW_FACTOR_CW   -1
 #define AP_MOTORS_MATRIX_YAW_FACTOR_CCW   1
+#endif
+
+
 
 /// @class      AP_MotorsMatrix
 class AP_MotorsMatrix : public AP_MotorsMulticopter {
