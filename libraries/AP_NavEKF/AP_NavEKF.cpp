@@ -96,6 +96,13 @@
 
 #endif // APM_BUILD_DIRECTORY
 
+// AB ZhaoYJ@2017-01-17 for less using mag
+#define EKF_NO_MAG 1
+#define TIME_MS_SUB(x, y) ((x>=y)?(x - y):(0xFFFFFFFF - y + x))
+#if EKF_NO_MAG
+#define EKF_MAG_FUSE_PERIOD 30000 // 30s
+#define EKF_MAG_FUSE_WINDOW 8000 // 8s
+#endif
 
 extern const AP_HAL::HAL& hal;
 
@@ -760,7 +767,49 @@ void NavEKF::UpdateFilter()
 
     // Update states using GPS, altimeter, compass, airspeed and synthetic sideslip observations
     SelectVelPosFusion();
+
+    // AB ZhaoYJ@2017-01-17 for less using mag
+#if EKF_NO_MAG 
+    static uint32_t lastFuseTime_ms = hal.scheduler->millis();
+    // if gps if available, not fusing mag
+    // otherwise, fusing mag 5~10s per 30s
+    if(gpsNotAvailable)
+    {
+#define TEST_FLOW 0
+#if TEST_FLOW
+        static uint32_t cnt1 = 0;
+        static uint32_t cnt2 = 0;
+#endif
+        uint32_t now = hal.scheduler->millis();
+        // check if fusion period
+        if(TIME_MS_SUB(now, lastFuseTime_ms) <= EKF_MAG_FUSE_WINDOW)
+        {
+            SelectMagFusion();
+#if TEST_FLOW
+            if((cnt1%1000 == 0) || (cnt1%1000 == 1))
+            {
+                hal.util->prt("[%d ms]: EKF mag fusing", now);
+            }
+            cnt1++;
+#endif
+        }
+        else if(TIME_MS_SUB(now, lastFuseTime_ms) >= EKF_MAG_FUSE_PERIOD) // reset to fuse
+        {
+            SelectMagFusion();
+            lastFuseTime_ms = now;
+#if TEST_FLOW
+            if((cnt2%1000 == 0) || (cnt2%1000 == 1))
+            {
+                hal.util->prt("[%d ms]: EKF mag fusing", now);
+            }
+            cnt2++;
+#endif
+        }
+    }
+
+#else
     SelectMagFusion();
+#endif
     SelectFlowFusion();
     SelectTasFusion();
     SelectBetaFusion();
