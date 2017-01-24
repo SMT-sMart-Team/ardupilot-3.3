@@ -1851,7 +1851,8 @@ void Copter::mavlink_delay_cb()
     }
     if (tnow - last_5s > 5000) {
         last_5s = tnow;
-        gcs_send_text_P(SEVERITY_LOW, PSTR("Initialising APM..."));
+        // gcs_send_text_P(SEVERITY_LOW, PSTR("Initialising APM..."));
+        gcs_send_text_P(SEVERITY_LOW, PSTR("Waiting for init..."));
     }
     check_usb_mux();
 

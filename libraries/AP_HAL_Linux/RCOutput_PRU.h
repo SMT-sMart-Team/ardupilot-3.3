@@ -37,6 +37,7 @@ private:
     struct pwm_cmd {
         uint32_t magic;
 	    uint16_t enmask;	/* enable mask */
+
 	    uint32_t periodhi[MAX_PWMS][2];
         uint32_t hilo_read[MAX_PWMS][2];
         uint16_t keep_alive; // flag, add By ZhaoYJ 

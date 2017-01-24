@@ -506,6 +506,14 @@ private:
     AP_Int8 _fallback;              // EKF-to-DCM fallback strictness. 0 = trust EKF more, 1 = fallback more conservatively.
     AP_Int8 _altSource;             // Primary alt source during optical flow navigation. 0 = use Baro, 1 = use range finder.
 
+    // AB ZhaoYJ@2017-01-18 for no mag
+    AP_Float _dw_th;
+    AP_Float _dg_th;
+    AP_Float _dgd_th;
+    AP_Int16 _dly; // 400Hz counter
+
+    // AB ZhaoYJ@2017-01-20 for export EKF gyro&accel value
+
     // Tuning parameters
     const float gpsNEVelVarAccScale;    // Scale factor applied to NE velocity measurement variance due to manoeuvre acceleration
     const float gpsDVelVarAccScale;     // Scale factor applied to vertical velocity measurement variance due to manoeuvre acceleration

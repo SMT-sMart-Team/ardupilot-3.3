@@ -257,6 +257,11 @@ public:
     void set_delta_velocity(uint8_t instance, float deltavt, const Vector3f &deltav);
     void set_delta_angle(uint8_t instance, const Vector3f &deltaa);
 
+    // AB ZhaoYJ@2017-01-18 for delta_w, delta_g, delta_gd
+    float get_delta_w(uint8_t i) const;
+    float get_delta_g(uint8_t i) const;
+    float get_delta_gd(uint8_t i) const;
+
 private:
 
     // load backend drivers
@@ -295,6 +300,7 @@ private:
     uint8_t _gyro_count;
     uint8_t _accel_count;
     uint8_t _backend_count;
+
 
     // the selected sample rate
     Sample_rate _sample_rate;

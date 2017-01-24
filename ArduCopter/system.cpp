@@ -286,7 +286,8 @@ void Copter::init_ardupilot()
 //******************************************************************************
 void Copter::startup_ground(bool force_gyro_cal)
 {
-    gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
+    // gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
+    gcs_send_text_P(SEVERITY_LOW,PSTR("STARTING CALIBRATION"));
 
     // initialise ahrs (may push imu calibration into the mpu6000 if using that device).
     ahrs.init();

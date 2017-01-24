@@ -1,6 +1,8 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "APM:Copter V3.3.3"
+// #define THISFIRMWARE "APM:Copter V3.3.3"
+// #define FIRMWARE_VERSION 3,3,3,FIRMWARE_VERSION_TYPE_OFFICIAL
+#define THISFIRMWARE "FARRING:Copter V0.2 BO ardupilot"
 #define FIRMWARE_VERSION 3,3,3,FIRMWARE_VERSION_TYPE_OFFICIAL
 
 /*
@@ -239,6 +241,14 @@ private:
         };
         uint32_t value;
     } ap;
+
+    // AB ZhaoYJ@2016-01-18 for control flag when new features, debug and test
+    union {
+        struct {
+            uint8_t EKF_no_mag: 1; // EKF with no mag
+        };
+        uint32_t value;
+    } uf_flag;
 
     // This is the state of the flight control system
     // There are multiple states defined such as STABILIZE, ACRO,

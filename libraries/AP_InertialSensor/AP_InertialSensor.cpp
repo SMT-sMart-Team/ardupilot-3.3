@@ -1581,4 +1581,24 @@ Vector3f AP_InertialSensor::get_vibration_levels(uint8_t instance) const
 #endif
     return vibe;
 }
+
+float AP_InertialSensor::get_delta_w(uint8_t i) const
+{
+#define RADIUS2DEGREE 57.29578
+    return _gyro[i].length()*RADIUS2DEGREE; 
+    // safe_sqrt(_gyro[i].x*_gyro[i].x + _gyro[i].y*_gyro[i].y + _gyro[i].z*_gyro[i].z);
+}
+float AP_InertialSensor::get_delta_g(uint8_t i) const
+{
+    // float acc_norm = safe_sqrt(_accel[i].x*_accel[i].x + _accel[i].y*_accel[i].y + _accel[i].z*_accel[i].z);
+    return fabs(_accel[i].length() - GRAVITY_MSS)*1000.0f; // mg
+}
+float AP_InertialSensor::get_delta_gd(uint8_t i) const
+{
+    static Vector3f acc_former = _accel[i];
+    Vector3f acc_diff = _accel[i] - acc_former;
+    acc_former = _accel[i];
+    return acc_diff.length()*1000.0f; // mg
+
+}
 #endif

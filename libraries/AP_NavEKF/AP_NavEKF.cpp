@@ -16,6 +16,8 @@
 
 #include <stdio.h>
 
+#define TEST_FLOW 1
+
 /*
   parameter defaults for different types of vehicle. The
   APM_BUILD_DIRECTORY is taken from the main vehicle directory name
@@ -102,6 +104,7 @@
 #if EKF_NO_MAG
 #define EKF_MAG_FUSE_PERIOD 30000 // 30s
 #define EKF_MAG_FUSE_WINDOW 8000 // 8s
+#define EKF_CONST_MODE 0
 #endif
 
 extern const AP_HAL::HAL& hal;
@@ -387,6 +390,38 @@ const AP_Param::GroupInfo NavEKF::var_info[] PROGMEM = {
     // @Values: 0:Use Baro, 1:Use Range Finder
     // @User: Advanced
     AP_GROUPINFO("ALT_SOURCE",    32, NavEKF, _altSource, 1),
+
+    // @Param: DELTA_W TH
+    // @DisplayName: Delta W th
+    // @Description: 
+    // @Values:
+    // @Unit: degree/s
+    // @User: Advanced
+    AP_GROUPINFO("DW_TH",    33, NavEKF, _dw_th, 0.3f),
+
+    // @Param: DELTA_G TH
+    // @DisplayName: Delta G th
+    // @Description: 
+    // @Values:
+    // @Unit: mg 
+    // @User: Advanced
+    AP_GROUPINFO("DG_TH",    34, NavEKF, _dg_th, 30.0f),
+
+    // @Param: DELTA_GD TH
+    // @DisplayName: Delta GD th
+    // @Description: 
+    // @Values:
+    // @Unit: mg 
+    // @User: Advanced
+    AP_GROUPINFO("DGD_TH",    35, NavEKF, _dgd_th, 30.0f),
+
+    // @Param: DELAY
+    // @DisplayName: FuseVelNED const mode Delay
+    // @Description: 
+    // @Values:
+    // @Unit: 30ms 
+    // @User: Advanced
+    AP_GROUPINFO("DLY",    36, NavEKF, _dly, 30),
 
     AP_GROUPEND
 };
@@ -775,7 +810,6 @@ void NavEKF::UpdateFilter()
     // otherwise, fusing mag 5~10s per 30s
     if(gpsNotAvailable)
     {
-#define TEST_FLOW 0
 #if TEST_FLOW
         static uint32_t cnt1 = 0;
         static uint32_t cnt2 = 0;
@@ -1976,14 +2010,79 @@ void NavEKF::FuseVelPosNED()
     // associated with sequential fusion
     if (fuseVelData || fusePosData || fuseHgtData) {
 
+        // AB ZhaoYJ@2017-01-18 for test with no mag
+#if EKF_CONST_MODE
+        static uint16_t delay_cnt = 0;
+        static uint8_t first = 1;
+        static state_elements const_mode_state;
+
+        const AP_InertialSensor &ins = _ahrs->get_ins();
+
+#if TEST_FLOW
+        static uint16_t test_cnt = 0;
+        if((0 == test_cnt%1000) || (1 == test_cnt%1000))
+        {
+            hal.util->prt("[%d ms]: NavEKF dw: %f d/s, dg: %f mg, dgd: %f mg", hal.scheduler->millis(), ins.get_delta_w(0), ins.get_delta_g(0), ins.get_delta_gd(0));
+        }
+        test_cnt++; 
+#endif
+
+        if((ins.get_delta_w(0) <= _dw_th) && (ins.get_delta_g(0) <= _dg_th) && (ins.get_delta_gd(0) <= _dgd_th))
+        {
+            // make sure it's constant pos/vel mode
+            if(delay_cnt >= _dly)
+            {
+                if(first)
+                {
+                    // store current state
+                    const_mode_state = state;
+                    first = 0;
+#if TEST_FLOW
+                    hal.util->prt("[%d ms]: NavEKF enter const mode, q0: %f, q1: %f, q2: %f, q3: %f", hal.scheduler->millis(), const_mode_state.quat.q1, const_mode_state.quat.q2, const_mode_state.quat.q3, const_mode_state.quat.q4);
+#endif
+                }
+
+                constPosMode = true;
+                // constVelMode = true;
+            }
+            else
+            {
+                delay_cnt++;
+            }
+        }
+        else
+        {
+            first = 1;
+            delay_cnt = 0;
+            constPosMode = false;
+            // constVelMode = false;
+#if TEST_FLOW
+            hal.util->prt("[%d ms]: NavEKF eixt const mode");
+#endif
+        }
+#endif
         // if constant position or constant velocity mode use the current states to calculate the predicted
         // measurement rather than use states from a previous time. We need to do this
         // because there may be no stored states due to lack of real measurements.
         if (constPosMode) {
+#if EKF_CONST_MODE
+            state = const_mode_state;
+#endif
             statesAtPosTime = state;
         } else if (constVelMode) {
+#if EKF_CONST_MODE
+            state = const_mode_state;
+#endif
             statesAtVelTime = state;
         }
+#if TEST_FLOW
+        static uint16_t test_cnt1 = 0;
+        if((0 == test_cnt1%1000) || (1 == test_cnt1%1000))
+        {
+            hal.util->prt("[%d ms]: NavEKF q0: %f, q1: %f, q2: %f, q3: %f", hal.scheduler->millis(), state.quat.q1, state.quat.q2, state.quat.q3, state.quat.q4);
+        }
+        test_cnt1++;
+#endif
 
         // set the GPS data timeout depending on whether airspeed data is present
         uint32_t gpsRetryTime;
