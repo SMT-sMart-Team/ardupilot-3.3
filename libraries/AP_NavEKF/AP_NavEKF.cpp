@@ -423,6 +423,14 @@ const AP_Param::GroupInfo NavEKF::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("DLY",    36, NavEKF, _dly, 30),
 
+    // @Param: MAG_FUSE_CNT
+    // @DisplayName: 
+    // @Description: 
+    // @Values:
+    // @Unit:  
+    // @User: Advanced
+    AP_GROUPINFO("MAG_CNT",    37, NavEKF, _mag_fuse_cnt, 0),
+
     AP_GROUPEND
 };
 
@@ -1050,7 +1058,11 @@ void NavEKF::SelectMagFusion()
         // ensure that the covariance prediction is up to date before fusing data
         if (!covPredStep) CovariancePrediction();
         // fuse the three magnetometer componenents sequentially
-        for (mag_state.obsIndex = 0; mag_state.obsIndex <= 2; mag_state.obsIndex++) FuseMagnetometer();
+        for (mag_state.obsIndex = 0; mag_state.obsIndex <= 2; mag_state.obsIndex++) 
+        {
+            _mag_fuse_cnt = _mag_fuse_cnt + 1;
+            FuseMagnetometer();
+        }
     }
 
     // Fuse corrections to quaternion, position and velocity states across several time steps to reduce 10Hz pulsing in the output
@@ -4936,6 +4948,7 @@ void NavEKF::InitialiseVariables()
     imuNoiseFiltState2 = 0.0f;
     lastImuSwitchState = IMUSWITCH_MIXED;
     hgtInnovFiltState = 0.0f;
+    _mag_fuse_cnt = 0;
 }
 
 // return true if we should use the airspeed sensor

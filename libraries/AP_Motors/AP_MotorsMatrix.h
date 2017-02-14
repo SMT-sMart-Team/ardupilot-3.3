@@ -12,7 +12,7 @@
 #include "AP_MotorsMulticopter.h"
 
 // AB ZhaoYJ@2017-01-09 for CCW-CW inversing to adapter with DJI & ZERO-TECH
-#define CCW_CW_INV 1
+#define CCW_CW_INV 0
 #if CCW_CW_INV 
 #define AP_MOTORS_MATRIX_YAW_FACTOR_CW   1
 #define AP_MOTORS_MATRIX_YAW_FACTOR_CCW   -1

@@ -512,6 +512,8 @@ private:
     AP_Float _dgd_th;
     AP_Int16 _dly; // 400Hz counter
 
+    AP_Int32 _mag_fuse_cnt; // 400Hz counter
+
     // AB ZhaoYJ@2017-01-20 for export EKF gyro&accel value
 
     // Tuning parameters
