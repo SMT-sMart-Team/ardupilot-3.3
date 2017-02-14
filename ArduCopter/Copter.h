@@ -1012,3 +1012,4 @@ public:
 
 extern const AP_HAL::HAL& hal;
 extern Copter copter;
+extern uint16_t g_debug_trigger;

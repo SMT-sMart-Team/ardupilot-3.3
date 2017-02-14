@@ -569,6 +569,9 @@ void Copter::one_hz_loop()
 
     // check for direct pwm
     hal.rcin->set_direct_pwm(g.rcin_direct_pwm);
+    
+    // AB ZhaoYJ@2017-02-14 for common debug
+    g_debug_trigger = g.user_trigger;
 }
 
 // called at 50hz

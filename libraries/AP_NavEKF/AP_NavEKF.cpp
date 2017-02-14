@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 
-#define TEST_FLOW 1
+#define TEST_FLOW 0
 
 /*
   parameter defaults for different types of vehicle. The

@@ -136,3 +136,6 @@ Copter::Copter(void) :
 }
 
 Copter copter;
+
+// AB ZhaoYJ@2017-02-14 for common debug
+uint16_t g_debug_trigger = 0;

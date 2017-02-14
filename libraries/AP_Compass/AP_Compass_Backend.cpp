@@ -6,6 +6,16 @@
 
 extern const AP_HAL::HAL& hal;
 
+// AB ZhaoYJ@2017-02-14 for testing no-mag EKF
+#define INJECT_RAND_OFFS 1
+
+#if INJECT_RAND_OFFS
+
+#include <time.h>
+
+extern uint16_t g_debug_trigger;
+#endif
+
 #define DEBUG_FLOW 0
 
 AP_Compass_Backend::AP_Compass_Backend(Compass &compass) :
@@ -83,6 +93,28 @@ void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
     const Vector3f &offdiagonals = state.offdiagonals.get();
     const Vector3f &mot = state.motor_compensation.get();
 
+#if INJECT_RAND_OFFS
+    Vector3f rand_offs;
+    static uint32_t cnt = 0;
+    // do sth to random offset for testing no-mag
+    if(g_debug_trigger)
+    {
+        if((0 == cnt%3))
+        {
+            srand(time(NULL));
+            uint8_t sign = rand()%2?-1:1;
+            rand_offs.x = sign * rand()%400;
+            sign = rand()%2?-1:1;
+            rand_offs.y = sign * rand()%400;
+            sign = rand()%2?-1:1;
+            rand_offs.z = sign * rand()%400;
+            // hal.util->prt("[%d us] Triggered! rand_x: %f rand_y: %f rand_z: %f", hal.scheduler->micros(),
+                    // rand_offs.x, rand_offs.y, rand_offs.z);
+        }
+        cnt++;
+    }
+#endif
+
     /*
       note that _motor_offset[] is kept even if compensation is not
       being applied so it can be logged correctly
@@ -90,7 +122,13 @@ void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
 #if DEBUG_FLOW 
     Vector3f orig = mag;
 #endif
+
+#if INJECT_RAND_OFFS
+    mag += offsets + rand_offs;
+#else
     mag += offsets;
+#endif
+
 #if DEBUG_FLOW 
     Vector3f cali = mag;
 #endif

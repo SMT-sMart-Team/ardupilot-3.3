@@ -348,6 +348,7 @@ public:
 
         // 254,255: reserved
         k_param_rcin_direct_pwm, // 252, AB ZhaoYJ for multi-pwm supporting
+        k_param_user_trigger, // 253, AB ZhaoYJ for common debug 
     };
 
     AP_Int16        format_version;
@@ -510,6 +511,8 @@ public:
 
     // AB ZhaoYJ @2016-09-13 for multi-pwm 
     AP_Int8                 rcin_direct_pwm;
+
+    AP_Int16                user_trigger;
 
     // Note: keep initializers here in the same order as they are declared
     // above.

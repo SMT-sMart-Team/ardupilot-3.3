@@ -1111,6 +1111,13 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(rcin_direct_pwm, "RCIN_DIRECT_PWM", 0),
 
+    // @Param: user_trigger
+    // @DisplayName: 
+    // @Description: 
+    // @Range: 0 1
+    // @User: Standard
+    GSCALAR(user_trigger, "user_trigger", 0),
+
     AP_VAREND
 };
 
