@@ -102,6 +102,7 @@
 #define EKF_NO_MAG 1
 #define TIME_MS_SUB(x, y) ((x>=y)?(x - y):(0xFFFFFFFF - y + x))
 #if EKF_NO_MAG
+static bool ekf_fuse_mag = true;
 #define EKF_MAG_FUSE_PERIOD 30000 // 30s
 #define EKF_MAG_FUSE_WINDOW 8000 // 8s
 #define EKF_CONST_MODE 0
@@ -826,7 +827,9 @@ void NavEKF::UpdateFilter()
         // check if fusion period
         if(TIME_MS_SUB(now, lastFuseTime_ms) <= EKF_MAG_FUSE_WINDOW)
         {
+            ekf_fuse_mag = true;
             SelectMagFusion();
+
 #if TEST_FLOW
             if((cnt1%1000 == 0) || (cnt1%1000 == 1))
             {
@@ -837,6 +840,7 @@ void NavEKF::UpdateFilter()
         }
         else if(TIME_MS_SUB(now, lastFuseTime_ms) >= EKF_MAG_FUSE_PERIOD) // reset to fuse
         {
+            ekf_fuse_mag = true;
             SelectMagFusion();
             lastFuseTime_ms = now;
 #if TEST_FLOW
@@ -847,6 +851,12 @@ void NavEKF::UpdateFilter()
             cnt2++;
 #endif
         }
+    }
+    else // using GPS vel
+    {
+        // just using mag fuse to as a mag-intefer detector
+        ekf_fuse_mag = false;
+        SelectMagFusion();
     }
 
 #else
@@ -2810,36 +2820,40 @@ void NavEKF::FuseMagnetometer()
     magHealth = (magTestRatio[0] < 1.0f && magTestRatio[1] < 1.0f && magTestRatio[2] < 1.0f);
     // Don't fuse unless all componenets pass. The exception is if the bad health has timed out and we are not a fly forward vehicle
     // In this case we might as well try using the magnetometer, but with a reduced weighting
-    if (magHealth || ((magTestRatio[obsIndex] < 1.0f) && !assume_zero_sideslip() && magTimeout)) {
+    if ((magHealth || ((magTestRatio[obsIndex] < 1.0f) && !assume_zero_sideslip() && magTimeout))) {
         // Attitude, velocity and position corrections are averaged across multiple prediction cycles between now and the anticipated time for the next measurement.
         // Don't do averaging of quaternion state corrections if total angle change across predicted interval is going to exceed 0.1 rad
         bool highRates = ((magUpdateCountMax * correctedDelAng.length()) > 0.1f);
         // Calculate the number of averaging frames left to go. This is required becasue magnetometer fusion is applied across three consecutive prediction cycles
         // There is no point averaging if the number of cycles left is less than 2
         float minorFramesToGo = float(magUpdateCountMax) - float(magUpdateCount);
-        // correct the state vector or store corrections to be applied incrementally
-        for (uint8_t j= 0; j<=21; j++) {
-            // If we are forced to use a bad compass in flight, we reduce the weighting by a factor of 4
-            if (!magHealth && !constPosMode) {
-                Kfusion[j] *= 0.25f;
+        // AB ZhaoYJ@2017-02-14 for exclude mag fusion when GPS 
+        if(ekf_fuse_mag)
+        {
+            // correct the state vector or store corrections to be applied incrementally
+            for (uint8_t j= 0; j<=21; j++) {
+                // If we are forced to use a bad compass in flight, we reduce the weighting by a factor of 4
+                if (!magHealth && !constPosMode) {
+                    Kfusion[j] *= 0.25f;
+                }
+                // If in the air and there is no other form of heading reference or we are yawing rapidly which creates larger inertial yaw errors,
+                // we strengthen the magnetometer attitude correction
+                if (vehicleArmed && (constPosMode || highYawRate) && j <= 3) {
+                    Kfusion[j] *= 4.0f;
+                }
+                // We don't need to spread corrections for non-dynamic states or if we are in a  constant postion mode
+                // We can't spread corrections if there is not enough time remaining
+                // We don't spread corrections to attitude states if we are rotating rapidly
+                if ((j <= 3 && highRates) || j >= 10 || constPosMode || minorFramesToGo < 1.5f ) {
+                    states[j] = states[j] - Kfusion[j] * innovMag[obsIndex];
+                } else {
+                    // scale the correction based on the number of averaging frames left to go
+                    magIncrStateDelta[j] -= Kfusion[j] * innovMag[obsIndex] * (magUpdateCountMaxInv * float(magUpdateCountMax) / minorFramesToGo);
+                }
             }
-            // If in the air and there is no other form of heading reference or we are yawing rapidly which creates larger inertial yaw errors,
-            // we strengthen the magnetometer attitude correction
-            if (vehicleArmed && (constPosMode || highYawRate) && j <= 3) {
-                Kfusion[j] *= 4.0f;
-            }
-            // We don't need to spread corrections for non-dynamic states or if we are in a  constant postion mode
-            // We can't spread corrections if there is not enough time remaining
-            // We don't spread corrections to attitude states if we are rotating rapidly
-            if ((j <= 3 && highRates) || j >= 10 || constPosMode || minorFramesToGo < 1.5f ) {
-                states[j] = states[j] - Kfusion[j] * innovMag[obsIndex];
-            } else {
-                // scale the correction based on the number of averaging frames left to go
-                magIncrStateDelta[j] -= Kfusion[j] * innovMag[obsIndex] * (magUpdateCountMaxInv * float(magUpdateCountMax) / minorFramesToGo);
-            }
+            // normalise the quaternion states
+            state.quat.normalize();
         }
-        // normalise the quaternion states
-        state.quat.normalize();
         // correct the covariance P = (I - K*H)*P
         // take advantage of the empty columns in KH to reduce the
         // number of operations
