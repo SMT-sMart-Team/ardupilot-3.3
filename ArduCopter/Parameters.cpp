@@ -1118,6 +1118,13 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(user_trigger, "user_trigger", 0),
 
+    // @Param: acro_y_expo
+    // @DisplayName: 
+    // @Description: 
+    // @Range: 0 1
+    // @User: Standard
+    GSCALAR(acro_y_expo, "acro_y_expo", 0.6),
+
     AP_VAREND
 };
 

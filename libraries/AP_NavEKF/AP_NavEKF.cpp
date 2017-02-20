@@ -856,7 +856,7 @@ void NavEKF::UpdateFilter()
     {
         // just using mag fuse to as a mag-intefer detector
         ekf_fuse_mag = false;
-        SelectMagFusion();
+        // SelectMagFusion();
     }
 
 #else

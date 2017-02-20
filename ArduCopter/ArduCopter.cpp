@@ -572,6 +572,14 @@ void Copter::one_hz_loop()
     
     // AB ZhaoYJ@2017-02-14 for common debug
     g_debug_trigger = g.user_trigger;
+
+    // AB ZhaoYJ@2017-02-15 for temply test mag-interfer
+    if(g.rc_8.radio_in > 1900)
+    {
+        g_debug_trigger = 1;
+    }
+
+
 }
 
 // called at 50hz
