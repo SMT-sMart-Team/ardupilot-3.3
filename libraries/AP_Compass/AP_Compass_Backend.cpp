@@ -7,7 +7,7 @@
 extern const AP_HAL::HAL& hal;
 
 // AB ZhaoYJ@2017-02-14 for testing no-mag EKF
-#define INJECT_RAND_OFFS 1
+#define INJECT_RAND_OFFS 0
 
 #if INJECT_RAND_OFFS
 
