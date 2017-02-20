@@ -22,6 +22,9 @@
 
 #include "AP_MotorsQuad.h"
 
+// AB ZhaoYJ@2017-02-20 for motor new order
+#define QUAD_MOTOR_ORDER_ALIGN 1
+
 // setup_motors - configures the motors for a quad
 void AP_MotorsQuad::setup_motors()
 {
@@ -90,9 +93,16 @@ void AP_MotorsQuad::setup_motors()
         add_motor(AP_MOTORS_MOT_4, 0, 160, AP_MOTORS_MATRIX_YAW_FACTOR_CW, 2);
     }else{
         // X frame set-up
+#if QUAD_MOTOR_ORDER_ALIGN 
+        add_motor(AP_MOTORS_MOT_1,   45, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
+        add_motor(AP_MOTORS_MOT_2,  135, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
+        add_motor(AP_MOTORS_MOT_3, -135, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
+        add_motor(AP_MOTORS_MOT_4,  -45, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
+#else
         add_motor(AP_MOTORS_MOT_1,   45, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 1);
         add_motor(AP_MOTORS_MOT_2, -135, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 3);
         add_motor(AP_MOTORS_MOT_3,  -45, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
         add_motor(AP_MOTORS_MOT_4,  135, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  2);
+#endif
     }
 }
