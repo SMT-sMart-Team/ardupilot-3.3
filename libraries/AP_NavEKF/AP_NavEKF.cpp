@@ -18,6 +18,10 @@
 
 #define TEST_FLOW 0
 
+// AB ZhaoYJ@2017-02-22
+// merge from solo
+#define EKF_OPTI_SOLO 0
+
 /*
   parameter defaults for different types of vehicle. The
   APM_BUILD_DIRECTORY is taken from the main vehicle directory name
@@ -568,11 +572,25 @@ void NavEKF::ResetHeight(void)
     state.position.z = -hgtMea; // down position from blended accel data
     state.posD1 = -hgtMea; // down position from IMU1 accel data
     state.posD2 = -hgtMea; // down position from IMU2 accel data
+#if EKF_OPTI_SOLO
+    terrainState = state.position.z + rngOnGnd;
+    // Reset the vertical velocity state using GPS vertical velocity if we are airborne (use arm status as a surrogate)
+    // Check that GPS vertical velocity data is available and can be used
+    if (vehicleArmed && !gpsNotAvailable && _fusionModeGPS == 0) {
+        state.velocity.z =  velNED.z;
+    }
+    // reset stored vertical position states to prevent subsequent GPS measurements from being rejected
+    for (uint8_t i=0; i<=49; i++){
+        storedStates[i].position.z = state.position.z;
+        storedStates[i].velocity.z = state.velocity.z;
+    }
+#else
     // reset stored vertical position states to prevent subsequent GPS measurements from being rejected
     for (uint8_t i=0; i<=49; i++){
         storedStates[i].position.z = -hgtMea;
     }
     terrainState = state.position.z + rngOnGnd;
+#endif
 }
 
 // this function is used to initialise the filter whilst moving, using the AHRS DCM solution
@@ -589,8 +607,13 @@ bool NavEKF::InitialiseFilterDynamic(void)
     }
 
     // If the DCM solution has not converged, then don't initialise,
+#if EKF_OPTI_SOLO
+    // unless at least 30s has passed or we're in flight
+    if (_ahrs->get_error_rp() > 0.05f && (_ahrs->uptime_ms() < 30000U || !hal.util->get_soft_armed())) {
+#else
     // unless at least 30s has passed
     if (_ahrs->get_error_rp() > 0.05f && _ahrs->uptime_ms() < 30000U) {
+#endif
         return false;
     }
 
@@ -960,7 +983,19 @@ void NavEKF::SelectVelPosFusion()
         } else {
             fusePosData = false;
         }
+#if EKF_OPTI_SOLO
+        // In constant position mode use synthetic position and velocity measurements set to zero whenever we are fusing a height measurement
+        // If no height has been received for 200 msec, then fuse anyway so we have a guaranteed minimum aiding rate equivalent to GPS
+        // Only fuse synthetic position measurements when rate of change of velocity is less than 0.5g to reduce attitude errors due to launch acceleration
+        // Only fuse synthetic velocity measurements when on the ground to reduce attitude errors due to short term manoeuvres
+        if (!vehicleArmed) {
+            fuseVelData = true;
+        } else {
+            fuseVelData = false;
+        }
+#else
         fuseVelData = false;
+#endif
     } else if (constVelMode && covPredStep) {
         // In constant velocity mode we fuse the last valid velocity vector
         // Reset the stored velocity vector when we enter the mode
@@ -2091,6 +2126,9 @@ void NavEKF::FuseVelPosNED()
             state = const_mode_state;
 #endif
             statesAtPosTime = state;
+#if EKF_OPTI_SOLO
+            statesAtVelTime = state;
+#endif
         } else if (constVelMode) {
 #if EKF_CONST_MODE
             state = const_mode_state;
@@ -2134,7 +2172,11 @@ void NavEKF::FuseVelPosNED()
         // estimate the GPS Velocity, GPS horiz position and height measurement variances.
         // if the GPS is able to report a speed error, we use it to adjust the observation noise for GPS velocity
         // otherwise we scale it using manoeuvre acceleration
+#if EKF_OPTI_SOLO
+        if ((gpsSpdAccuracy > 0.0f) && !constPosMode && !constVelMode) {
+#else
         if (gpsSpdAccuracy > 0.0f) {
+#endif
             // use GPS receivers reported speed accuracy - floor at value set by gps noise parameter
             R_OBS[0] = sq(constrain_float(gpsSpdAccuracy, _gpsHorizVelNoise, 50.0f));
             R_OBS[2] = sq(constrain_float(gpsSpdAccuracy, _gpsVertVelNoise, 50.0f));
@@ -2272,8 +2314,12 @@ void NavEKF::FuseVelPosNED()
             velHealth = ((velTestRatio < 1.0f)  || badIMUdata);
             // declare a timeout if we have not fused velocity data for too long or not aiding
             velTimeout = (((imuSampleTime_ms - lastVelPassTime) > gpsRetryTime) || PV_AidingMode == AID_NONE);
+#if EKF_OPTI_SOLO
+            if (velHealth || velTimeout || constVelMode || constPosMode) {
+#else
             // if data is healthy  or in constant velocity mode we fuse it
             if (velHealth || velTimeout || constVelMode) {
+#endif
                 velHealth = true;
                 // restart the timeout count
                 lastVelPassTime = imuSampleTime_ms;
@@ -2323,26 +2369,46 @@ void NavEKF::FuseVelPosNED()
         }
 
         // set range for sequential fusion of velocity and position measurements depending on which data is available and its health
+#if EKF_OPTI_SOLO
+        if (fuseVelData && useGpsVertVel && velHealth && (PV_AidingMode == AID_ABSOLUTE)) {
+#else
         if (fuseVelData && useGpsVertVel && velHealth && !constPosMode && PV_AidingMode == AID_ABSOLUTE) {
+#endif
             fuseData[0] = true;
             fuseData[1] = true;
             fuseData[2] = true;
         }
+#if EKF_OPTI_SOLO
+        if (fuseVelData && (_fusionModeGPS == 1) && velHealth && (PV_AidingMode == AID_ABSOLUTE)) {
+#else
         if (fuseVelData && _fusionModeGPS == 1 && velHealth && !constPosMode && PV_AidingMode == AID_ABSOLUTE) {
+#endif
             fuseData[0] = true;
             fuseData[1] = true;
         }
+
+#if EKF_OPTI_SOLO
+        if (fusePosData && posHealth) {
+#else
         if ((fusePosData && posHealth && PV_AidingMode == AID_ABSOLUTE) || constPosMode) {
+#endif
             fuseData[3] = true;
             fuseData[4] = true;
         }
+
+#if EKF_OPTI_SOLO
+        if (fuseHgtData && hgtHealth) {
+#else
         if ((fuseHgtData && hgtHealth) || constPosMode) {
+#endif
             fuseData[5] = true;
         }
+#if !EKF_OPTI_SOLO
         if (constVelMode) {
             fuseData[0] = true;
             fuseData[1] = true;
         }
+#endif
 
         // fuse measurements sequentially
         for (obsIndex=0; obsIndex<=5; obsIndex++) {
@@ -4484,7 +4550,7 @@ void NavEKF::readGpsData()
     }
 
     // If no previous GPS lock or told not to use it, or EKF origin not set, we declare the  GPS unavailable for use
-    if ((_ahrs->get_gps().status() < AP_GPS::GPS_OK_FIX_3D) || _fusionModeGPS == 3 || !validOrigin) {
+    if ((_ahrs->get_gps().status() < AP_GPS::GPS_OK_FIX_3D) || (_fusionModeGPS == 3) || !validOrigin) {
         gpsNotAvailable = true;
     } else {
         gpsNotAvailable = false;
@@ -4696,7 +4762,16 @@ Quaternion NavEKF::calcQuatAndFieldStates(float roll, float pitch)
             // store the yaw change so that it can be retrieved externally for use by the control loops to prevent yaw disturbances following a reset
             Vector3f tempEuler;
             state.quat.to_euler(tempEuler.x, tempEuler.y, tempEuler.z);
+#if EKF_OPTI_SOLO 
+            // Update yaw reset reporting.
+            if (imuSampleTime_ms != lastYawReset_ms) {
+                yawResetAngle = 0;
+            }
+            yawResetAngle += wrap_PI(yaw - tempEuler.z);
+            lastYawReset_ms = imuSampleTime_ms;
+#else
             yawResetAngle = wrap_PI(yaw - tempEuler.z);
+#endif
             // set the flag to indicate that an in-flight yaw reset has been performed
             // this will be cleared when the reset value is retrieved
             yawResetAngleWaiting = true;
@@ -4720,6 +4795,14 @@ Quaternion NavEKF::calcQuatAndFieldStates(float roll, float pitch)
         initQuat.from_euler(roll, pitch, 0.0f);
         yawAligned = false;
     }
+
+#if EKF_OPTI_SOLO
+    if (!vehicleArmed) {
+        // The flags indicating that the in-air alignment has been completed need to be cleared
+        // because this alignment is on-ground and the yaw and field values could be incorrect.
+        secondMagYawInit = firstMagYawInit = false;
+    }
+#endif
 
     // return attitude quaternion
     return initQuat;
@@ -4957,6 +5040,7 @@ void NavEKF::InitialiseVariables()
     highYawRate = false;
     yawRateFilt = 0.0f;
     yawResetAngle = 0.0f;
+    lastYawReset_ms = 0;
     yawResetAngleWaiting = false;
     imuNoiseFiltState1 = 0.0f;
     imuNoiseFiltState2 = 0.0f;
@@ -5209,6 +5293,14 @@ void NavEKF::performArmingChecks()
             meaHgtAtTakeOff = hgtMea;
             // reset the vertical position state to faster recover from baro errors experienced during touchdown
             state.position.z = -hgtMea;
+#if EKF_OPTI_SOLO
+            // Reset the Z delta velocity bias  covariance.
+            // This is necessary becasue vertical GPS speed errors can offset the bias state, causing a
+            // vertical innovation offset after disarming, failing health checks and delaying re-arming.
+            zeroRows(P,13,13);
+            zeroCols(P,13,13);
+            P[13][13] = 0.5f * sq(INIT_ACCEL_BIAS_UNCERTAINTY * dtIMUavg);
+#endif
         } else if (_fusionModeGPS == 3) { // arming when GPS useage has been prohibited
             if (optFlowDataPresent()) {
                 PV_AidingMode = AID_RELATIVE; // we have optical flow data and can estimate all vehicle states
@@ -5273,14 +5365,22 @@ void NavEKF::performArmingChecks()
         // Do the first in-air yaw and earth mag field initialisation when the vehicle has gained 1.5m of altitude after arming if it is a non-fly forward vehicle (vertical takeoff)
         // This is done to prevent magnetic field distoration from steel roofs and adjacent structures causing bad earth field and initial yaw values
         Vector3f eulerAngles;
+#if EKF_OPTI_SOLO
+        statesAtMagMeasTime.quat.to_euler(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+#else
         getEulerAngles(eulerAngles);
+#endif
         state.quat = calcQuatAndFieldStates(eulerAngles.x, eulerAngles.y);
         firstMagYawInit = true;
     } else if (vehicleArmed && !secondMagYawInit && (state.position.z - posDownAtArming) < -5.0f && !assume_zero_sideslip()) {
         // Do the second and final yaw and earth mag field initialisation when the vehicle has gained 5.0m of altitude after arming if it is a non-fly forward vehicle (vertical takeoff)
         // This second and final correction is needed for flight from large metal structures where the magnetic field distortion can extend up to 5m
         Vector3f eulerAngles;
+#if EKF_OPTI_SOLO
+        statesAtMagMeasTime.quat.to_euler(eulerAngles.x, eulerAngles.y, eulerAngles.z);
+#else
         getEulerAngles(eulerAngles);
+#endif
         state.quat = calcQuatAndFieldStates(eulerAngles.x, eulerAngles.y);
         secondMagYawInit = true;
     }
@@ -5409,10 +5509,18 @@ bool NavEKF::calcGpsGoodToAlign(void)
     
     // If we have good magnetometer consistency and bad innovations for longer than 5 seconds then we reset heading and field states
     // This enables us to handle large changes to the external magnetic field environment that occur before arming
+#if EKF_OPTI_SOLO
+    if ((magTestRatio.x <= 1.0f && magTestRatio.y <= 1.0f)) {
+#else
     if ((magTestRatio.x <= 1.0f && magTestRatio.y <= 1.0f) || !consistentMagData) {
+#endif
         magYawResetTimer_ms = imuSampleTime_ms;
     }
+#if EKF_OPTI_SOLO
+    if ((imuSampleTime_ms - magYawResetTimer_ms > 5000) && !vehicleArmed) {
+#else
     if (imuSampleTime_ms - magYawResetTimer_ms > 5000) {
+#endif
         // reset heading and field states
         Vector3f eulerAngles;
         getEulerAngles(eulerAngles);
