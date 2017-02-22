@@ -37,13 +37,13 @@ void AP_MotorsOcta::setup_motors()
         // plus frame set-up
 #if OCTA_MOTOR_ORDER_ALIGN
         add_motor(AP_MOTORS_MOT_1,    0,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
-        add_motor(AP_MOTORS_MOT_2,   45,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
-        add_motor(AP_MOTORS_MOT_3,   90,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
-        add_motor(AP_MOTORS_MOT_4,  135,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+        add_motor(AP_MOTORS_MOT_2,  -45,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+        add_motor(AP_MOTORS_MOT_3,  -90,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
+        add_motor(AP_MOTORS_MOT_4, -135,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
         add_motor(AP_MOTORS_MOT_5,  180,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
-        add_motor(AP_MOTORS_MOT_6, -135,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
-        add_motor(AP_MOTORS_MOT_7,  -90,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
-        add_motor(AP_MOTORS_MOT_8,  -45,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 8);
+        add_motor(AP_MOTORS_MOT_6,  135,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+        add_motor(AP_MOTORS_MOT_7,   90,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
+        add_motor(AP_MOTORS_MOT_8,   45,  AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 8);
 #else
         add_motor(AP_MOTORS_MOT_1,    0,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
         add_motor(AP_MOTORS_MOT_2,  180,  AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
@@ -70,13 +70,13 @@ void AP_MotorsOcta::setup_motors()
         // X frame set-up
 #if OCTA_MOTOR_ORDER_ALIGN
         add_motor(AP_MOTORS_MOT_1,   22.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
-        add_motor(AP_MOTORS_MOT_2,   67.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
-        add_motor(AP_MOTORS_MOT_3,  112.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
-        add_motor(AP_MOTORS_MOT_4,  157.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
+        add_motor(AP_MOTORS_MOT_2,  -22.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 2);
+        add_motor(AP_MOTORS_MOT_3,  -67.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
+        add_motor(AP_MOTORS_MOT_4, -112.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 4);
         add_motor(AP_MOTORS_MOT_5, -157.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
-        add_motor(AP_MOTORS_MOT_6, -112.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
-        add_motor(AP_MOTORS_MOT_7,  -67.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
-        add_motor(AP_MOTORS_MOT_8,  -22.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 8);
+        add_motor(AP_MOTORS_MOT_6,  157.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 6);
+        add_motor(AP_MOTORS_MOT_7,  112.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
+        add_motor(AP_MOTORS_MOT_8,   67.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CCW, 8);
 #else
         add_motor(AP_MOTORS_MOT_1,   22.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  1);
         add_motor(AP_MOTORS_MOT_2, -157.5f, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
