@@ -39,13 +39,19 @@
 #include <systemlib/perf_counter.h>
 #endif
 
+// AB ZhaoYJ@2017-02-24 for EKF accuracy from float to double
+#define EKF_DOUBLE_EN 1
 
 class AP_AHRS;
 
 class NavEKF
 {
 public:
+#if EKF_DOUBLE_EN 
+    typedef double ftype;
+#else
     typedef float ftype;
+#endif
 #if defined(MATH_CHECK_INDEXES) && (MATH_CHECK_INDEXES == 1)
     typedef VectorN<ftype,2> Vector2;
     typedef VectorN<ftype,3> Vector3;
