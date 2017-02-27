@@ -30,6 +30,111 @@ extern bool start_cali;
 #define FILTER_TYPE 15 // 7 filters, 4 order with b & a
 
 #define ELLIPTIC_80DB 1
+#if IMU_8KHZ 
+const double ba[FILTER_TYPE][5*2] = {
+    // 0: fc=10Hz
+    {  9.941241125902e-05,-0.0003945263576618,0.0005902402068445,-0.0003945263576618,
+          9.941241125902e-05,
+            1,   -3.972458622135,    5.917754504397,   -3.918130095139,
+                  0.972834225191},
+    // 1: fc=20Hz
+    {  0.0001003734958431,-0.0003890744437156,0.0005775969901159,-0.0003890744437156,
+          0.0001003734958431,
+            1,   -3.944864674435,     5.83610895405,   -3.837599574185,
+                 0.9463554896637},
+    // 2: fc=30Hz
+    {   0.000102862236555,-0.0003835252095693, 0.000562306474394,-0.0003835252095693,
+           0.000102862236555,
+              1,   -3.917165192517,    5.754909352487,   -3.758241150432,
+                   0.9204979709902},
+    // 3: 40Hz
+    {  0.0001068876168914,-0.0003776890948126,0.0005446874763283,-0.0003776890948126,
+          0.0001068876168914,
+            1,     -3.8893064155,    5.674005151862,   -3.679896540922,
+                 0.8952008890803},
+    // 4: 50Hz
+    {  0.0001124883762028,-0.0003713038989948,0.0005251459150399,-0.0003713038989948,
+          0.0001124883762028,
+            1,   -3.861233372095,    5.593248173458,   -3.602415197646,
+                 0.8704079111519},
+    // 5: 60Hz
+    {  0.0001197336574328,-0.0003640298656109,0.0005041830349917,-0.0003640298656109,
+          0.0001197336574328,
+            1,   -3.832889447413,    5.512491568755,   -3.525653162673,
+                 0.8460666319496},
+    // 6: 100Hz
+    {    0.00016772222904,-0.0003160025650004,0.0004202992163563,-0.0003160025650004,
+            0.00016772222904,
+                1,   -3.715588329731,     5.18652198639,   -3.223093823181,
+                     0.7522839050674}, 
+#if 0
+    // 7: 140Hz
+    {    0.03491867202533,    0.109221934686,     0.15231860983,    0.109221934686,
+            0.03491867202533,
+                1,   -1.283404870008,    1.021296455388,  -0.3523374727386,
+                    0.05504571061107},
+    // 8: 200Hz
+    {    0.08893723310995,   0.3209252123518,   0.4657669085511,   0.3209252123518,
+            0.08893723310995,
+                1,  -0.2139521883892,   0.5177818092894, -0.03877694557932,
+                     0.0204391241538},
+#endif
+    // elliptic
+    // 7: 10Hz
+    {  0.0001365293649764,-0.0003551533699655,0.0004773999437498,-0.0003551533699655,
+          0.0001365293649764,
+            1,    -3.81612017141,    5.468667637301,   -3.487687994098,
+                 0.8351807202926},
+    // 8: 15Hz 
+    {  0.0001911802771726,-0.0003000902507431,0.0004122248786295,-0.0003000902507431,
+          0.0001911802771726,
+            1,   -3.721617458581,    5.210625006096,    -3.25211605352,
+                 0.7633031053408},
+    // 9: 20Hz
+    {  0.0002759610582909,-0.0001858490563426,0.0004075153360141,-0.0001858490563426,
+          0.0002759610582909,
+            1,   -3.625620035462,    4.958311097943,   -3.029764714886,
+                 0.6976619794845},
+    // 10: 25Hz
+    {  0.0003980885129365,2.576616211313e-05,0.0005251917953061,2.576616211313e-05,
+          0.0003980885129365,
+            1,    -3.52828560094,     4.71214368799,   -2.820210784204,
+                 0.6377269711995},
+    // 11: 30Hz
+    {  0.0005663497151324,0.0003784008300013,0.0008349291084672,0.0003784008300013,
+          0.0005663497151324,
+            1,   -3.429768711272,    4.472488606159,   -2.623003094254,
+                 0.5830103539969},
+    // 12: 35Hz
+    {  0.0007906376344732,0.0009193435980036, 0.001411473231841,0.0009193435980036,
+          0.0007906376344732,
+            1,   -3.330220028609,    4.239661627194,   -2.437669304545,
+                 0.5330639730933},
+#if ELLIPTIC_80DB 
+    // 13: 10Hz 80db
+    {0.0003980052194648,2.560038094574e-05,  0.00052507500309,2.560038094574e-05,
+    0.0003980052194648,
+    1,   -3.528358568107,    4.712330426217,   -2.820372195743,
+    0.6377739974605},
+    // 14: 6Hz 80db
+    {0.0001911564530998,-0.0003001208385711,0.0004122437690402,-0.0003001208385711,
+    0.0001911564530998,
+    1,   -3.721661619608,    5.210745694536,   -3.252226509473,
+    0.7633369440482},
+#else
+    // 13: 40Hz
+    {0.01825647670023,  0.04629083875403,  0.06204752664347,  0.04629083875403,
+    0.01825647670023,
+    1,   -2.003795946524,    1.913402001585,  -0.8899384841482,
+    0.1716659149431},
+    // 14: 50Hz
+    {0.03167074869554,  0.09500734129155,   0.1312278441234,  0.09500734129155,
+    0.03167074869554,
+    1,   -1.500899021154,    1.356646489988,  -0.5839458813532,
+    0.1131673951732},
+#endif
+};
+#else
 const double ba[FILTER_TYPE][5*2] = {
     // 0: fc=10Hz
     {0.0009877867510385,-0.003762348901931, 0.005553744695291,-0.003762348901931,
@@ -133,6 +238,10 @@ const double ba[FILTER_TYPE][5*2] = {
     0.1131673951732},
 #endif
 };
+#endif
+
+#define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx] << 8) | v[2*idx+1]))
+#define uint16_val(v, idx)(((uint16_t)v[2*idx] << 8) | v[2*idx+1])
 
 #define DUMP 0
 #if DUMP
@@ -140,8 +249,19 @@ const double ba[FILTER_TYPE][5*2] = {
 #include <stdlib.h>
 
 #define DUMP_LEN 0x10000
-static float dump[DUMP_LEN];
+static dump_type dump[DUMP_LEN];
 static uint32_t dump_cnt = 0;
+#endif
+
+#define DUMP_HALF_SEC 0
+#if DUMP_HALF_SEC 
+#include <stdio.h>
+#include <stdlib.h>
+
+
+#define DUMP_HALF_SEC_LEN 4096 // 0.5s*8*1024
+static dump_half_sec_type dump_half_sec[DUMP_HALF_SEC_LEN];
+static uint32_t dump_half_sec_cnt = 0;
 #endif
 
 #define DEBUG_FLOW 0
@@ -219,6 +339,10 @@ static uint32_t dump_cnt = 0;
 #       define BIT_ZMOT_INT                                             0x20
 #       define BIT_MOT_INT                                              0x40
 #       define BIT_FF_INT                                               0x80
+#define MPUREG_FIFO_COUNTH                          0x72
+#define MPUREG_FIFO_COUNTL                          0x73
+#define MPUREG_FIFO_R_W                             0x74
+#define MPUREG_CONFIG_FIFO_MODE_STOP         0x40
 #define MPUREG_ACCEL_XOUT_H                             0x3B
 #define MPUREG_ACCEL_XOUT_L                             0x3C
 #define MPUREG_ACCEL_YOUT_H                             0x3D
@@ -242,10 +366,23 @@ static uint32_t dump_cnt = 0;
 #       define BIT_USER_CTRL_I2C_IF_DIS                 0x10            // Disable primary I2C interface and enable hal.spi->interface
 #       define BIT_USER_CTRL_I2C_MST_EN                 0x20            // Enable MPU to act as the I2C Master to external slave sensors
 #       define BIT_USER_CTRL_FIFO_EN                    0x40            // Enable FIFO operations
+#define MPUREG_FIFO_EN                          0x23
+#       define BIT_TEMP_FIFO_EN                     0x80
+#       define BIT_XG_FIFO_EN                       0x40
+#       define BIT_YG_FIFO_EN                       0x20
+#       define BIT_ZG_FIFO_EN                       0x10
+#       define BIT_ACCEL_FIFO_EN                    0x08
+#       define BIT_SLV2_FIFO_EN                     0x04
+#       define BIT_SLV1_FIFO_EN                     0x02
+#       define BIT_SLV0_FIFI_EN0                    0x01
+#define MPUREG_I2C_MST_CTRL                     0x24
 #       define BIT_USER_CTRL_DMP_EN                             0x80            // Enable DMP operations
 #define MPUREG_PWR_MGMT_1                               0x6B
 #       define BIT_PWR_MGMT_1_CLK_INTERNAL              0x00            // clock set to internal 8Mhz oscillator
 #       define BIT_PWR_MGMT_1_CLK_AUTO                  0x01            //  auto mode
+#       define BIT_PWR_MGMT_1_CLK_XGYRO             0x01 // PLL with X axis gyroscope reference
+#       define BIT_PWR_MGMT_1_CLK_YGYRO             0x02 // PLL with Y axis gyroscope reference
+#       define BIT_PWR_MGMT_1_CLK_ZGYRO             0x03 // PLL with Z axis gyroscope reference
 #       define BIT_PWR_MGMT_1_CLK_EXT32KHZ              0x04            // PLL with external 32.768kHz reference
 #       define BIT_PWR_MGMT_1_CLK_EXT19MHZ              0x05            // PLL with external 19.2MHz reference
 #       define BIT_PWR_MGMT_1_CLK_STOP                  0x07            // Stops the clock and keeps the timing generator in reset
@@ -272,6 +409,26 @@ static uint32_t dump_cnt = 0;
 #define BITS_DLPF_CFG_2100HZ_NOLPF              0x07
 #define BITS_DLPF_CFG_MASK                              0x07
 
+// ICM20608 specific registers
+#define ICMREG_ACCEL_CONFIG2          0x1D
+#define ICM_ACC_DLPF_CFG_1046HZ_NOLPF 0x00
+#define ICM_ACC_DLPF_CFG_218HZ        0x01
+#define ICM_ACC_DLPF_CFG_99HZ         0x02
+#define ICM_ACC_DLPF_CFG_44HZ         0x03
+#define ICM_ACC_DLPF_CFG_21HZ         0x04
+#define ICM_ACC_DLPF_CFG_10HZ         0x05
+#define ICM_ACC_DLPF_CFG_5HZ          0x06
+#define ICM_ACC_DLPF_CFG_420HZ        0x07
+#define ICM_ACC_FCHOICE_B             0x08
+
+/* this is an undocumented register which
+   if set incorrectly results in getting a 2.7m/s/s offset
+   on the Y axis of the accelerometer
+*/
+#define MPUREG_ICM_UNDOC1       0x11
+#define MPUREG_ICM_UNDOC1_VALUE 0xc9
+
+
 // AB ZhaoYJ@2016-11-01 for debugging LPF
 // according to GYRO (also for ACCEL)
 // #define GYRO_SCALE_250DPS
@@ -290,6 +447,11 @@ static uint32_t dump_cnt = 0;
 #else
 // ICM20689 accelerometer scaling for 16g range: 2^15LSB/16g = 2048LSB/g, 1g = 9.8/2048 
 #define ICM20689_ACCEL_SCALE_1G    (GRAVITY_MSS / 2048.0f) // 16g
+#endif
+
+#if IMU_8KHZ
+    // Last status from register user control
+    static uint8_t _last_stat_user_ctrl;    
 #endif
 
 /*
@@ -362,6 +524,8 @@ AP_InertialSensor_Backend *AP_InertialSensor_ICM20689::detect(AP_InertialSensor 
 }
 
 bool AP_InertialSensor_ICM20689::initialize_driver_state() {
+
+
     AP_HAL::SPIDeviceDriver *spi = hal.spi->device(AP_HAL::SPIDevice_ICM20689);
     if (!spi)
         return false;
@@ -392,6 +556,46 @@ bool AP_InertialSensor_ICM20689::initialize_driver_state() {
     uint8_t tries;
     for (tries = 0; tries < 5; tries++) {
 
+#if IMU_8KHZ
+        _last_stat_user_ctrl = _register_read(spi, MPUREG_USER_CTRL);
+
+        /* First disable the master I2C to avoid hanging the slaves on the
+         * aulixiliar I2C bus - it will be enabled again if the AuxiliaryBus
+         * is used */
+        if (_last_stat_user_ctrl & BIT_USER_CTRL_I2C_MST_EN) {
+            _last_stat_user_ctrl &= ~BIT_USER_CTRL_I2C_MST_EN;
+            _register_write(spi, MPUREG_USER_CTRL, _last_stat_user_ctrl);
+            hal.scheduler->delay(10);
+        }
+
+        /* reset device */
+        _register_write(spi, MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_DEVICE_RESET);
+        hal.scheduler->delay(100);
+
+        /* bus-dependent initialization */
+            /* Disable I2C bus if SPI selected (Recommended in Datasheet to be
+             * done just after the device is reset) */
+        _last_stat_user_ctrl |= BIT_USER_CTRL_I2C_IF_DIS;
+        _register_write(spi, MPUREG_USER_CTRL, _last_stat_user_ctrl);
+
+
+        // Wake up device and select GyroZ clock. Note that the
+        // ICM20689 starts up in sleep mode, and it can take some time
+        // for it to come out of sleep
+        _register_write(spi, MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_CLK_ZGYRO);
+        hal.scheduler->delay(5);
+
+        // check it has woken up
+        if (_register_read(spi, MPUREG_PWR_MGMT_1) == BIT_PWR_MGMT_1_CLK_ZGYRO) {
+            break;
+        }
+
+        hal.scheduler->delay(10);
+        uint8_t status = _register_read(spi, MPUREG_INT_STATUS);
+        if ((status & BIT_RAW_RDY_INT) != 0) {
+            break;
+        }
+#else
 
         // reset device
         _register_write(spi, MPUREG_PWR_MGMT_1, BIT_PWR_MGMT_1_DEVICE_RESET);
@@ -416,6 +620,8 @@ bool AP_InertialSensor_ICM20689::initialize_driver_state() {
         if ((status & BIT_RAW_RDY_INT) != 0) {
             break;
         }
+#endif
+
 #if ICM20689_DEBUG
         _dump_registers(_spi);
 #endif
@@ -427,6 +633,7 @@ bool AP_InertialSensor_ICM20689::initialize_driver_state() {
     }
 
     spi->set_state(AP_HAL::SPIDeviceDriver::State::RUNNING);
+
 
     return true;
 
@@ -563,10 +770,146 @@ void AP_InertialSensor_ICM20689::_poll_data(void)
         */
         return;
     }
+#if IMU_8KHZ
+    _read_fifo();
+#else
     _read_data_transaction();
+#endif
     _spi_sem->give();
 }
 
+#if IMU_8KHZ
+void AP_InertialSensor_ICM20689::_filter_imu_1KHz(Vector3f imu_acc, Vector3f imu_gyro) 
+{
+#if DEBUG_FLOW 
+    static uint16_t cnt1 = 0;
+    if((0 == (cnt1%3000)) || (1 == (cnt1%3000)))
+    {
+        hal.util->prt("[%d us] ICM20689 timer %d", hal.scheduler->micros(), cnt1);
+    }
+    cnt1++;
+#endif
+
+    // imu_acc = _accel_filter.apply(imu_acc);
+
+    // imu_gyro = _gyro_filter.apply(imu_gyro);
+    //
+    uint8_t acc_user_ft = _imu.get_accl_user_filter();
+    uint8_t gyro_user_ft = _imu.get_gyro_user_filter();
+
+    Vector3f _accel_filtered;
+    Vector3f _gyro_filtered;
+
+#define CHK_FT_TAP 0
+#if CHK_FT_TAP 
+    static uint32_t acc_gyro_cnt = 0;
+#endif
+
+    if(acc_user_ft < 0xF) // ChebyII
+    {
+        _accel_filtered = _accel_user_filter(imu_acc, acc_user_ft);
+    }
+    else if(acc_user_ft == 0xF) // median
+    {
+        _accel_filtered = _accel_median_filter(imu_acc);
+    }
+    else if(acc_user_ft & 0x10) // median + ChebyII(Hz)
+    {
+        _accel_filtered = _accel_median_filter(imu_acc);
+        _accel_filtered = _accel_user_filter(_accel_filtered, acc_user_ft & 0xF);
+    }
+    else if(acc_user_ft & 0x20) // ChebyII(Hz) + median 
+    {
+#if CHK_FT_TAP 
+        if((0 == (acc_gyro_cnt%4000)) || (1 == (acc_gyro_cnt%4000)))
+        {
+            hal.util->prt("acc ft: %d, med_tap: %d", acc_user_ft, _imu.get_med_tap_acc());
+        }
+#endif
+        _accel_filtered = _accel_user_filter(imu_acc, acc_user_ft & 0xF);
+        _accel_filtered = _accel_median_filter(_accel_filtered);
+    }
+
+    if(gyro_user_ft < 0xF) // ChebyII
+    {
+        _gyro_filtered = _gyro_user_filter(imu_gyro, gyro_user_ft);
+    }
+    else if(gyro_user_ft == 0xF) // median
+    {
+        _gyro_filtered = _gyro_median_filter(imu_gyro);
+    }
+    else if(gyro_user_ft & 0x10) // median + ChebyII(Hz)
+    {
+        _gyro_filtered = _gyro_median_filter(imu_gyro);
+        _gyro_filtered = _gyro_user_filter(_gyro_filtered, gyro_user_ft & 0xF);
+    }
+    else if(gyro_user_ft & 0x20) // ChebyII(20Hz) + median 
+    {
+#if CHK_FT_TAP 
+        if((0 == (acc_gyro_cnt%4000)) || (1 == (acc_gyro_cnt%4000)))
+        {
+            hal.util->prt("gyro ft: %d, med_tap: %d", gyro_user_ft, _imu.get_med_tap_gyro());
+        }
+#endif
+        _gyro_filtered = _gyro_user_filter(imu_gyro, gyro_user_ft & 0xF);
+        _gyro_filtered = _gyro_median_filter(_gyro_filtered);
+    }
+#if CHK_FT_TAP 
+    acc_gyro_cnt++;
+#endif
+
+
+    // if (_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER)) 
+        {
+        // update the shared buffer
+        uint8_t idx = _shared_data_idx ^ 1;
+        _shared_data[idx]._accel_filtered = _accel_filtered;
+        _shared_data[idx]._gyro_filtered = _gyro_filtered;
+
+#ifdef SMT_CAPTURE_IMU_RAW
+        _shared_data_raw[idx]._accel_raw = imu_acc;
+        _shared_data_raw[idx]._gyro_raw = imu_gyro; 
+#endif
+        _shared_data_idx = idx;
+
+
+        _have_sample_available = true;
+        // _sem->give();
+#if DUMP
+        if(start_cali)
+        {
+        if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
+        {
+            hal.util->prt("[ %d us] ICM20689 dumpcnt %d (%s)", hal.scheduler->micros(), dump_cnt, start_cali?"cali":"no cali");
+        }
+        if(dump_cnt < DUMP_LEN)
+        {
+            // dump[dump_cnt++] = _accel_filtered.z;
+            dump[dump_cnt++] = _gyro_filtered.z;
+        }
+        else if(DUMP_LEN == dump_cnt)
+        {
+            FILE *fd = fopen("/root/test/dump.log", "w");
+            if(fd)
+            {
+                for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
+                {
+                    fprintf(fd, "%f\n", dump[ii]);
+                }
+                fclose(fd);
+                hal.util->prt("[OK] dump log done");
+                exit(1);
+            }
+            else
+            {
+                hal.util->prt("[Err] failed to open dump log");
+            }
+        }
+        }
+#endif
+    }
+}
+#endif
 
 /*
   read from the data registers and update filtered data
@@ -591,7 +934,6 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
 
     _spi->transaction((const uint8_t *)&tx, (uint8_t *)&rx, sizeof(rx));
 
-#define int16_val(v, idx) ((int16_t)(((uint16_t)v[2*idx] << 8) | v[2*idx+1]))
 
     Vector3f imu_acc;
     imu_acc.x = int16_val(rx.v, 1);
@@ -605,10 +947,6 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
 
 #if USER_FILTER
 
-    // imu_acc = _accel_filter.apply(imu_acc);
-
-    // imu_gyro = _gyro_filter.apply(imu_gyro);
-    //
     uint8_t acc_user_ft = _imu.get_accl_user_filter();
     uint8_t gyro_user_ft = _imu.get_gyro_user_filter();
 
@@ -698,33 +1036,7 @@ void AP_InertialSensor_ICM20689::_read_data_transaction()
 #if DUMP
         if(start_cali)
         {
-        if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
-        {
-            hal.util->prt("[ %d us] ICM20689 dumpcnt %d (%s)", hal.scheduler->micros(), dump_cnt, start_cali?"cali":"no cali");
-        }
-        if(dump_cnt < DUMP_LEN)
-        {
-            // dump[dump_cnt++] = _accel_filtered.z;
-            dump[dump_cnt++] = _gyro_filtered.z;
-        }
-        else if(DUMP_LEN == dump_cnt)
-        {
-            FILE *fd = fopen("/root/test/dump.log", "w");
-            if(fd)
-            {
-                for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
-                {
-                    fprintf(fd, "%f\n", dump[ii]);
-                }
-                fclose(fd);
-                hal.util->prt("[OK] dump log done");
-                exit(1);
-            }
-            else
-            {
-                hal.util->prt("[Err] failed to open dump log");
-            }
-        }
+            dump_data(_gyro_filtered.z);
         }
 #endif
     }
@@ -805,29 +1117,32 @@ bool AP_InertialSensor_ICM20689::_hardware_init(void)
     if (!initialize_driver_state())
         return false;
 
-    // need test: ZhaoYJ@2016-10-19
-    _register_write(MPUREG_PWR_MGMT_2, 0x00);            // only used for wake-up in accelerometer only low power mode
 
     // used no filter of 256Hz on the sensor, then filter using
     // the 2-pole software filter
 #ifdef  EN_LPF
+
 #define ACCEL_LPF_EN 0x8
 #define ACCEL_AVERAGE_SAMPLE 0x30 // 32 samples
     _register_write(MPUREG_CONFIG, BITS_DLPF_CFG_HZ);
+    hal.scheduler->delay(1);
     _register_write(MPUREG_ACCEL_CONFIG2, (ACCEL_LPF_EN | BITS_DLPF_CFG_HZ));
     // _register_write(MPUREG_ACCEL_CONFIG2, (ACCEL_AVERAGE_SAMPLE | ACCEL_LPF_EN | BITS_DLPF_CFG_HZ));
 #else
     _register_write(MPUREG_CONFIG, BITS_DLPF_CFG_256HZ_NOLPF2);
 #endif
+    hal.scheduler->delay(1);
 
     // set sample rate to 1kHz, and use the 2 pole filter to give the
     // desired rate
     _register_write(MPUREG_SMPLRT_DIV, MPUREG_SMPLRT_1000HZ);
+    hal.scheduler->delay(1);
 #ifdef GYRO_SCALE_250DPS
     _register_write(MPUREG_GYRO_CONFIG, BITS_GYRO_FS_250DPS);  // Gyro scale 250º/s
 #else
     _register_write(MPUREG_GYRO_CONFIG, BITS_GYRO_FS_2000DPS);  // Gyro scale 2000º/s
 #endif
+    hal.scheduler->delay(1);
 
 #ifdef ACCEL_SCALE_4G
     // RM-MPU-9250A-00.pdf, pg. 15, select accel full scale 4g
@@ -836,13 +1151,35 @@ bool AP_InertialSensor_ICM20689::_hardware_init(void)
     // RM-MPU-9250A-00.pdf, pg. 15, select accel full scale 16g
     _register_write(MPUREG_ACCEL_CONFIG,3<<3);
 #endif
+    hal.scheduler->delay(1);
 
     // configure interrupt to fire when new data arrives
     _register_write(MPUREG_INT_ENABLE, BIT_RAW_RDY_EN);
+    hal.scheduler->delay(1);
 
     // clear interrupt on any read, and hold the data ready pin high
     // until we clear the interrupt
-    _register_write(MPUREG_INT_PIN_CFG, BIT_INT_RD_CLEAR | BIT_LATCH_INT_EN);
+    _register_write(MPUREG_INT_PIN_CFG, _register_read(MPUREG_INT_PIN_CFG) | BIT_INT_RD_CLEAR | BIT_LATCH_INT_EN);
+    hal.scheduler->delay(1);
+
+#if IMU_8KHZ
+
+    // only used for wake-up in accelerometer only low power mode
+    _register_write(MPUREG_PWR_MGMT_2, 0x00);
+    hal.scheduler->delay(1);
+
+    // always use FIFO
+    _fifo_reset();
+
+    // setup ODR and on-sensor filtering
+    // TODO will be redundant with above configs, clean up it
+    _set_filter_register();
+
+    // ref from 3.4, need validation
+    // this avoids a sensor bug, see description above
+	_register_write(MPUREG_ICM_UNDOC1, MPUREG_ICM_UNDOC1_VALUE);
+    
+#endif
 
     // now that we have initialised, we set the SPI bus speed to high
     // (8MHz on APM2)
@@ -1324,5 +1661,363 @@ Vector3f AP_InertialSensor_ICM20689::_gyro_median_filter(Vector3f _gyro_in)
 }
 
 #endif
+
+#if IMU_8KHZ
+bool AP_InertialSensor_ICM20689::_accumulate_fast_sampling(uint8_t *samples, uint8_t n_samples)
+{
+    int32_t tsum = 0;
+    bool ret = true;
+    
+    for (uint8_t i = 0; i < n_samples; i++) {
+        const uint8_t *data = samples + MPU_SAMPLE_SIZE * i;
+
+        // use temperatue to detect FIFO corruption
+        static uint32_t fifo_corr_cnt = 0;
+        int16_t t2 = int16_val(data, 3);
+        if (!_check_raw_temp(t2)) {
+            fifo_corr_cnt++; 
+            hal.util->prt("temp reset(%d) %d -> %d",fifo_corr_cnt, _raw_temp, t2);
+            _fifo_reset();
+            ret = false;
+            break;
+        }
+        tsum += t2;
+
+#if DUMP_HALF_SEC
+        dump_half_sec_type tmp_data;
+        tmp_data.temp = t2;
+#endif
+
+        if ((_accum.count & 1) == 0) {
+            // accel data is at 4kHz
+            Vector3f a(int16_val(data, 1),
+                       int16_val(data, 0),
+                       -int16_val(data, 2));
+
+#if DUMP_HALF_SEC
+            tmp_data.acc(int16_val(data, 1),
+                       int16_val(data, 0),
+                       -int16_val(data, 2));
+#endif
+            _accum.accel += _accel_uf->apply3d(a);
+        }
+
+        Vector3f g(int16_val(data, 5),
+                   int16_val(data, 4),
+                   -int16_val(data, 6));
+#if DUMP_HALF_SEC
+            tmp_data.gyro(int16_val(data, 5),
+                   int16_val(data, 4),
+                   -int16_val(data, 6));
+
+            dump_data_half_sec(tmp_data);
+#endif
+
+        _accum.gyro += _gyro_uf->apply3d(g);
+
+        // tmp2 = tmp2;
+        _accum.count++;
+
+        // make sure it's 1KHz to EKF
+        if (_accum.count == MPU_FIFO_DOWNSAMPLE_COUNT) {
+
+            // average
+            _accum.accel = _accum.accel/MPU_FIFO_DOWNSAMPLE_COUNT_ACC;
+            _accum.gyro = _accum.gyro/MPU_FIFO_DOWNSAMPLE_COUNT;
+
+#if USER_FILTER
+            _filter_imu_1KHz(_accum.accel, _accum.gyro);
+#else
+
+            // update the shared buffer
+            uint8_t idx = _shared_data_idx ^ 1;
+            _shared_data[idx]._accel_filtered = _accum.accel;
+            _shared_data[idx]._gyro_filtered = _accum.gyro;
+
+#ifdef SMT_CAPTURE_IMU_RAW
+            _shared_data_raw[idx]._accel_raw = imu_acc;
+            _shared_data_raw[idx]._gyro_raw = imu_gyro; 
+#endif
+            _shared_data_idx = idx;
+
+
+            _have_sample_available = true;
+#endif
+            _accum.accel.zero();
+            _accum.gyro.zero();
+            _accum.count = 0;
+        }
+    }
+
+
+    if (ret) {
+        float temp = (static_cast<float>(tsum)/n_samples)/340.0f + 36.53f;
+        _temp_filtered = _temp_filter.apply(temp);
+        _publish_temperature(_gyro_instance, _temp_filtered);
+    }
+    
+    return ret;
+}
+void AP_InertialSensor_ICM20689::_read_fifo()
+{
+    uint8_t n_samples;
+    uint16_t bytes_read;
+    uint8_t *rx = _fifo_buffer;
+    bool need_reset = false;
+
+    static bool first = true;
+    if(first)
+    {
+        first = false;
+        uint16_t filter_info = _imu.get_accl_user_filter_8KHz(); 
+        uint16_t ft = (filter_info%10)%5; // convert to filter_type: 0 - chebyI, 1, chebyII, 2 - elliptic 
+        uint16_t cutoff = (uint16_t)(filter_info - ft)*2; // for accel, it's 4KHz, but in userfilter, there're just 8KHz coeff, so need convert
+
+        // then, for accel, max cutoff is 94Hz~100Hz
+        // TODO: this logic is messed up, so clean it when time available
+        if((filter_info >= 188) && (filter_info < 200))
+        {
+            cutoff = 188;
+            ft = filter_info - 188;
+        }
+        else if(filter_info >= 200)
+        {
+            cutoff = 200;
+            ft = filter_info - 200;
+        }
+        hal.util->prt("[Info] InvSense: accel filter_info %d, ft: %d, cutoff: %d", filter_info, (uint8_t)ft, cutoff);
+        _accel_uf = new UserFilterDouble_Size5(UserFilterDouble_Size5::sample_rate_4KHz, (uint8_t)ft, cutoff); 
+        filter_info = _imu.get_gyro_user_filter_8KHz(); 
+        ft = (filter_info%10)%5; // convert to filter_type: 0 - chebyI, 1, chebyII, 2 - elliptic 
+        cutoff = (uint16_t)(filter_info - ft);
+        if((filter_info >= 188) && (filter_info < 200))
+        {
+            cutoff = 188;
+            ft = filter_info - 188;
+        }
+        else if(filter_info >= 200)
+        {
+            cutoff = 200;
+            ft = filter_info - 200;
+        }
+        _gyro_uf = new UserFilterDouble_Size5(UserFilterDouble_Size5::sample_rate_8KHz, (uint8_t)ft, cutoff);
+        hal.util->prt("[Info] InvSense: gyro filter_info %d, ft: %d, cutoff: %d", filter_info, (uint8_t)ft, cutoff);
+    }
+
+    if (!_block_read(MPUREG_FIFO_COUNTH, rx, 2)) {
+        goto check_registers;
+    }
+
+    bytes_read = uint16_val(rx, 0);
+    n_samples = bytes_read / MPU_SAMPLE_SIZE;
+
+#if DUMP
+    dump_data(bytes_read);
+#endif
+
+    if (n_samples == 0) {
+        /* Not enough data in FIFO */
+        hal.util->prt("[Err-%d ms]: ICM20689 n_samples(%d) = 0", hal.scheduler->millis(), n_samples);
+        goto check_registers;
+    }
+
+    /*
+      testing has shown that if we have more than 32 samples in the
+      FIFO then some of those samples will be corrupt. It always is
+      the ones at the end of the FIFO, so clear those with a reset
+      once we've read the first 24. Reading 24 gives us the normal
+      number of samples for fast sampling at 400Hz
+     */
+    // TODO need test for 689
+    if (n_samples > 128) {
+        hal.util->prt("[Err-%d ms]: ICM20689 n_samples(%d) > 128", hal.scheduler->millis(), n_samples);
+        need_reset = true;
+        n_samples = 32;
+    }
+    
+    while (n_samples > 0) {
+#define MIN(a, b) ((a<=b)?a:b)
+        uint8_t n = MIN(n_samples, MPU_FIFO_BUFFER_LEN);
+        if (!_block_read(MPUREG_FIFO_R_W, rx, n * MPU_SAMPLE_SIZE)) {
+            hal.util->prt("[Err-%d ms]: ICM20689 blk_read", hal.scheduler->millis());
+            goto check_registers;
+        }
+        if (!_accumulate_fast_sampling(rx, n)) {
+            hal.util->prt("stop at %u of %u", n_samples, bytes_read/MPU_SAMPLE_SIZE);
+            break;
+        }
+        n_samples -= n;
+    }
+
+    if (need_reset) {
+        hal.util->prt("fifo reset n_samples %u", bytes_read/MPU_SAMPLE_SIZE);
+        _fifo_reset();
+    }
+    
+check_registers:
+    return;
+    
+}
+
+/*
+  fetch temperature in order to detect FIFO sync errors
+*/
+bool AP_InertialSensor_ICM20689::_check_raw_temp(int16_t t2)
+{
+    if (abs(t2 - _raw_temp) < 400) {
+        // cached copy OK
+        return true;
+    }
+    uint8_t trx[2];
+    if (_block_read(MPUREG_TEMP_OUT_H, trx, 2)) {
+        _raw_temp = int16_val(trx, 0);
+    }
+    return (abs(t2 - _raw_temp) < 400);
+}
+
+bool AP_InertialSensor_ICM20689::_block_read(uint8_t reg, uint8_t *buf,
+                                            uint32_t size)
+{
+    uint8_t tx = reg | 0x80; // Set most significant bit
+
+    return _spi->transfer(&tx, 1, buf, size);
+    // return true;
+}
+
+/*
+  set the DLPF filter frequency. Assumes caller has taken semaphore
+ */
+void AP_InertialSensor_ICM20689::_set_filter_register(void)
+{
+    uint8_t config;
+
+#if INVENSENSE_EXT_SYNC_ENABLE
+    // add in EXT_SYNC bit if enabled
+    config = (MPUREG_CONFIG_EXT_SYNC_AZ << MPUREG_CONFIG_EXT_SYNC_SHIFT);
+#else
+    config = 0;
+#endif
+
+    
+    // this gives us 8kHz sampling on gyros and 4kHz on accels
+    config |= BITS_DLPF_CFG_256HZ_NOLPF2;
+
+    config |= MPUREG_CONFIG_FIFO_MODE_STOP;
+    _register_write(MPUREG_CONFIG, config);
+
+    // setup for 4kHz accels
+    _register_write(ICMREG_ACCEL_CONFIG2, ICM_ACC_FCHOICE_B);
+}
+
+void AP_InertialSensor_ICM20689::_fifo_reset()
+{
+    uint8_t user_ctrl = _last_stat_user_ctrl;
+    user_ctrl &= ~(BIT_USER_CTRL_FIFO_RESET | BIT_USER_CTRL_FIFO_EN);
+    _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_LOW);
+    _register_write(MPUREG_FIFO_EN, 0);
+    _register_write(MPUREG_USER_CTRL, user_ctrl);
+    _register_write(MPUREG_USER_CTRL, user_ctrl | BIT_USER_CTRL_FIFO_RESET);
+    _register_write(MPUREG_USER_CTRL, user_ctrl | BIT_USER_CTRL_FIFO_EN);
+    _register_write(MPUREG_FIFO_EN, BIT_XG_FIFO_EN | BIT_YG_FIFO_EN |
+                    BIT_ZG_FIFO_EN | BIT_ACCEL_FIFO_EN | BIT_TEMP_FIFO_EN);
+    hal.scheduler->delay_microseconds(1);
+    _spi->set_bus_speed(AP_HAL::SPIDeviceDriver::SPI_SPEED_HIGH);
+    _last_stat_user_ctrl = user_ctrl | BIT_USER_CTRL_FIFO_EN;
+}
+
+#endif
+
+void AP_InertialSensor_ICM20689::dump_data(dump_type data)
+{
+#if DUMP
+        if((0 == (dump_cnt%(DUMP_LEN >> 3))) || (1 == (dump_cnt%(DUMP_LEN >> 3))))
+        {
+            hal.util->prt("[ %d us] ICM20689 dumpcnt %d (%s)", hal.scheduler->micros(), dump_cnt, start_cali?"cali":"no cali");
+        }
+        if(dump_cnt < DUMP_LEN)
+        {
+            // dump[dump_cnt++] = _accel_filtered.z;
+            dump[dump_cnt++] = data;
+        }
+        else if(DUMP_LEN == dump_cnt)
+        {
+            FILE *fd = fopen("/var/APM/dump.txt", "w");
+            if(fd)
+            {
+                for(uint32_t ii = 0; ii < DUMP_LEN; ii++)
+                {
+                    fprintf(fd, "%d\n", dump[ii]);
+                }
+                fclose(fd);
+                hal.util->prt("[OK] dump log done");
+                exit(1);
+            }
+            else
+            {
+                hal.util->prt("[Err] failed to open dump log");
+            }
+        }
+#endif
+}
+
+void AP_InertialSensor_ICM20689::dump_data_half_sec(dump_half_sec_type data)
+{
+#if DUMP_HALF_SEC
+    static FILE *fd = fopen("/var/APM/dump", "a");
+    static uint32_t half_sec_cnt = 0;
+    static uint32_t start_ms = hal.scheduler->millis();
+
+#if 0
+        if((0 == (dump_half_sec_cnt%(DUMP_HALF_SEC_LEN >> 3))) || (1 == (dump_half_sec_cnt%(DUMP_HALF_SEC_LEN >> 3))))
+        {
+            if(half_sec_cnt !=0)
+                hal.util->prt("[ %d us] ICM20689 dumpcnt %d (%s), acc:[%d-%d-%d], gyro:[%d-%d-%d]", hal.scheduler->micros(), dump_half_sec_cnt, start_cali?"cali":"no cali", data.acc.x, data.acc.y, data.acc.z, data.gyro.x, data.gyro.y, data.gyro.z);
+        }
+#endif
+        if(dump_half_sec_cnt < DUMP_HALF_SEC_LEN)
+        {
+            // dump[dump_half_sec_cnt++] = _accel_filtered.z;
+            dump_half_sec[dump_half_sec_cnt++] = data;
+        }
+        else if(DUMP_HALF_SEC_LEN == dump_half_sec_cnt)
+        {
+            if(fd)
+            {
+                // for(uint32_t ii = 0; ii < DUMP_HALF_SEC_LEN; ii++)
+                {
+                    // fprintf(fd, "%d,%d,%d,%d,%d,%d,%d\n", dump_half_sec[ii].acc.x,
+                    //         dump_half_sec[ii].acc.y,
+                    //         dump_half_sec[ii].acc.z,
+                    //         dump_half_sec[ii].gyro.x,
+                    //         dump_half_sec[ii].gyro.y,
+                    //         dump_half_sec[ii].gyro.z,
+                    //         dump_half_sec[ii].temp);
+                    fwrite(dump_half_sec, sizeof(dump_half_sec_type), DUMP_HALF_SEC_LEN, fd);
+                }
+                dump_half_sec_cnt = 0;
+                dump_half_sec[dump_half_sec_cnt++] = data;
+                // fclose(fd);
+                half_sec_cnt++; 
+                if(half_sec_cnt%10 == 0)
+                {
+                    hal.util->prt("[OK-%d ms] dump %ds IMU", hal.scheduler
+                        ->millis(), half_sec_cnt/2, half_sec_cnt);
+                }
+                //  hours
+                if(half_sec_cnt == (60*60*2))
+                // if(half_sec_cnt == 8)
+                {
+                    hal.util->prt("[OK] dump done [%d -> %d ms]", start_ms, hal.scheduler->millis());
+                    fclose(fd);
+                    exit(1);
+                }
+            }
+            else
+            {
+                hal.util->prt("[Err] failed to open dump log");
+            }
+        }
+#endif
+}
 
 #endif // CONFIG_HAL_BOARD

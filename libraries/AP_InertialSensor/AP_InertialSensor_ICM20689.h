@@ -14,9 +14,23 @@
 // enable debug to see a register dump on startup
 #define ICM20689_DEBUG 0
 
+// enable FIFO
+#define MPU_SAMPLE_SIZE 14
+#define MPU_FIFO_DOWNSAMPLE_COUNT 8
+#define MPU_FIFO_DOWNSAMPLE_COUNT_ACC 4
+#define MPU_FIFO_BUFFER_LEN 64 
+
+
 // AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyI filter
-#define USER_FILTER 1
 #define N_ORDER 4
+
+typedef uint16_t dump_type;
+
+typedef struct {
+    Vector3i acc;
+    Vector3i gyro;
+    int16_t temp;
+}dump_half_sec_type;
 
 class AP_InertialSensor_ICM20689 : public AP_InertialSensor_Backend
 {
@@ -80,6 +94,11 @@ private:
     Vector3f _gyro_median_filter(Vector3f _gyro_in);
 #endif
 
+    void dump_data(dump_type data);
+
+
+    void dump_data_half_sec(dump_half_sec_type data);
+
     // This structure is used to pass data from the timer which reads
     // the sensor to the main thread. The _shared_data_idx is used to
     // prevent race conditions by ensuring the data is fully updated
@@ -96,6 +115,9 @@ private:
     } _shared_data_raw[2];
 #endif
 
+    float _temp_filtered;
+    AverageFilterFloat_Size5 _temp_filter;
+
     // Low Pass filters for gyro and accel 
     LowPassFilter2pVector3f _accel_filter;
     LowPassFilter2pVector3f _gyro_filter;
@@ -110,6 +132,34 @@ private:
     // The default rotation for the IMU, its value depends on how the IMU is
     // placed by default on the system
     enum Rotation _default_rotation;
+
+#if IMU_8KHZ
+
+    // buffer for fifo read
+    uint8_t _fifo_buffer[MPU_SAMPLE_SIZE*MPU_FIFO_BUFFER_LEN];
+
+    /*
+      accumulators for fast sampling
+      See description in _accumulate_fast_sampling()
+    */
+    struct {
+        Vector3f accel;
+        Vector3f gyro;
+        uint8_t count;
+    } _accum;
+
+    UserFilterDouble_Size5 *_accel_uf;
+    UserFilterDouble_Size5 *_gyro_uf;
+
+    void _read_fifo();
+    void _fifo_reset();
+    bool _block_read(uint8_t reg, uint8_t *buf,                                         uint32_t size);
+    void _set_filter_register(void);
+    void _filter_imu_1KHz(Vector3f imu_acc, Vector3f imu_gyro);
+    bool _accumulate_fast_sampling(uint8_t *samples, uint8_t n_samples);
+    bool _check_raw_temp(int16_t t2);
+    int16_t _raw_temp;
+#endif
 
 #if ICM20689_DEBUG
     static void _dump_registers(AP_HAL::SPIDeviceDriver *spi);

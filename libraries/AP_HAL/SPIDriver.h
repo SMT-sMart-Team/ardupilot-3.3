@@ -26,6 +26,7 @@ public:
     virtual void cs_release() = 0;
     virtual uint8_t transfer (uint8_t data) = 0;
     virtual void transfer (const uint8_t *data, uint16_t len) = 0;
+    virtual bool transfer(const uint8_t *send, uint32_t send_len, uint8_t *recv, uint32_t recv_len) = 0;
 
     /**
        optional set_bus_speed() interface. This can be used by drivers

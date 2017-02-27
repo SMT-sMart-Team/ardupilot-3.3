@@ -180,7 +180,7 @@ static void run_test()
 
         length = accel.length();
 
-		if (counter++ % 50 == 0) {
+		if (counter++ % 100 == 0) {
 			// display results
 			hal.console->printf_P(PSTR("Accel X:%4.2f \t Y:%4.2f \t Z:%4.2f \t len:%4.2f \t Gyro X:%4.2f \t Y:%4.2f \t Z:%4.2f\n"), 
 								  accel.x, accel.y, accel.z, length, gyro.x, gyro.y, gyro.z);

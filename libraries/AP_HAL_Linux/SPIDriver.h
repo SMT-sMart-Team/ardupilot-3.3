@@ -27,6 +27,8 @@ public:
     void cs_release();
     uint8_t transfer (uint8_t data);
     void transfer (const uint8_t *data, uint16_t len);
+    bool transfer(const uint8_t *send, uint32_t send_len,
+                         uint8_t *recv, uint32_t recv_len);
     void set_bus_speed(enum bus_speed speed);
     void set_state(State state) override { _state = state; }
     State get_state() override { return _state; }
@@ -42,6 +44,7 @@ private:
     uint32_t _lowspeed;
     uint32_t _highspeed;
     uint32_t _speed;
+    uint8_t _last_mode;
     enum AP_HAL::SPIDevice _type;
     int _fd;	// Per-device FD.
 };
@@ -56,6 +59,7 @@ public:
     static void cs_assert(enum AP_HAL::SPIDevice type);
     static void cs_release(enum AP_HAL::SPIDevice type);
     static void transaction(LinuxSPIDeviceDriver &driver, const uint8_t *tx, uint8_t *rx, uint16_t len);
+    static bool transaction(LinuxSPIDeviceDriver &driver, const uint8_t *send, uint32_t send_len, uint8_t *recv, uint32_t recv_len);
 
 private:
     static LinuxSPIDeviceDriver _device[];

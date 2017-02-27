@@ -11,6 +11,7 @@ public:
     void init();
     AP_HAL::Semaphore* get_semaphore();
     void transaction(const uint8_t *tx, uint8_t *rx, uint16_t len);
+    bool transfer(const uint8_t *send, uint32_t send_len, uint8_t *recv, uint32_t recv_len) { return true; };
 
     void cs_assert();
     void cs_release();

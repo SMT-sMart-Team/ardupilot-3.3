@@ -40,10 +40,10 @@ LinuxSPIDeviceDriver LinuxSPIDeviceManager::_device[] = {
     /* MPU9250 is restricted to 1MHz for non-data and interrupt registers */
     LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_MPU9250,    SPI_MODE_3, 8, BBB_P9_23,  1*MHZ, 10*MHZ),
 #ifdef SMT_INS_ICM20689
-    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_ICM20689,    SPI_MODE_3, 8, BBB_P8_14,  1*MHZ, 4*MHZ),
+    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_ICM20689,    SPI_MODE_3, 8, BBB_P8_14,  1*MHZ, 6*MHZ),
 #endif
 #ifdef SMT_COMPASS_HMC5983
-    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_HMC5983,    SPI_MODE_3, 8, BBB_P8_16,  1*MHZ, 4*MHZ),
+    LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_HMC5983,    SPI_MODE_3, 8, BBB_P8_16,  1*MHZ, 6*MHZ),
 #endif
     // LinuxSPIDeviceDriver(2, 0, AP_HAL::SPIDevice_Dataflash,  SPI_MODE_3, 8, BBB_P8_12,  6*MHZ, 6*MHZ),
 };
@@ -137,6 +137,11 @@ uint8_t LinuxSPIDeviceDriver::transfer(uint8_t data)
 void LinuxSPIDeviceDriver::transfer(const uint8_t *data, uint16_t len)
 {
     transaction(data, NULL, len);
+}
+
+bool LinuxSPIDeviceDriver::transfer(const uint8_t *send, uint32_t send_len, uint8_t *recv, uint32_t recv_len)
+{
+    return LinuxSPIDeviceManager::transaction(*this, send, send_len, recv, recv_len);
 }
 
 void LinuxSPIDeviceManager::init(void *)
@@ -247,6 +252,53 @@ void LinuxSPIDeviceManager::transaction(LinuxSPIDeviceDriver &driver, const uint
 
     ioctl(driver._fd, SPI_IOC_MESSAGE(1), &spi);
     cs_release(driver._type);
+}
+
+
+bool LinuxSPIDeviceManager::transaction(LinuxSPIDeviceDriver &driver, const uint8_t *send, uint32_t send_len, uint8_t *recv, uint32_t recv_len)
+{
+    struct spi_ioc_transfer msgs[2] = { };
+    unsigned nmsgs = 0;
+
+    ioctl(driver._fd, SPI_IOC_WR_MODE, &driver._mode);
+
+    if (send && send_len != 0) {
+        msgs[nmsgs].tx_buf = (uint64_t) send;
+        msgs[nmsgs].rx_buf = 0;
+        msgs[nmsgs].len = send_len;
+        msgs[nmsgs].speed_hz = driver._speed;
+        msgs[nmsgs].delay_usecs = 0;
+        msgs[nmsgs].bits_per_word = driver._bitsPerWord;
+        msgs[nmsgs].cs_change = 0;
+        nmsgs++;
+    }
+
+    if (recv && recv_len != 0) {
+        msgs[nmsgs].tx_buf = 0;
+        msgs[nmsgs].rx_buf = (uint64_t) recv;
+        msgs[nmsgs].len = recv_len;
+        msgs[nmsgs].speed_hz = driver._speed;
+        msgs[nmsgs].delay_usecs = 0;
+        msgs[nmsgs].bits_per_word = driver._bitsPerWord;
+        msgs[nmsgs].cs_change = 0;
+        nmsgs++;
+    }
+
+    if (!nmsgs) {
+        return false;
+    }
+
+    cs_assert(driver._type);
+    int r = ioctl(driver._fd, SPI_IOC_MESSAGE(nmsgs), &msgs);
+    cs_release(driver._type);
+
+    if (r == -1) {
+        hal.console->printf("SPIDevice: error transferring data fd=%d (%s)\n",
+                            driver._fd, strerror(errno));
+        return false;
+    }
+
+    return true;
 }
 
 /*

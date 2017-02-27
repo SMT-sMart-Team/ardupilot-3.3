@@ -11,6 +11,7 @@
 #include "LowPassFilter.h"
 #include "ModeFilter.h"
 #include "Butter.h"
+#include "UserFilter.h"
 
 #endif //__FILTER_H__
 

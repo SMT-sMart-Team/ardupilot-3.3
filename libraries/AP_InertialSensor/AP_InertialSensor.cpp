@@ -326,6 +326,20 @@ const AP_Param::GroupInfo AP_InertialSensor::var_info[] PROGMEM = {
     // @User: Advanced
     AP_GROUPINFO("GYRO_MED_TAP", 26, AP_InertialSensor, _med_tap_gyro[0],  14),
 
+    // @Param: ACC_UF 
+    // @DisplayName: accl user defined filter
+    // @Description: User defined filter
+    // @Values: 0:original,1:CI-10Hz
+    // @User: Advanced
+    AP_GROUPINFO("ACC_UF_8", 27, AP_InertialSensor, _accl_user_filter_8KHz[0],  189),
+
+    // @Param: GYRO_USER_FILTER 
+    // @DisplayName: 
+    // @Description: User defined filter
+    // @Values: 0:original,1:CI-10Hz
+    // @User: Advanced
+    AP_GROUPINFO("GYRO_UF_8", 28, AP_InertialSensor, _gyro_user_filter_8KHz[0],  189),
+
     AP_GROUPEND
 };
 
