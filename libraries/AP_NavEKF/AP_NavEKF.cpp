@@ -110,6 +110,8 @@ static bool ekf_fuse_mag = true;
 #define EKF_MAG_FUSE_PERIOD 30000 // 30s
 #define EKF_MAG_FUSE_WINDOW 8000 // 8s
 #define EKF_CONST_MODE 0
+
+#define EKF_NO_MAG_ARMED 1
 #endif
 
 extern const AP_HAL::HAL& hal;
@@ -877,9 +879,13 @@ void NavEKF::UpdateFilter()
     }
     else // using GPS vel
     {
-        // just using mag fuse to as a mag-intefer detector
-        ekf_fuse_mag = false;
-        // SelectMagFusion();
+#if EKF_NO_MAG_ARMED
+        if(!hal.util->get_soft_armed())
+        {
+            ekf_fuse_mag = true;
+            SelectMagFusion();
+        }
+#endif
     }
 
 #else

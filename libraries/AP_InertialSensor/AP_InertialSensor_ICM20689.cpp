@@ -1786,7 +1786,7 @@ void AP_InertialSensor_ICM20689::_read_fifo()
             ft = filter_info - 200;
         }
         hal.util->prt("[Info] InvSense: accel filter_info %d, ft: %d, cutoff: %d", filter_info, (uint8_t)ft, cutoff);
-        _accel_uf = new UserFilterDouble_Size5(UserFilterDouble_Size5::sample_rate_4KHz, (uint8_t)ft, cutoff); 
+        _accel_uf = new UserFilterDouble_Size5(UserFilterDouble_Size5::sample_rate_8KHz, (uint8_t)ft, cutoff); 
         filter_info = _imu.get_gyro_user_filter_8KHz(); 
         ft = (filter_info%10)%5; // convert to filter_type: 0 - chebyI, 1, chebyII, 2 - elliptic 
         cutoff = (uint16_t)(filter_info - ft);

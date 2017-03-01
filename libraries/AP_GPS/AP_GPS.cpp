@@ -20,6 +20,16 @@
 #include <AP_Notify/AP_Notify.h>
 #include "AP_GPS.h"
 
+// AB ZhaoYJ@2017-02-14 for testing GPS EKF
+#define GPS_FAKE_FAIL 0
+
+#if GPS_FAKE_FAIL 
+
+#include <time.h>
+
+extern uint16_t g_debug_trigger;
+#endif
+
 extern const AP_HAL::HAL& hal;
 
 // table of user settable parameters
@@ -387,6 +397,13 @@ AP_GPS::update_instance(uint8_t instance)
 void
 AP_GPS::update(void)
 {
+#if GPS_FAKE_FAIL  
+    if(g_debug_trigger)
+    {
+        state[0].status = AP_GPS::NO_GPS;
+        return;
+    }
+#endif
     // try to enable GPS UART port mux for 3rd-party APP via pty in linux, such as GPSD
     // add by ZhaoYJ@2015-10-25 
     static uint8_t first_time = 1;

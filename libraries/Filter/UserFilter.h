@@ -89,7 +89,7 @@ public:
                 fr_t = freq_200Hz;        
             }
         }
-        init((filter_t) ft, fr_t);
+        init(FILTER_SIZE - 1, fs, (filter_t) ft, fr_t);
     }; // : FilterWithBuffer<T,FILTER_SIZE>(); 
 
     // update - Add a new raw value to the filter, but don't recalculate
@@ -101,7 +101,7 @@ public:
 
 
     // init coeffs
-    void        init(filter_t ft, freq_t cutoff);
+    void init(uint8_t tap, uint8_t fs, filter_t ft, freq_t fr_t);
 
     // reset - clear the filter
     virtual void        reset();
