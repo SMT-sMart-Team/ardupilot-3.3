@@ -148,8 +148,8 @@ private:
         uint8_t count;
     } _accum;
 
-    UserFilterDouble_Size5 *_accel_uf;
-    UserFilterDouble_Size5 *_gyro_uf;
+    UserFilterDouble_Size3 *_accel_uf;
+    UserFilterDouble_Size3 *_gyro_uf;
 
     void _read_fifo();
     void _fifo_reset();
@@ -159,6 +159,8 @@ private:
     bool _accumulate_fast_sampling(uint8_t *samples, uint8_t n_samples);
     bool _check_raw_temp(int16_t t2);
     int16_t _raw_temp;
+    bool _bypass_acc_uf;
+    bool _bypass_gyro_uf;
 #endif
 
 #if ICM20689_DEBUG

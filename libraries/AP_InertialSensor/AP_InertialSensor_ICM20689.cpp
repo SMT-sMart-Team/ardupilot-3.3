@@ -480,6 +480,8 @@ AP_InertialSensor_ICM20689::AP_InertialSensor_ICM20689(AP_InertialSensor &imu) :
     _shared_data_idx(0),
     _accel_filter(1000, 15),
     _gyro_filter(1000, 15),
+    _bypass_acc_uf(false),
+    _bypass_gyro_uf(false),
     _have_sample_available(false),
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
 #ifdef SMT_NEW_BOARD
@@ -1676,7 +1678,7 @@ bool AP_InertialSensor_ICM20689::_accumulate_fast_sampling(uint8_t *samples, uin
         int16_t t2 = int16_val(data, 3);
         if (!_check_raw_temp(t2)) {
             fifo_corr_cnt++; 
-            hal.util->prt("temp reset(%d) %d -> %d",fifo_corr_cnt, _raw_temp, t2);
+            // hal.util->prt("temp reset(%d) %d -> %d",fifo_corr_cnt, _raw_temp, t2);
             _fifo_reset();
             ret = false;
             break;
@@ -1699,7 +1701,46 @@ bool AP_InertialSensor_ICM20689::_accumulate_fast_sampling(uint8_t *samples, uin
                        int16_val(data, 0),
                        -int16_val(data, 2));
 #endif
-            _accum.accel += _accel_uf->apply3d(a);
+            if(!_bypass_acc_uf)
+            {
+#define TEST_UF 0
+#if TEST_UF
+                static uint8_t cnt = 0;
+                a.zero();
+                a(cnt, cnt, cnt);
+                cnt++;
+#endif
+
+                if(_accel_uf != nullptr)
+                {
+
+                    _accum.accel += _accel_uf->apply3d(a);
+                }
+                else
+                {
+                    hal.util->prt("[Err] accel UF is NULL");
+                    _accum.accel += a;
+                }
+#if TEST_UF
+                if(cnt <= 8)
+                {
+                    hal.util->prt("===============");
+                    hal.util->prt(" before uf: ax = %f, ay = %f, az = %f", a.x, a.y, a.z);
+                    Vector3f tmp = _accel_uf->apply3d(a);
+                    hal.util->prt(" after uf: ax = %f, ay = %f, az = %f", tmp.x, tmp.y, tmp.z);
+                    hal.util->prt("===============");
+                }
+                else
+                {
+                    hal.util->prt("test done");
+                    exit(1);
+                }
+#endif
+            }
+            else // bypass uf
+            {
+                _accum.accel += a;
+            }
         }
 
         Vector3f g(int16_val(data, 5),
@@ -1713,7 +1754,22 @@ bool AP_InertialSensor_ICM20689::_accumulate_fast_sampling(uint8_t *samples, uin
             dump_data_half_sec(tmp_data);
 #endif
 
-        _accum.gyro += _gyro_uf->apply3d(g);
+            if(!_bypass_gyro_uf)
+            {
+                if(_gyro_uf != nullptr)
+                {
+                    _accum.gyro += _gyro_uf->apply3d(g);
+                }
+                else
+                {
+                    hal.util->prt("[Err] gyro UF is NULL");
+                    _accum.gyro += g;
+                }
+            }
+            else
+            {
+                _accum.gyro += g;
+            }
 
         // tmp2 = tmp2;
         _accum.count++;
@@ -1771,7 +1827,7 @@ void AP_InertialSensor_ICM20689::_read_fifo()
         first = false;
         uint16_t filter_info = _imu.get_accl_user_filter_8KHz(); 
         uint16_t ft = (filter_info%10)%5; // convert to filter_type: 0 - chebyI, 1, chebyII, 2 - elliptic 
-        uint16_t cutoff = (uint16_t)(filter_info - ft)*2; // for accel, it's 4KHz, but in userfilter, there're just 8KHz coeff, so need convert
+        uint16_t cutoff = (uint16_t)(filter_info - ft);
 
         // then, for accel, max cutoff is 94Hz~100Hz
         // TODO: this logic is messed up, so clean it when time available
@@ -1780,13 +1836,23 @@ void AP_InertialSensor_ICM20689::_read_fifo()
             cutoff = 188;
             ft = filter_info - 188;
         }
-        else if(filter_info >= 200)
+        else if((filter_info < 300) && (filter_info >= 200))
         {
             cutoff = 200;
             ft = filter_info - 200;
         }
+        else if(filter_info >= 300)
+        {
+            _bypass_acc_uf = true;
+        }
+
         hal.util->prt("[Info] InvSense: accel filter_info %d, ft: %d, cutoff: %d", filter_info, (uint8_t)ft, cutoff);
-        _accel_uf = new UserFilterDouble_Size5(UserFilterDouble_Size5::sample_rate_8KHz, (uint8_t)ft, cutoff); 
+
+        if(!_bypass_acc_uf)
+        {
+            _accel_uf = new UserFilterDouble_Size3(UserFilterDouble_Size3::sample_rate_4KHz, (uint8_t)ft, cutoff); 
+        }
+
         filter_info = _imu.get_gyro_user_filter_8KHz(); 
         ft = (filter_info%10)%5; // convert to filter_type: 0 - chebyI, 1, chebyII, 2 - elliptic 
         cutoff = (uint16_t)(filter_info - ft);
@@ -1795,12 +1861,21 @@ void AP_InertialSensor_ICM20689::_read_fifo()
             cutoff = 188;
             ft = filter_info - 188;
         }
-        else if(filter_info >= 200)
+        else if((filter_info < 300) && (filter_info >= 200))
         {
             cutoff = 200;
             ft = filter_info - 200;
         }
-        _gyro_uf = new UserFilterDouble_Size5(UserFilterDouble_Size5::sample_rate_8KHz, (uint8_t)ft, cutoff);
+        else if(filter_info >= 300)
+        {
+            _bypass_gyro_uf = true;
+        }
+
+        if(!_bypass_gyro_uf)
+        {
+            _gyro_uf = new UserFilterDouble_Size3(UserFilterDouble_Size3::sample_rate_8KHz, (uint8_t)ft, cutoff);
+        }
+
         hal.util->prt("[Info] InvSense: gyro filter_info %d, ft: %d, cutoff: %d", filter_info, (uint8_t)ft, cutoff);
     }
 
@@ -1817,7 +1892,7 @@ void AP_InertialSensor_ICM20689::_read_fifo()
 
     if (n_samples == 0) {
         /* Not enough data in FIFO */
-        hal.util->prt("[Err-%d ms]: ICM20689 n_samples(%d) = 0", hal.scheduler->millis(), n_samples);
+        // hal.util->prt("[Err-%d ms]: ICM20689 n_samples(%d) = 0", hal.scheduler->millis(), n_samples);
         goto check_registers;
     }
 
@@ -1843,7 +1918,7 @@ void AP_InertialSensor_ICM20689::_read_fifo()
             goto check_registers;
         }
         if (!_accumulate_fast_sampling(rx, n)) {
-            hal.util->prt("stop at %u of %u", n_samples, bytes_read/MPU_SAMPLE_SIZE);
+            // hal.util->prt("stop at %u of %u", n_samples, bytes_read/MPU_SAMPLE_SIZE);
             break;
         }
         n_samples -= n;

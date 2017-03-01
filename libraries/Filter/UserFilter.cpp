@@ -102,12 +102,11 @@ Vector3f UserFilter<T,FILTER_SIZE>::apply3d(Vector3f sample)
                 b[0], b[1], b[2], b[3], b[4]);
         hal.util->prt("filter a: %.19f, %.19f, %.19f, %.19f, %.19f", 
                 a[0], a[1], a[2], a[3], a[4]);
-        hal.util->prt("ChebyII filter idx: curr_idx %d, %d, %d, %d, %d", 
+        hal.util->prt("filter idx: curr_idx %d, %f, %f, %f", 
                 curr_idx,
-                FORMER(curr_idx, 1, FILTER_SIZE), 
-                FORMER(curr_idx, 2, FILTER_SIZE), 
-                FORMER(curr_idx, 3, FILTER_SIZE), 
-                FORMER(curr_idx, 4, FILTER_SIZE)); 
+                filter_state_3d[FORMER(curr_idx, 0, FILTER_SIZE)].x, 
+                filter_state_3d[FORMER(curr_idx, 1, FILTER_SIZE)].x, 
+                filter_state_3d[FORMER(curr_idx, 2, FILTER_SIZE)].x); 
 #if 0
         uint8_t med_f_len = _imu.get_mean_filter_former() + _imu.get_mean_filter_latter();
         hal.util->prt("Median filter idx: len: %d, curr_idx %d", med_f_len, curr_idx);
@@ -184,7 +183,7 @@ Vector3f UserFilter<T,FILTER_SIZE>::apply3d(Vector3f sample)
         ret = sample;
     }
 
-    // hal.util->prt("[ %d us] ICM20689 filter end", hal.scheduler->micros()); 
+    // hal.util->prt("[ %d us] filter end: x-y-z: %f-%f-%f", hal.scheduler->micros(), ret.x, ret.y, ret.z); 
     return ret;
 }
 
@@ -192,7 +191,7 @@ Vector3f UserFilter<T,FILTER_SIZE>::apply3d(Vector3f sample)
 template <class T,  uint8_t FILTER_SIZE>
 void UserFilter<T,FILTER_SIZE>::init(uint8_t tap, uint8_t fs, filter_t ft, freq_t fr_t)
 {
-    hal.util->prt("UserFilter(%dKHz %dtap): type: %d, cutoff: %dHz", fs, tap, ft, (fr_t+1)*5);
+    hal.util->prt("[Info] UserFilter(%dKHz %dtap): type: %d, cutoff: %dHz", fs, tap, ft, (fr_t+1)*5);
     
     // if(5 == FILTER_SIZE)
     {
@@ -257,6 +256,7 @@ void UserFilter<T,FILTER_SIZE>::reset(void)
 // add new instances as needed here
 template void UserFilter<float,3>::update(float sample, uint32_t timestamp);
 template float UserFilter<float,3>::apply(float sample);
+template Vector3f UserFilter<float,3>::apply3d(Vector3f sample);
 template void UserFilter<float,3>::reset(void);
 template void UserFilter<float,3>::init(uint8_t tap, uint8_t fs, filter_t ft, freq_t fr_t);
 template void UserFilter<float,4>::update(float sample, uint32_t timestamp);
@@ -278,6 +278,7 @@ template void UserFilter<float,7>::init(uint8_t tap, uint8_t fs, filter_t ft, fr
 
 template void UserFilter<double,3>::update(double sample, uint32_t timestamp);
 template double UserFilter<double,3>::apply(double sample);
+template Vector3f UserFilter<double,3>::apply3d(Vector3f sample);
 template void UserFilter<double,3>::reset(void);
 template void UserFilter<double,3>::init(uint8_t tap, uint8_t fs, filter_t ft, freq_t fr_t);
 template void UserFilter<double,4>::update(double sample, uint32_t timestamp);

@@ -70,6 +70,7 @@ public:
     // TODO: fs will be needed for future
     UserFilter(sample_rate fs, uint8_t ft, uint16_t cutoff) {
 
+        _first = true;
         reset();
         freq_t fr_t = (freq_t) (cutoff/(uint16_t)5 - 1);
         // check cutoff freq is valid

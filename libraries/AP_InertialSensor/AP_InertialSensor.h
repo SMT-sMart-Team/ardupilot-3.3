@@ -216,8 +216,8 @@ public:
     // get ddd gyro filter rate in Hz
     uint8_t get_accl_user_filter(void) const { return _accl_user_filter[0]; }
     uint8_t get_gyro_user_filter(void) const { return _gyro_user_filter[0]; }
-    uint8_t get_accl_user_filter_8KHz(void) const { return _accl_user_filter_8KHz[0]; }
-    uint8_t get_gyro_user_filter_8KHz(void) const { return _gyro_user_filter_8KHz[0]; }
+    uint16_t get_accl_user_filter_8KHz(void) const { return _accl_user_filter_8KHz[0]; }
+    uint16_t get_gyro_user_filter_8KHz(void) const { return _gyro_user_filter_8KHz[0]; }
     uint8_t get_med_tap_acc(void) const { return _med_tap_acc[0]; }
     uint8_t get_med_tap_gyro(void) const { return _med_tap_gyro[0]; }
 
