@@ -111,7 +111,7 @@ static bool ekf_fuse_mag = true;
 #define EKF_MAG_FUSE_WINDOW 8000 // 8s
 #define EKF_CONST_MODE 0
 
-#define EKF_NO_MAG_ARMED 1
+#define EKF_NO_MAG_ARMED 0
 #endif
 
 extern const AP_HAL::HAL& hal;
