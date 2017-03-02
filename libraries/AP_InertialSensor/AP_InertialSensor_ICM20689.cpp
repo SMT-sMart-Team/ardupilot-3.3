@@ -480,8 +480,10 @@ AP_InertialSensor_ICM20689::AP_InertialSensor_ICM20689(AP_InertialSensor &imu) :
     _shared_data_idx(0),
     _accel_filter(1000, 15),
     _gyro_filter(1000, 15),
+#if IMU_8KHZ
     _bypass_acc_uf(false),
     _bypass_gyro_uf(false),
+#endif
     _have_sample_available(false),
 #if CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_PXF
 #ifdef SMT_NEW_BOARD
