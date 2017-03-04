@@ -133,8 +133,13 @@ void Copter::set_system_time_from_GPS()
     // if we have a 3d lock and valid location
     if (gps.status() >= AP_GPS::GPS_OK_FIX_3D) {
         // set system clock for log timestamps
-        hal.util->set_system_clock(gps.time_epoch_usec());
-        ap.system_time_set = true;
-        Log_Write_Event(DATA_SYSTEM_TIME_SET);
+        // AB ZhaoYJ@2017-03-05 for 1980 error from UBLX
+        // 1488701564527000ULL is UNIX time for 2017-03-05
+        if(gps.time_epoch_usec() > 1488701564527000ULL)
+        {
+            hal.util->set_system_clock(gps.time_epoch_usec());
+            ap.system_time_set = true;
+            Log_Write_Event(DATA_SYSTEM_TIME_SET);
+        }
     }
 }
