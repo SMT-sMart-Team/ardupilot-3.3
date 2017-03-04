@@ -16,9 +16,17 @@
 
 // enable FIFO
 #define MPU_SAMPLE_SIZE 14
+#define MPU_FIFO_BUFFER_LEN 64 
+
+// 8KHz
+#if IMU_SAMPLE_RATE == 8
 #define MPU_FIFO_DOWNSAMPLE_COUNT 8
 #define MPU_FIFO_DOWNSAMPLE_COUNT_ACC 4
-#define MPU_FIFO_BUFFER_LEN 64 
+// 1KHz
+#elif IMU_SAMPLE_RATE == 1
+#define MPU_FIFO_DOWNSAMPLE_COUNT 1
+#define MPU_FIFO_DOWNSAMPLE_COUNT_ACC 1
+#endif
 
 
 // AB ZhaoYJ@2016-11-30 for user-defined 4 order chebyI filter
@@ -90,9 +98,11 @@ private:
 #if USER_FILTER 
     Vector3f _accel_user_filter(Vector3f _accl_in, uint8_t _uf);
     Vector3f _gyro_user_filter(Vector3f _gyro_in, uint8_t _uf);
+#endif
     Vector3f _accel_median_filter(Vector3f _accl_in);
     Vector3f _gyro_median_filter(Vector3f _gyro_in);
-#endif
+    uint8_t _accl_med_len;
+    uint8_t _gyro_med_len;
 
     void dump_data(dump_type data);
 
@@ -133,7 +143,7 @@ private:
     // placed by default on the system
     enum Rotation _default_rotation;
 
-#if IMU_8KHZ
+#if IMU_FAST_SAMPLE 
 
     // buffer for fifo read
     uint8_t _fifo_buffer[MPU_SAMPLE_SIZE*MPU_FIFO_BUFFER_LEN];
@@ -148,14 +158,14 @@ private:
         uint8_t count;
     } _accum;
 
-    UserFilterDouble_Size3 *_accel_uf;
-    UserFilterDouble_Size3 *_gyro_uf;
+    // 8KHz or 1KHz, but filter in 1KHz with tap4
+    UserFilterDouble_Size5 *_accel_uf;
+    UserFilterDouble_Size5 *_gyro_uf;
 
     void _read_fifo();
     void _fifo_reset();
     bool _block_read(uint8_t reg, uint8_t *buf,                                         uint32_t size);
     void _set_filter_register(void);
-    void _filter_imu_1KHz(Vector3f imu_acc, Vector3f imu_gyro);
     bool _accumulate_fast_sampling(uint8_t *samples, uint8_t n_samples);
     bool _check_raw_temp(int16_t t2);
     int16_t _raw_temp;

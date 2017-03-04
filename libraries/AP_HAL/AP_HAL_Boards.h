@@ -304,8 +304,14 @@
 #endif
 
 // AB ZhaoYJ@2017-02-27 for 8KHZ
-#define IMU_8KHZ 0
-#define USER_FILTER 1
+#define IMU_FAST_SAMPLE 0
+#if IMU_FAST_SAMPLE
+#define IMU_SAMPLE_RATE 1
+
+#define USER_FILTER 0 // old filter for IMU
+#else
+#define USER_FILTER 1 // old filter for IMU
+#endif
 
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BEBOP
 #define HAL_BOARD_LOG_DIRECTORY "/data/ftp/internal_000/APM/logs"
