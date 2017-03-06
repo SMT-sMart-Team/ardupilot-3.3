@@ -34,7 +34,7 @@ const AP_Param::GroupInfo AP_MotorsMulticopter::var_info[] PROGMEM = {
     // @Description: Controls whether motors always spin when armed (must be below THR_MIN)
     // @Values: 0:Do Not Spin,70:VerySlow,100:Slow,130:Medium,150:Fast
     // @User: Standard
-    AP_GROUPINFO("SPIN_ARMED", 5, AP_MotorsMulticopter, _spin_when_armed, AP_MOTORS_SPIN_WHEN_ARMED),
+    AP_GROUPINFO("SPIN_ARMED", 5, AP_MotorsMulticopter, _spin_when_armed, 0 /*AP_MOTORS_SPIN_WHEN_ARMED*/),
 
     // @Param: YAW_HEADROOM
     // @DisplayName: Matrix Yaw Min

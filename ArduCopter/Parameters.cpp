@@ -614,7 +614,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Range: 50 490
     // @Increment: 1
     // @User: Advanced
-    GSCALAR(rc_speed, "RC_SPEED",              RC_FAST_SPEED),
+    GSCALAR(rc_speed, "RC_SPEED",              400 /*RC_FAST_SPEED*/),
 
     // @Param: ACRO_RP_P
     // @DisplayName: Acro Roll and Pitch P gain
