@@ -26,6 +26,12 @@ static struct {
     uint32_t last_warn_time;    // system time of last warning in milliseconds.  Used to throttle text warnings sent to GCS
 } ekf_check_state;
 
+// AB ZhaoYJ@2017-03-10 for EKF failsafe recovery
+#define EKF_RECOV_MODE 0
+#if EKF_RECOV_MODE
+int8_t last_mode;
+#endif
+
 // ekf_check - detects if ekf variance are out of tolerance and triggers failsafe
 // should be called at 10hz
 void Copter::ekf_check()
@@ -72,8 +78,15 @@ void Copter::ekf_check()
             ekf_check_state.fail_count--;
 
             // if compass is flagged as bad and the counter reaches zero then clear flag
+#if EKF_RECOV_MODE
+            // printf("EKF failed cnt %d\n", ekf_check_state.fail_count);
+            if (ekf_check_state.fail_count == 0) {
+#else
             if (ekf_check_state.bad_variance && ekf_check_state.fail_count == 0) {
-                ekf_check_state.bad_variance = false;
+#endif
+                if (ekf_check_state.bad_variance) {
+                    ekf_check_state.bad_variance = false;
+                }
                 // log recovery in the dataflash
                 Log_Write_Error(ERROR_SUBSYSTEM_EKFCHECK, ERROR_CODE_EKFCHECK_VARIANCE_CLEARED);
                 // clear failsafe
@@ -135,6 +148,10 @@ void Copter::failsafe_ekf_event()
 
     // EKF failsafe event has occurred
     failsafe.ekf = true;
+#if EKF_RECOV_MODE
+    last_mode = control_mode;
+    // printf("EKF error: mode %d\n", last_mode);
+#endif
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_OCCURRED);
 
     // take action based on fs_ekf_action parameter
@@ -167,4 +184,11 @@ void Copter::failsafe_ekf_off_event(void)
     // clear flag and log recovery
     failsafe.ekf = false;
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_EKFINAV, ERROR_CODE_FAILSAFE_RESOLVED);
+#if EKF_RECOV_MODE
+    // printf("EKF recovery: mode %d\n", last_mode);
+    if (!set_mode(last_mode)) {
+        // printf("EKF recovery failed\n");
+        set_mode_land_with_pause();
+    }
+#endif
 }

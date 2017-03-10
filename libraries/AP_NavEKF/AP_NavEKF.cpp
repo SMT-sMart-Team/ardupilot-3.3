@@ -22,6 +22,10 @@
 // merge from solo
 #define EKF_OPTI_SOLO 0
 
+// AB ZhaoYJ@2017-03-10
+// try to recover EKF when GPS recovery
+#define EKF_GPS_RECOVER 1
+
 /*
   parameter defaults for different types of vehicle. The
   APM_BUILD_DIRECTORY is taken from the main vehicle directory name
@@ -5226,6 +5230,20 @@ void  NavEKF::getFilterStatus(nav_filter_status &status) const
     status.flags.takeoff = expectGndEffectTakeoff; // The EKF has been told to expect takeoff and is in a ground effect mitigation mode
     status.flags.touchdown = expectGndEffectTouchdown; // The EKF has been told to detect touchdown and is in a ground effect mitigation mode
     status.flags.using_gps = (imuSampleTime_ms - lastPosPassTime) < 4000;
+
+#if 0
+    static uint32_t cnt = 0;
+    if(0 == cnt%2000)
+    {
+        printf("doingNormalGpsNav %d !posTimeout %d PV %d\n", doingNormalGpsNav,!posTimeout, (PV_AidingMode == AID_ABSOLUTE)); 
+        printf("notDeadReckoning %d !constVelMode %d \n", notDeadReckoning,!constVelMode); 
+        printf("horiz_pos_abs %d !gpsAidingBad %d doingNormalGpsNav %d notDeadReckoning %d filterHealthy %d\n", status.flags.horiz_pos_abs, !gpsAidingBad ,doingNormalGpsNav ,notDeadReckoning ,filterHealthy);
+        printf("!constPosMode  %d filterHealthy %d\n", !constPosMode ,filterHealthy); 
+        printf("gpsAvailable  %d \n", !gpsNotAvailable); 
+    }
+    cnt++;
+#endif
+
 }
 
 // send an EKF_STATUS message to GCS
@@ -5390,6 +5408,32 @@ void NavEKF::performArmingChecks()
         state.quat = calcQuatAndFieldStates(eulerAngles.x, eulerAngles.y);
         secondMagYawInit = true;
     }
+
+#if EKF_GPS_RECOVER 
+    static bool last_gps_available = !gpsNotAvailable;
+    // suffer GPS recovery when armed
+    // curr GPS is ok, last time is not ok
+    if(vehicleArmed && !gpsNotAvailable && !last_gps_available)
+    {
+        PV_AidingMode = AID_ABSOLUTE; // we have GPS data and can estimate all vehicle states
+        posTimeout = false;
+        velTimeout = false;
+        constPosMode = false;
+        constVelMode = false;
+
+        // we need to reset the GPS timers to prevent GPS timeout logic being invoked on entry into GPS aiding
+        // this is becasue the EKF can be interrupted for an arbitrary amount of time during vehicle arming checks
+        lastFixTime_ms = imuSampleTime_ms;
+         // secondLastFixTime_ms = imuSampleTime_ms;
+        // reset the last valid position fix time to prevent unwanted activation of GPS glitch logic
+        lastPosPassTime = imuSampleTime_ms;
+        // reset the fail time to prevent premature reporting of loss of position accruacy
+        lastPosFailTime = 0;
+        printf("recovery EKF from GPS\n");
+    }
+
+    last_gps_available = !gpsNotAvailable;
+#endif
 
     // Always turn aiding off when the vehicle is disarmed
     if (!vehicleArmed) {
