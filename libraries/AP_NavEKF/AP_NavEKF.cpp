@@ -24,7 +24,7 @@
 
 // AB ZhaoYJ@2017-03-10
 // try to recover EKF when GPS recovery
-#define EKF_GPS_RECOVER 1
+#define EKF_GPS_RECOVER 0
 
 /*
   parameter defaults for different types of vehicle. The
@@ -5427,8 +5427,18 @@ void NavEKF::performArmingChecks()
          // secondLastFixTime_ms = imuSampleTime_ms;
         // reset the last valid position fix time to prevent unwanted activation of GPS glitch logic
         lastPosPassTime = imuSampleTime_ms;
-        // reset the fail time to prevent premature reporting of loss of position accruacy
-        lastPosFailTime = 0;
+
+        // Apply an offset to the GPS position so that the position can be corrected gradually
+        gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
+        gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
+        // limit the radius of the offset to 100m and decay the offset to zero radially
+        decayGpsOffset();
+        ResetPosition();
+        ResetVelocity();
+        // record the fail time
+        lastPosFailTime = imuSampleTime_ms;
+        // Reset the normalised innovation to avoid false failing the bad position fusion test
+        posTestRatio = 0.0f;
         printf("recovery EKF from GPS\n");
     }
 
