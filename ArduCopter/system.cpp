@@ -343,7 +343,7 @@ bool Copter::ekf_position_ok()
     }
 }
 
-// optflow_position_ok - returns true if optical flow based position estimate is ok
+//  optflow_position_ok - returns true if optical flow based position estimate is ok
 bool Copter::optflow_position_ok()
 {
 #if OPTFLOW != ENABLED
