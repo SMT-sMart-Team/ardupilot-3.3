@@ -27,7 +27,7 @@ static struct {
 } ekf_check_state;
 
 // AB ZhaoYJ@2017-03-10 for EKF failsafe recovery
-#define EKF_RECOV_MODE 0
+#define EKF_RECOV_MODE 1
 #if EKF_RECOV_MODE
 int8_t last_mode;
 #endif
