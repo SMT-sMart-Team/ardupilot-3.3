@@ -17,10 +17,12 @@ bool Copter::set_mode(uint8_t mode)
     bool success = false;
     bool ignore_checks = !motors.armed();   // allow switching to any mode if disarmed.  We rely on the arming check to perform
 
+
     // return immediately if we are already in the desired mode
     if (mode == control_mode) {
         return true;
     }
+
 
     switch(mode) {
         case ACRO:
@@ -121,6 +123,15 @@ bool Copter::set_mode(uint8_t mode)
     // update notify object
     if (success) {
         notify_flight_mode(control_mode);
+        // char buf[32];
+        // sprintf(buf, "change to %d mode success \n", mode);
+        // gcs_send_text_P(SEVERITY_HIGH,PSTR(buf));
+    }
+    else
+    {
+        char buf[32];
+        sprintf(buf, "change to %d mode failed\n", mode);
+        gcs_send_text_P(SEVERITY_HIGH,PSTR(buf));
     }
 
     // return success or failure
@@ -133,6 +144,7 @@ void Copter::update_flight_mode()
 {
     // Update EKF speed limit - used to limit speed when we are using optical flow
     ahrs.getEkfControlLimits(ekfGndSpdLimit, ekfNavVelGainScaler);
+
 
     switch (control_mode) {
         case ACRO:

@@ -163,7 +163,7 @@ void Copter::esc_calibration_auto()
         }
         cnt++;
 #endif
-        gcs_send_text_P(SEVERITY_HIGH,PSTR("ESC Calibration: auto calibration done, please reboot"));
+        gcs_send_text_P(SEVERITY_HIGH,PSTR("ESC calibration done, please reboot"));
         delay(3000); 
     }
 #endif // FRAME_CONFIG != HELI_FRAME
