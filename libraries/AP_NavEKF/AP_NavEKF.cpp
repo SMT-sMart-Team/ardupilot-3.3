@@ -24,7 +24,8 @@
 
 // AB ZhaoYJ@2017-03-10
 // try to recover EKF when GPS recovery
-#define EKF_GPS_RECOVER 0
+#define EKF_GPS_RECOVER 1
+#define GPS_RECOVER_MSECS 2000 // 2s
 
 /*
   parameter defaults for different types of vehicle. The
@@ -5411,38 +5412,56 @@ void NavEKF::performArmingChecks()
 
 #if EKF_GPS_RECOVER 
     static bool last_gps_available = !gpsNotAvailable;
+    static uint32_t last_gps_loss_ms = 0;
     // suffer GPS recovery when armed
     // curr GPS is ok, last time is not ok
     if(vehicleArmed && !gpsNotAvailable && !last_gps_available)
     {
-        PV_AidingMode = AID_ABSOLUTE; // we have GPS data and can estimate all vehicle states
-        posTimeout = false;
-        velTimeout = false;
-        constPosMode = false;
-        constVelMode = false;
+        // make sure GPS has available for a while since last lost
+        if((hal.scheduler->millis() - last_gps_loss_ms) > GPS_RECOVER_MSECS) 
+        {
+            PV_AidingMode = AID_ABSOLUTE; // we have GPS data and can estimate all vehicle states
+            posTimeout = false;
+            velTimeout = false;
+            constPosMode = false;
+            constVelMode = false;
 
-        // we need to reset the GPS timers to prevent GPS timeout logic being invoked on entry into GPS aiding
-        // this is becasue the EKF can be interrupted for an arbitrary amount of time during vehicle arming checks
-        lastFixTime_ms = imuSampleTime_ms;
-         // secondLastFixTime_ms = imuSampleTime_ms;
-        // reset the last valid position fix time to prevent unwanted activation of GPS glitch logic
-        lastPosPassTime = imuSampleTime_ms;
+            // we need to reset the GPS timers to prevent GPS timeout logic being invoked on entry into GPS aiding
+            // this is becasue the EKF can be interrupted for an arbitrary amount of time during vehicle arming checks
+            // lastFixTime_ms = imuSampleTime_ms;
+            // secondLastFixTime_ms = imuSampleTime_ms;
+            // // reset the last valid position fix time to prevent unwanted activation of GPS glitch logic
+            // lastPosPassTime = imuSampleTime_ms;
 
-        // Apply an offset to the GPS position so that the position can be corrected gradually
-        gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
-        gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
-        // limit the radius of the offset to 100m and decay the offset to zero radially
-        decayGpsOffset();
-        ResetPosition();
-        ResetVelocity();
-        // record the fail time
-        lastPosFailTime = imuSampleTime_ms;
-        // Reset the normalised innovation to avoid false failing the bad position fusion test
-        posTestRatio = 0.0f;
-        printf("recovery EKF from GPS\n");
+            // Apply an offset to the GPS position so that the position can be corrected gradually
+            gpsPosGlitchOffsetNE.x = statesAtPosTime.position.x - gpsPosNE.x;
+            gpsPosGlitchOffsetNE.y = statesAtPosTime.position.y - gpsPosNE.y;
+            // limit the radius of the offset to 100m and decay the offset to zero radially
+            decayGpsOffset();
+            ResetPosition();
+            ResetVelocity();
+            // record the fail time
+            lastPosFailTime = imuSampleTime_ms;
+            // Reset the normalised innovation to avoid false failing the bad position fusion test
+            posTestRatio = 0.0f;
+
+            last_gps_available = !gpsNotAvailable;
+
+            printf("[%d ms] Recovery EKF from GPS\n", hal.scheduler->millis());
+        }
+    }
+    else if(gpsNotAvailable)
+    {
+        // printf("[%d ms] EKF suffer GPS loss\n", hal.scheduler->millis());
+        last_gps_available = !gpsNotAvailable;
+        last_gps_loss_ms  = hal.scheduler->millis();
+    }
+    else // update gps status
+    {
+        last_gps_available = !gpsNotAvailable;
     }
 
-    last_gps_available = !gpsNotAvailable;
+
 #endif
 
     // Always turn aiding off when the vehicle is disarmed
