@@ -30,6 +30,10 @@
 #define AP_AHRS_NAVEKF_AVAILABLE 1
 #define AP_AHRS_NAVEKF_SETTLE_TIME_MS 20000     // time in milliseconds the ekf needs to settle after being started
 
+#if EKF_CALC_GYRO_ACCEL
+typedef Vector3f VectorType;
+#endif
+
 class AP_AHRS_NavEKF : public AP_AHRS_DCM
 {
 public:
@@ -127,6 +131,13 @@ AP_AHRS_NavEKF(AP_InertialSensor &ins, AP_Baro &baro, AP_GPS &gps, RangeFinder &
     // report any reason for why the backend is refusing to initialise
     const char *prearm_failure_reason(void) const override;
 
+    // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
+#if EKF_CALC_GYRO_ACCEL
+    const Vector3d &get_angle_rate_ekf() const { return _angle_rate_EKF; };
+    const Vector3d &get_accel_ef_ekf() const { return _accel_EKF; };
+#endif
+
+
 private:
     bool using_EKF(void) const;
 
@@ -140,6 +151,20 @@ private:
     Vector3f _accel_ef_ekf_blended;
     const uint16_t startup_delay_ms;
     uint32_t start_time_ms;
+
+    // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
+#if EKF_CALC_GYRO_ACCEL
+    Vector3d _angle_rate_EKF;
+    Vector3d _accel_EKF;
+    Vector3d _last_ekf_angle;
+    Vector3d _last_ekf_vel;
+    uint32_t _last_ekf_t;
+#if EKF_CALC_GYRO_ACCEL_LPF 
+    LowPassFilter2pVector3f _lpf_ekf_gyro;    
+    LowPassFilter2pVector3f _lpf_ekf_accl;    
+#endif
+
+#endif
 };
 #endif
 

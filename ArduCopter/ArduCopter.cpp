@@ -440,7 +440,11 @@ void Copter::fifty_hz_logging_loop()
 
     // log IMU data if we're not already logging at the higher rate
     if (should_log(MASK_LOG_IMU) && !(should_log(MASK_LOG_IMU_FAST) || should_log(MASK_LOG_IMU_RAW))) {
+#if LOG_EKF_GYRO_ACCEL 
+        DataFlash.Log_Write_IMU(ins, ahrs);
+#else
         DataFlash.Log_Write_IMU(ins);
+#endif
     }
 #endif
 }
@@ -450,10 +454,18 @@ void Copter::fifty_hz_logging_loop()
 void Copter::full_rate_logging_loop()
 {
     if (should_log(MASK_LOG_IMU_FAST) && !should_log(MASK_LOG_IMU_RAW)) {
+#if LOG_EKF_GYRO_ACCEL 
+        DataFlash.Log_Write_IMU(ins, ahrs);
+#else
         DataFlash.Log_Write_IMU(ins);
+#endif
     }
     if (should_log(MASK_LOG_IMU_FAST) || should_log(MASK_LOG_IMU_RAW)) {
-        DataFlash.Log_Write_IMUDT(ins);
+#if LOG_EKF_GYRO_ACCEL 
+        DataFlash.Log_Write_IMU(ins, ahrs);
+#else
+        DataFlash.Log_Write_IMU(ins);
+#endif
     }
 
     static uint8_t cnt = 0;

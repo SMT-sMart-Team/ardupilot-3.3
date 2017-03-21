@@ -68,7 +68,11 @@ public:
     void Log_Write_Format(const struct LogStructure *structure);
     void Log_Write_Parameter(const char *name, float value);
     void Log_Write_GPS(const AP_GPS &gps, uint8_t instance, int32_t relative_alt);
+#if LOG_EKF_GYRO_ACCEL 
+    void Log_Write_IMU(const AP_InertialSensor &ins, AP_AHRS_NavEKF &ahrs);
+#else
     void Log_Write_IMU(const AP_InertialSensor &ins);
+#endif
     void Log_Write_IMUDT(const AP_InertialSensor &ins);
     void Log_Write_Vibration(const AP_InertialSensor &ins);
     void Log_Write_RCIN(void);

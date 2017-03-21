@@ -33,7 +33,11 @@ const Vector3f &AP_AHRS_NavEKF::get_gyro(void) const
     if (!using_EKF()) {
         return AP_AHRS_DCM::get_gyro();
     }
+#if EKF_CALC_GYRO_ACCEL_USE
+    return Vector3f((float)_angle_rate_EKF.x, (float)_angle_rate_EKF.y, (float)_angle_rate_EKF.z);
+#else
     return _gyro_estimate;
+#endif
 }
 
 const Matrix3f &AP_AHRS_NavEKF::get_dcm_matrix(void) const
@@ -141,6 +145,96 @@ void AP_AHRS_NavEKF::update(void)
             } else {
                 _accel_ef_ekf_blended = _accel_ef_ekf[_ins.get_primary_accel()];
             }
+
+
+            // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
+#if EKF_CALC_GYRO_ACCEL
+#define TRY_DCM 0
+
+#define TIME32_SUB(x, y) ((x >= y)?(x - y):(0xFFFFFFFF - y + x))
+
+            static bool first = true;
+            if(!first)
+            {
+                Vector3f cur_vel;
+                EKF.getVelNED(cur_vel);
+                Vector3d angle, vel;
+#if TRY_DCM
+                angle.x = (double) _dcm_attitude.x;
+                angle.y = (double) _dcm_attitude.y;
+                angle.z = (double) _dcm_attitude.z;
+#else
+                angle.x = (double)eulers.x;
+                angle.y = (double)eulers.y;
+                angle.z = (double)eulers.z;
+#endif
+                vel.x = (double)cur_vel.x;
+                vel.y = (double)cur_vel.y;
+                vel.z = (double)cur_vel.z;
+                //  calc diff
+                uint32_t now = hal.scheduler->micros();
+                uint32_t delta_t = TIME32_SUB(now, _last_ekf_t);
+                _angle_rate_EKF = (angle - _last_ekf_angle)*1000000.0d/(double)(delta_t); // rad/s 
+                _accel_EKF = (vel - _last_ekf_vel)*1000000.0d/(double)delta_t; // m/s/s 
+                _accel_EKF.z -= GRAVITY_MSS;
+
+#if EKF_CALC_GYRO_ACCEL_LPF 
+
+                Vector3f gyro_tmp, accl_tmp;
+                gyro_tmp = _lpf_ekf_gyro.apply(Vector3f((float)_angle_rate_EKF.x, 
+                            (float)_angle_rate_EKF.y,
+                            (float)_angle_rate_EKF.z));
+                accl_tmp = _lpf_ekf_accl.apply(Vector3f((float)_accel_EKF.x,
+                            (float)_accel_EKF.y,
+                            (float)_accel_EKF.z));
+                _angle_rate_EKF = Vector3d((double)gyro_tmp.x, (double)gyro_tmp.y, (double)gyro_tmp.z);
+                _accel_EKF = Vector3d((double)accl_tmp.x, (double)accl_tmp.y, (double)accl_tmp.z);
+#endif
+
+
+#if 0
+                if((fabs(_angle_rate_EKF.x) > 0.01f)
+                   || (fabs(_angle_rate_EKF.y) > 0.01f)
+                   || (fabs(_angle_rate_EKF.z) > 0.01f)
+                   || (now == 0)
+                   )
+                {
+                    hal.util->prt("[%d ms]EKF cal seems not good: gyroX-> %f, gyroY-> %f, gyroZ->%f", hal.scheduler->millis(),  
+                            _angle_rate_EKF.x,
+                            _angle_rate_EKF.y,
+                            _angle_rate_EKF.z);
+                    hal.util->prt("=== now(%u), _last_ekf_t(%u)", now, _last_ekf_t);
+                    hal.util->prt("=== angle.x(%.19f), _last_ekf_angle.x(%.19f)", angle.x, _last_ekf_angle.x);
+                    hal.util->prt("=== angle.y(%.19f), _last_ekf_angle.y(%.19f)", angle.y, _last_ekf_angle.y);
+                    hal.util->prt("=== angle.z(%.19f), _last_ekf_angle.z(%.19f)", angle.z, _last_ekf_angle.z);
+                }
+#endif
+
+                // update 
+                _last_ekf_t = now;
+                _last_ekf_angle = angle;
+                _last_ekf_vel = vel;
+                
+            }
+            else // init
+            {
+                first = false;
+#if EKF_CALC_GYRO_ACCEL_LPF 
+                _lpf_ekf_gyro.set_cutoff_frequency(1000, 20);
+                _lpf_ekf_accl.set_cutoff_frequency(1000, 20);
+#endif
+                _last_ekf_t = hal.scheduler->micros();
+                _last_ekf_angle.x = (double)eulers.x;
+                _last_ekf_angle.y = (double)eulers.y;
+                _last_ekf_angle.z = (double)eulers.z;
+                Vector3f cur_vel;
+                EKF.getVelNED(cur_vel);
+                _last_ekf_vel.x = (double)cur_vel.x;
+                _last_ekf_vel.y = (double)cur_vel.y;
+                _last_ekf_vel.z = (double)cur_vel.z;
+                hal.util->prt("[%d ms]EKF cal gyro & accel start, last_ekf_t: %lu", hal.scheduler->millis(),  _last_ekf_t);
+            }
+#endif
         }
     }
 }
@@ -160,7 +254,11 @@ const Vector3f &AP_AHRS_NavEKF::get_accel_ef_blended(void) const
     if(!using_EKF()) {
         return AP_AHRS_DCM::get_accel_ef_blended();
     }
+#if EKF_CALC_GYRO_ACCEL_USE
+    return Vector3f((float)_accel_EKF.x, (float)_accel_EKF.y, (float)_accel_EKF.z);
+#else
     return _accel_ef_ekf_blended;
+#endif
 }
 
 void AP_AHRS_NavEKF::reset(bool recover_eulers)

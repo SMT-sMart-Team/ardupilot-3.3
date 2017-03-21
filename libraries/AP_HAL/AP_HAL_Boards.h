@@ -313,6 +313,14 @@
 #define USER_FILTER 1 // old filter for IMU
 #endif
 
+// AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
+#define EKF_CALC_GYRO_ACCEL 1
+#if EKF_CALC_GYRO_ACCEL
+#define EKF_CALC_GYRO_ACCEL_USE 0
+#define EKF_CALC_GYRO_ACCEL_LPF 0
+#define LOG_EKF_GYRO_ACCEL 1
+#endif
+
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BEBOP
 #define HAL_BOARD_LOG_DIRECTORY "/data/ftp/internal_000/APM/logs"
 #define HAL_BOARD_TERRAIN_DIRECTORY "/data/ftp/internal_000/APM/terrain"

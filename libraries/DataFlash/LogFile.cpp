@@ -807,7 +807,11 @@ void DataFlash_Class::Log_Write_Baro(AP_Baro &baro)
 }
 
 // Write an raw accel/gyro data packet
+#if LOG_EKF_GYRO_ACCEL 
+void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins, AP_AHRS_NavEKF &ahrs)
+#else
 void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
+#endif
 {
     uint64_t time_us = hal.scheduler->micros64();
 #ifdef SMT_CAPTURE_IMU_RAW
@@ -820,7 +824,8 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
     // }
 #else
     const Vector3f &gyro = ins.get_gyro(0);
-    const Vector3f &accel = ins.get_accel(0);
+    // const Vector3f &accel = ins.get_accel(0);
+    const Vector3f &accel = ahrs.get_accel_ef_blended(); // ins.get_accel(0);
 #endif
     struct log_IMU pkt = {
         LOG_PACKET_HEADER_INIT(LOG_IMU_MSG),
@@ -838,9 +843,33 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
         accel_health : (uint8_t)ins.get_accel_health(0)
     };
     WriteBlock(&pkt, sizeof(pkt));
+
+    // borrow imu2 to log ekf gyro and accel
+#if LOG_EKF_GYRO_ACCEL 
+    const Vector3d &gyro_ekf = ahrs.get_angle_rate_ekf();
+    const Vector3d &accel_ekf = ahrs.get_accel_ef_ekf();
+    struct log_IMU pkt_ekf_imu = {
+        LOG_PACKET_HEADER_INIT(LOG_IMU2_MSG),
+        time_us : time_us,
+        gyro_x  : (float)gyro_ekf.x,
+        gyro_y  : (float)gyro_ekf.y,
+        gyro_z  : (float)gyro_ekf.z,
+        accel_x : (float)accel_ekf.x,
+        accel_y : (float)accel_ekf.y,
+        accel_z : (float)accel_ekf.z,
+        gyro_error  : 11,
+        accel_error : 22,
+        temperature : 33,
+        gyro_health : 1,
+        accel_health: 1 
+    };
+    WriteBlock(&pkt_ekf_imu, sizeof(pkt_ekf_imu));
+#endif
+
     if (ins.get_gyro_count() < 2 && ins.get_accel_count() < 2) {
         return;
     }
+
 #if INS_MAX_INSTANCES > 1
     const Vector3f &gyro2 = ins.get_gyro(1);
     const Vector3f &accel2 = ins.get_accel(1);
