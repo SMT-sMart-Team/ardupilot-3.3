@@ -116,7 +116,7 @@ static bool ekf_fuse_mag = true;
 #define EKF_MAG_FUSE_WINDOW 8000 // 8s
 #define EKF_CONST_MODE 0
 
-#define EKF_NO_MAG_ARMED 0
+#define EKF_NO_MAG_ARMED 1
 #endif
 
 extern const AP_HAL::HAL& hal;
@@ -876,7 +876,7 @@ void NavEKF::UpdateFilter()
 #if TEST_FLOW
             if((cnt2%1000 == 0) || (cnt2%1000 == 1))
             {
-                hal.util->prt("[%d ms]: EKF mag fusing", now);
+                hal.util->prt("[%d ms]: EKF mag fusing when no GPS", now);
             }
             cnt2++;
 #endif
@@ -888,6 +888,7 @@ void NavEKF::UpdateFilter()
         if(!hal.util->get_soft_armed())
         {
             ekf_fuse_mag = true;
+            // hal.util->prt("[%d ms]: EKF mag fusing when disarmed", hal.scheduler->millis());
             SelectMagFusion();
         }
 #endif
