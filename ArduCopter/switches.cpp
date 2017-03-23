@@ -677,10 +677,12 @@ void Copter::auto_trim()
         AP_Notify::flags.save_trim = true;
 
         // calculate roll trim adjustment
-        float roll_trim_adjustment = ToRad((float)channel_roll->control_in / 4000.0f);
+        // float roll_trim_adjustment = ToRad((float)channel_roll->control_in / 4000.0f);
+        float roll_trim_adjustment = ToRad((float)channel_roll->control_in / 1800.0f);
 
         // calculate pitch trim adjustment
-        float pitch_trim_adjustment = ToRad((float)channel_pitch->control_in / 4000.0f);
+        // float pitch_trim_adjustment = ToRad((float)channel_pitch->control_in / 4000.0f);
+        float pitch_trim_adjustment = ToRad((float)channel_pitch->control_in / 1800.0f);
 
         // add trim to ahrs object
         // save to eeprom on last iteration

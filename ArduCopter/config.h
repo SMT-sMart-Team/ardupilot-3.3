@@ -538,11 +538,15 @@
 //////////////////////////////////////////////////////////////////////////////
 // Stabilize Rate Control
 //
+#define ANGLE_MAX 2000
 #ifndef ROLL_PITCH_INPUT_MAX
- # define ROLL_PITCH_INPUT_MAX      4500            // roll, pitch input range
+ # define ROLL_PITCH_INPUT_MAX      ANGLE_MAX // roll, pitch input range
 #endif
 #ifndef DEFAULT_ANGLE_MAX
- # define DEFAULT_ANGLE_MAX         4500            // ANGLE_MAX parameters default value
+ # define DEFAULT_ANGLE_MAX         ANGLE_MAX // ANGLE_MAX parameters default value
+#endif
+#ifndef YAW_INPUT_MAX
+ #define YAW_INPUT_MAX 4500 // ANGLE_MAX parameters default value
 #endif
 #ifndef ANGLE_RATE_MAX
  # define ANGLE_RATE_MAX            18000           // default maximum rotation rate in roll/pitch axis requested by angle controller used in stabilize, loiter, rtl, auto flight modes

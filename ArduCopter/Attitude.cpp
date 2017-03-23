@@ -39,7 +39,6 @@ void Copter::get_pilot_desired_lean_angles(float roll_in, float pitch_in, float 
 // get_pilot_desired_heading - transform pilot's yaw input into a
 // desired yaw rate
 // returns desired yaw rate in centi-degrees per second
-#define ROLL_PITCH_YAW_INPUT_MAX 4500
 float Copter::get_pilot_desired_yaw_rate(int16_t stick_angle)
 {
 
@@ -59,10 +58,10 @@ float Copter::get_pilot_desired_yaw_rate(int16_t stick_angle)
 
 
         // yaw expo
-        y_in = float(stick_angle)/ROLL_PITCH_YAW_INPUT_MAX;
+        y_in = float(stick_angle)/YAW_INPUT_MAX;
         y_in3 = y_in*y_in*y_in;
         y_out = (g.acro_y_expo * y_in3) + ((1.0f - g.acro_y_expo) * y_in);
-        yaw_request = ROLL_PITCH_YAW_INPUT_MAX * y_out * g.acro_yaw_p;
+        yaw_request = YAW_INPUT_MAX * y_out * g.acro_yaw_p;
     }
     // convert pilot input to the desired yaw rate
     return yaw_request;
