@@ -316,7 +316,8 @@
 // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
 #define EKF_CALC_GYRO_ACCEL 1
 #if EKF_CALC_GYRO_ACCEL
-#define EKF_CALC_GYRO_ACCEL_USE 0
+#define EKF_CALC_ACCEL_USE 0
+#define EKF_CALC_GYRO_USE 0
 #define EKF_CALC_GYRO_ACCEL_LPF 0
 #define LOG_EKF_GYRO_ACCEL 1
 #endif

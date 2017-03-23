@@ -824,8 +824,11 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
     // }
 #else
     const Vector3f &gyro = ins.get_gyro(0);
-    // const Vector3f &accel = ins.get_accel(0);
-    const Vector3f &accel = ahrs.get_accel_ef_blended(); // ins.get_accel(0);
+#if LOG_EKF_GYRO_ACCEL 
+    const Vector3f &accel = ahrs.get_accel_ef_blended_log(); // ins.get_accel(0);
+#else
+    const Vector3f &accel = ins.get_accel(0);
+#endif
 #endif
     struct log_IMU pkt = {
         LOG_PACKET_HEADER_INIT(LOG_IMU_MSG),
@@ -846,8 +849,8 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
 
     // borrow imu2 to log ekf gyro and accel
 #if LOG_EKF_GYRO_ACCEL 
-    const Vector3d &gyro_ekf = ahrs.get_angle_rate_ekf();
-    const Vector3d &accel_ekf = ahrs.get_accel_ef_ekf();
+    const Vector3f &gyro_ekf = ahrs.get_angle_rate_ekf();
+    const Vector3f &accel_ekf = ahrs.get_accel_ef_ekf();
     struct log_IMU pkt_ekf_imu = {
         LOG_PACKET_HEADER_INIT(LOG_IMU2_MSG),
         time_us : time_us,

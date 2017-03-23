@@ -91,7 +91,9 @@ void AP_Compass_Backend::apply_corrections(Vector3f &mag, uint8_t i)
     const Vector3f &offsets = state.offset.get();
     const Vector3f &diagonals = state.diagonals.get();
     const Vector3f &offdiagonals = state.offdiagonals.get();
+#if !COMP_MOT_KX_B
     const Vector3f &mot = state.motor_compensation.get();
+#endif
 
 #if INJECT_RAND_OFFS
     Vector3f rand_offs;

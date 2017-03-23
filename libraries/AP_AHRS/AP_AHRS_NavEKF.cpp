@@ -33,8 +33,8 @@ const Vector3f &AP_AHRS_NavEKF::get_gyro(void) const
     if (!using_EKF()) {
         return AP_AHRS_DCM::get_gyro();
     }
-#if EKF_CALC_GYRO_ACCEL_USE
-    return Vector3f((float)_angle_rate_EKF.x, (float)_angle_rate_EKF.y, (float)_angle_rate_EKF.z);
+#if EKF_CALC_GYRO_USE
+    return _gyro_ekf_calc;
 #else
     return _gyro_estimate;
 #endif
@@ -156,6 +156,15 @@ void AP_AHRS_NavEKF::update(void)
             static bool first = true;
             if(!first)
             {
+                //  calc diff
+                uint32_t now = hal.scheduler->micros();
+                uint32_t delta_t = TIME32_SUB(now, _last_ekf_t);
+                // constrain dt to at least 2.5ms)
+                if(delta_t < 2500)
+                {
+                    return;
+                }
+
                 Vector3f cur_vel;
                 EKF.getVelNED(cur_vel);
                 Vector3d angle, vel;
@@ -171,9 +180,7 @@ void AP_AHRS_NavEKF::update(void)
                 vel.x = (double)cur_vel.x;
                 vel.y = (double)cur_vel.y;
                 vel.z = (double)cur_vel.z;
-                //  calc diff
-                uint32_t now = hal.scheduler->micros();
-                uint32_t delta_t = TIME32_SUB(now, _last_ekf_t);
+
                 _angle_rate_EKF = (angle - _last_ekf_angle)*1000000.0d/(double)(delta_t); // rad/s 
                 _accel_EKF = (vel - _last_ekf_vel)*1000000.0d/(double)delta_t; // m/s/s 
                 _accel_EKF.z -= GRAVITY_MSS;
@@ -190,6 +197,11 @@ void AP_AHRS_NavEKF::update(void)
                 _angle_rate_EKF = Vector3d((double)gyro_tmp.x, (double)gyro_tmp.y, (double)gyro_tmp.z);
                 _accel_EKF = Vector3d((double)accl_tmp.x, (double)accl_tmp.y, (double)accl_tmp.z);
 #endif
+
+                // record gyro & accl ekf calculated
+                _gyro_ekf_calc = Vector3f((float)_angle_rate_EKF.x, (float)_angle_rate_EKF.y, (float)_angle_rate_EKF.z);
+
+                _accel_ef_ekf_calc = Vector3f((float)_accel_EKF.x, (float)_accel_EKF.y, (float)_accel_EKF.z);
 
 
 #if 0
@@ -254,12 +266,22 @@ const Vector3f &AP_AHRS_NavEKF::get_accel_ef_blended(void) const
     if(!using_EKF()) {
         return AP_AHRS_DCM::get_accel_ef_blended();
     }
-#if EKF_CALC_GYRO_ACCEL_USE
-    return Vector3f((float)_accel_EKF.x, (float)_accel_EKF.y, (float)_accel_EKF.z);
+#if EKF_CALC_ACCEL_USE
+    return _accel_ef_ekf_calc;
 #else
     return _accel_ef_ekf_blended;
 #endif
 }
+
+// blended accelerometer values in the earth frame in m/s/s
+const Vector3f &AP_AHRS_NavEKF::get_accel_ef_blended_log(void) const
+{
+    if(!using_EKF()) {
+        return AP_AHRS_DCM::get_accel_ef_blended();
+    }
+    return _accel_ef_ekf_blended;
+}
+
 
 void AP_AHRS_NavEKF::reset(bool recover_eulers)
 {

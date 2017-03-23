@@ -98,6 +98,7 @@ AP_AHRS_NavEKF(AP_InertialSensor &ins, AP_Baro &baro, AP_GPS &gps, RangeFinder &
 
     // blended accelerometer values in the earth frame in m/s/s
     const Vector3f &get_accel_ef_blended(void) const;
+    const Vector3f &get_accel_ef_blended_log(void) const;
 
     // set home location
     void set_home(const Location &loc);
@@ -133,8 +134,8 @@ AP_AHRS_NavEKF(AP_InertialSensor &ins, AP_Baro &baro, AP_GPS &gps, RangeFinder &
 
     // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
 #if EKF_CALC_GYRO_ACCEL
-    const Vector3d &get_angle_rate_ekf() const { return _angle_rate_EKF; };
-    const Vector3d &get_accel_ef_ekf() const { return _accel_EKF; };
+    const Vector3f &get_angle_rate_ekf() const { return _gyro_ekf_calc; };
+    const Vector3f &get_accel_ef_ekf() const { return _accel_ef_ekf_calc; };
 #endif
 
 
@@ -154,6 +155,8 @@ private:
 
     // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
 #if EKF_CALC_GYRO_ACCEL
+    Vector3f _gyro_ekf_calc;
+    Vector3f _accel_ef_ekf_calc;
     Vector3d _angle_rate_EKF;
     Vector3d _accel_EKF;
     Vector3d _last_ekf_angle;

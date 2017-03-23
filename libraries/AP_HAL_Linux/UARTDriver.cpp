@@ -365,12 +365,12 @@ int16_t LinuxUARTDriver::read()
     }
     c = _readbuf[_readbuf_head];
     BUF_ADVANCEHEAD(_readbuf, 1);
-    static int cnt = 0;
-    static unsigned int cnt2 = 0;
     if(1 == this->mux)
     {
 		_device_pts->write(&c, 1);
 #ifdef TEST_PTS_MUX
+        static int cnt = 0;
+        static unsigned int cnt2 = 0;
     	cnt ++;
     	if((10003 >= cnt) && (cnt >= 10000))
     	{
