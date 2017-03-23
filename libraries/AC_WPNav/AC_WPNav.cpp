@@ -208,6 +208,9 @@ void AC_WPNav::loiter_soften_for_landing()
 void AC_WPNav::set_pilot_desired_acceleration(float control_roll, float control_pitch)
 {
     // convert pilot input to desired acceleration in cm/s/s
+    // CB ZhaoYJ@2017-03-23
+    // MAX angle now is 2000, so almost half of 4500
+    // TODO: need to confirm it's OK for cutting off half of pilot input
     _pilot_accel_fwd_cms = -control_pitch * _loiter_accel_cmss / 4500.0f;
     _pilot_accel_rgt_cms = control_roll * _loiter_accel_cmss / 4500.0f;
 }
