@@ -850,6 +850,7 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
     // borrow imu2 to log ekf gyro and accel
     const Vector3f &gyro_ekf = ahrs.get_angle_rate_ekf();
     const Vector3f &accel_ekf = ahrs.get_accel_ef_ekf();
+    const Vector3f &accel_ekf_blended = ahrs.get_accel_ef_blended_log();
     struct log_IMU pkt_ekf_imu = {
         LOG_PACKET_HEADER_INIT(LOG_IMU2_MSG),
         time_us : time_us,
@@ -864,15 +865,16 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
         temperature : 22,
         gyro_health : 22,
         accel_health: 22, 
-        dg: 22,
-        dgd: 22,
-        dw: 22
+        dg: accel_ekf_blended.x ,
+        dgd: accel_ekf_blended.y,
+        dw: accel_ekf_blended.z
     };
     WriteBlock(&pkt_ekf_imu, sizeof(pkt_ekf_imu));
 
     // borrow imu3 to log dcm gyro and accel
     const Vector3f &gyro_dcm = ahrs.get_angle_rate_dcm();
     const Vector3f &accel_dcm = ahrs.get_accel_ef_dcm();
+    const Vector3f &gyro_ekf_esti = ahrs.get_gyro();
     struct log_IMU pkt_dcm = {
         LOG_PACKET_HEADER_INIT(LOG_IMU3_MSG),
         time_us : time_us,
@@ -887,9 +889,9 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
         temperature : 33,
         gyro_health : 33,
         accel_health : 33,
-        dg: 33,
-        dgd: 33,
-        dw: 33
+        dg: gyro_ekf_esti.x,
+        dgd: gyro_ekf_esti.y,
+        dw: gyro_ekf_esti.z
     };
     WriteBlock(&pkt_dcm, sizeof(pkt_dcm));
 #endif
