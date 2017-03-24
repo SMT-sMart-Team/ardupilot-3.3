@@ -152,8 +152,8 @@ struct LogStructure {
     uint8_t msg_type;
     uint8_t msg_len;
     const char name[5];
-    const char format[16];
-    const char labels[64];
+    const char format[32];
+    const char labels[128];
 };
 
 /*
@@ -164,8 +164,8 @@ struct PACKED log_Format {
     uint8_t type;
     uint8_t length;
     char name[4];
-    char format[16];
-    char labels[64];
+    char format[32];
+    char labels[128];
 };
 
 struct PACKED log_Parameter {
@@ -207,6 +207,7 @@ struct PACKED log_IMU {
     uint32_t gyro_error, accel_error;
     float temperature;
     uint8_t gyro_health, accel_health;
+    float dg, dgd, dw;
 };
 
 struct PACKED log_IMUDT {
@@ -312,6 +313,12 @@ struct PACKED log_EKF1 {
     int16_t gyrX;
     int16_t gyrY;
     int16_t gyrZ;
+    float gyrX_esti;
+    float gyrY_esti;
+    float gyrZ_esti;
+    float accX_esti;
+    float accY_esti;
+    float accZ_esti;
 };
 
 struct PACKED log_EKF2 {
@@ -645,7 +652,7 @@ Format characters in the format string for binary log messages
     { LOG_GPS_MSG, sizeof(log_GPS), \
       "GPS",  "QBIHBcLLeeEefB", "TimeUS,Status,GMS,GWk,NSats,HDop,Lat,Lng,RAlt,Alt,Spd,GCrs,VZ,U" }, \
     { LOG_IMU_MSG, sizeof(log_IMU), \
-      "IMU",  "QffffffIIfBB",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt" }, \
+      "IMU",  "QffffffIIfBBfff",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt,dg,dgd,dw" }, \
     { LOG_MESSAGE_MSG, sizeof(log_Message), \
       "MSG",  "QZ",     "TimeUS,Message"}, \
     { LOG_RCIN_MSG, sizeof(log_RCIN), \
@@ -678,9 +685,9 @@ Format characters in the format string for binary log messages
     { LOG_GPS2_MSG, sizeof(log_GPS), \
       "GPS2",  "QBIHBcLLeeEefB", "TimeUS,Status,GMS,GWk,NSats,HDop,Lat,Lng,RAlt,Alt,Spd,GCrs,VZ,U" }, \
     { LOG_IMU2_MSG, sizeof(log_IMU), \
-      "IMU2",  "QffffffIIfBB",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt" }, \
+      "IMU2",  "QffffffIIfBBfff",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt,dg,dgd,dw" }, \
     { LOG_IMU3_MSG, sizeof(log_IMU), \
-      "IMU3",  "QffffffIIfBB",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt" }, \
+      "IMU3",  "QffffffIIfBBfff",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt,dg,dgd,dw" }, \
     { LOG_AHR2_MSG, sizeof(log_AHRS), \
       "AHR2","QccCfLL","TimeUS,Roll,Pitch,Yaw,Alt,Lat,Lng" }, \
     { LOG_POS_MSG, sizeof(log_POS), \
@@ -688,7 +695,7 @@ Format characters in the format string for binary log messages
     { LOG_SIMSTATE_MSG, sizeof(log_AHRS), \
       "SIM","QccCfLL","TimeUS,Roll,Pitch,Yaw,Alt,Lat,Lng" }, \
     { LOG_EKF1_MSG, sizeof(log_EKF1), \
-      "EKF1","QccCffffffccc","TimeUS,Roll,Pitch,Yaw,VN,VE,VD,PN,PE,PD,GX,GY,GZ" }, \
+      "EKF1","QccCffffffcccffffff","TimeUS,Roll,Pitch,Yaw,VN,VE,VD,PN,PE,PD,GX,GY,GZ,AXE,AYE,AZE,GXE,GYE,GZE" }, \
     { LOG_EKF2_MSG, sizeof(log_EKF2), \
       "EKF2","Qbbbcchhhhhh","TimeUS,Ratio,AZ1bias,AZ2bias,VWN,VWE,MN,ME,MD,MX,MY,MZ" }, \
     { LOG_EKF3_MSG, sizeof(log_EKF3), \

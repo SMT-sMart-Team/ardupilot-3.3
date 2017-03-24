@@ -824,11 +824,7 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
     // }
 #else
     const Vector3f &gyro = ins.get_gyro(0);
-#if LOG_EKF_GYRO_ACCEL 
-    const Vector3f &accel = ahrs.get_accel_ef_blended_log(); // ins.get_accel(0);
-#else
     const Vector3f &accel = ins.get_accel(0);
-#endif
 #endif
     struct log_IMU pkt = {
         LOG_PACKET_HEADER_INIT(LOG_IMU_MSG),
@@ -843,12 +839,15 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
         accel_error : ins.get_accel_error_count(0),
         temperature : ins.get_temperature(0),
         gyro_health : (uint8_t)ins.get_gyro_health(0),
-        accel_health : (uint8_t)ins.get_accel_health(0)
+        accel_health : (uint8_t)ins.get_accel_health(0),
+        dg: ins.get_delta_g(0),
+        dgd: ins.get_delta_gd(0),
+        dw: ins.get_delta_w(0)
     };
     WriteBlock(&pkt, sizeof(pkt));
 
-    // borrow imu2 to log ekf gyro and accel
 #if LOG_EKF_GYRO_ACCEL 
+    // borrow imu2 to log ekf gyro and accel
     const Vector3f &gyro_ekf = ahrs.get_angle_rate_ekf();
     const Vector3f &accel_ekf = ahrs.get_accel_ef_ekf();
     struct log_IMU pkt_ekf_imu = {
@@ -860,13 +859,39 @@ void DataFlash_Class::Log_Write_IMU(const AP_InertialSensor &ins)
         accel_x : (float)accel_ekf.x,
         accel_y : (float)accel_ekf.y,
         accel_z : (float)accel_ekf.z,
-        gyro_error  : 11,
+        gyro_error  : 22,
         accel_error : 22,
-        temperature : 33,
-        gyro_health : 1,
-        accel_health: 1 
+        temperature : 22,
+        gyro_health : 22,
+        accel_health: 22, 
+        dg: 22,
+        dgd: 22,
+        dw: 22
     };
     WriteBlock(&pkt_ekf_imu, sizeof(pkt_ekf_imu));
+
+    // borrow imu3 to log dcm gyro and accel
+    const Vector3f &gyro_dcm = ahrs.get_angle_rate_dcm();
+    const Vector3f &accel_dcm = ahrs.get_accel_ef_dcm();
+    struct log_IMU pkt_dcm = {
+        LOG_PACKET_HEADER_INIT(LOG_IMU3_MSG),
+        time_us : time_us,
+        gyro_x  : gyro_dcm.x,
+        gyro_y  : gyro_dcm.y,
+        gyro_z  : gyro_dcm.z,
+        accel_x : accel_dcm.x,
+        accel_y : accel_dcm.y,
+        accel_z : accel_dcm.z,
+        gyro_error  : 33,
+        accel_error : 33,
+        temperature : 33,
+        gyro_health : 33,
+        accel_health : 33,
+        dg: 33,
+        dgd: 33,
+        dw: 33
+    };
+    WriteBlock(&pkt_dcm, sizeof(pkt_dcm));
 #endif
 
     if (ins.get_gyro_count() < 2 && ins.get_accel_count() < 2) {
@@ -1156,7 +1181,13 @@ void DataFlash_Class::Log_Write_EKF(AP_AHRS_NavEKF &ahrs, bool optFlowEnabled)
         posD    : (float)(posNED.z), // metres Down
         gyrX    : (int16_t)(100*degrees(gyroBias.x)), // cd/sec, displayed as deg/sec due to format string
         gyrY    : (int16_t)(100*degrees(gyroBias.y)), // cd/sec, displayed as deg/sec due to format string
-        gyrZ    : (int16_t)(100*degrees(gyroBias.z)) // cd/sec, displayed as deg/sec due to format string
+        gyrZ    : (int16_t)(100*degrees(gyroBias.z)), // cd/sec, displayed as deg/sec due to format string
+        gyrX_esti: ahrs.get_gyro().x,
+        gyrY_esti: ahrs.get_gyro().y,
+        gyrZ_esti: ahrs.get_gyro().z,
+        accX_esti: ahrs.get_accel_ef_blended_log().x,
+        accY_esti: ahrs.get_accel_ef_blended_log().y,
+        accZ_esti: ahrs.get_accel_ef_blended_log().z
     };
     WriteBlock(&pkt, sizeof(pkt));
 

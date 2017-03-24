@@ -149,7 +149,7 @@ void AP_AHRS_NavEKF::update(void)
 
             // AB ZhaoYJ@2017-03-20 for tdiff of angle and velocity
 #if EKF_CALC_GYRO_ACCEL
-#define TRY_DCM 0
+#define TRY_DCM 1
 
 #define TIME32_SUB(x, y) ((x >= y)?(x - y):(0xFFFFFFFF - y + x))
 
@@ -168,22 +168,25 @@ void AP_AHRS_NavEKF::update(void)
                 Vector3f cur_vel;
                 EKF.getVelNED(cur_vel);
                 Vector3d angle, vel;
-#if TRY_DCM
-                angle.x = (double) _dcm_attitude.x;
-                angle.y = (double) _dcm_attitude.y;
-                angle.z = (double) _dcm_attitude.z;
-#else
+                Vector3f angle_dcm, vel_dcm;
+
+                angle_dcm = _dcm_attitude;
+                // using GPS vel
+                vel_dcm = _gps.velocity();
+
                 angle.x = (double)eulers.x;
                 angle.y = (double)eulers.y;
                 angle.z = (double)eulers.z;
-#endif
                 vel.x = (double)cur_vel.x;
                 vel.y = (double)cur_vel.y;
                 vel.z = (double)cur_vel.z;
 
                 _angle_rate_EKF = (angle - _last_ekf_angle)*1000000.0d/(double)(delta_t); // rad/s 
+                _gyro_dcm_calc = (angle_dcm - _last_dcm_angle)*1000000.0d/(double)(delta_t); // rad/s 
                 _accel_EKF = (vel - _last_ekf_vel)*1000000.0d/(double)delta_t; // m/s/s 
+                _accel_ef_dcm_calc = (vel_dcm - _last_dcm_vel)*1000000.0d/(double)delta_t; // m/s/s 
                 _accel_EKF.z -= GRAVITY_MSS;
+                _accel_ef_dcm_calc.z -= GRAVITY_MSS;
 
 #if EKF_CALC_GYRO_ACCEL_LPF 
 
@@ -225,7 +228,9 @@ void AP_AHRS_NavEKF::update(void)
                 // update 
                 _last_ekf_t = now;
                 _last_ekf_angle = angle;
+                _last_dcm_angle = angle_dcm;
                 _last_ekf_vel = vel;
+                _last_dcm_vel = vel_dcm;
                 
             }
             else // init
@@ -239,11 +244,13 @@ void AP_AHRS_NavEKF::update(void)
                 _last_ekf_angle.x = (double)eulers.x;
                 _last_ekf_angle.y = (double)eulers.y;
                 _last_ekf_angle.z = (double)eulers.z;
+                _last_dcm_angle = _dcm_attitude;
                 Vector3f cur_vel;
                 EKF.getVelNED(cur_vel);
                 _last_ekf_vel.x = (double)cur_vel.x;
                 _last_ekf_vel.y = (double)cur_vel.y;
                 _last_ekf_vel.z = (double)cur_vel.z;
+                _last_dcm_vel = _gps.velocity();
                 hal.util->prt("[%d ms]EKF cal gyro & accel start, last_ekf_t: %lu", hal.scheduler->millis(),  _last_ekf_t);
             }
 #endif

@@ -136,6 +136,8 @@ AP_AHRS_NavEKF(AP_InertialSensor &ins, AP_Baro &baro, AP_GPS &gps, RangeFinder &
 #if EKF_CALC_GYRO_ACCEL
     const Vector3f &get_angle_rate_ekf() const { return _gyro_ekf_calc; };
     const Vector3f &get_accel_ef_ekf() const { return _accel_ef_ekf_calc; };
+    const Vector3f &get_angle_rate_dcm() const { return _gyro_dcm_calc; };
+    const Vector3f &get_accel_ef_dcm() const { return _accel_ef_dcm_calc; };
 #endif
 
 
@@ -157,10 +159,14 @@ private:
 #if EKF_CALC_GYRO_ACCEL
     Vector3f _gyro_ekf_calc;
     Vector3f _accel_ef_ekf_calc;
+    Vector3f _gyro_dcm_calc;
+    Vector3f _accel_ef_dcm_calc;
     Vector3d _angle_rate_EKF;
     Vector3d _accel_EKF;
     Vector3d _last_ekf_angle;
     Vector3d _last_ekf_vel;
+    Vector3f _last_dcm_angle;
+    Vector3f _last_dcm_vel;
     uint32_t _last_ekf_t;
 #if EKF_CALC_GYRO_ACCEL_LPF 
     LowPassFilter2pVector3f _lpf_ekf_gyro;    
