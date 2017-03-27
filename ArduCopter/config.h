@@ -538,7 +538,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Stabilize Rate Control
 //
-#define ANGLE_MAX 2000
+#define ANGLE_MAX 3000
 #ifndef ROLL_PITCH_INPUT_MAX
  # define ROLL_PITCH_INPUT_MAX      ANGLE_MAX // roll, pitch input range
 #endif

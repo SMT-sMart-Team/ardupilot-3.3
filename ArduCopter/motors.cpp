@@ -904,7 +904,7 @@ void Copter::lost_vehicle_check()
 
     // ensure throttle is down, motors not armed, pitch and roll rc at max. Note: rc1=roll rc2=pitch
     // if (ap.throttle_zero && !motors.armed() && (channel_roll->control_in > 4000) && (channel_pitch->control_in > 4000)) {
-    if (ap.throttle_zero && !motors.armed() && (channel_roll->control_in > 1800) && (channel_pitch->control_in > 1800)) {
+    if (ap.throttle_zero && !motors.armed() && (channel_roll->control_in > (ROLL_PITCH_INPUT_MAX*8/9)) && (channel_pitch->control_in > (ROLL_PITCH_INPUT_MAX*8/9))) {
         if (soundalarm_counter >= LOST_VEHICLE_DELAY) {
             if (AP_Notify::flags.vehicle_lost == false) {
                 AP_Notify::flags.vehicle_lost = true;
