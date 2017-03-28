@@ -144,7 +144,7 @@
 // PWM control
 // default RC speed in Hz
 #ifndef RC_FAST_SPEED
-   #   define RC_FAST_SPEED 490
+   #   define RC_FAST_SPEED 400
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -278,7 +278,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //  EKF Failsafe
 #ifndef FS_EKF_ACTION_DEFAULT
- # define FS_EKF_ACTION_DEFAULT         FS_EKF_ACTION_LAND  // EKF failsafe triggers land by default
+ # define FS_EKF_ACTION_DEFAULT         FS_EKF_ACTION_ALTHOLD               // EKF failsafe triggers land by default
 #endif
 #ifndef FS_EKF_THRESHOLD_DEFAULT
  # define FS_EKF_THRESHOLD_DEFAULT      0.8f    // EKF failsafe's default compass and velocity variance threshold above which the EKF failsafe will be triggered
@@ -464,7 +464,7 @@
 #endif
 
 #ifndef ACRO_YAW_P
- # define ACRO_YAW_P                4.5f
+ # define ACRO_YAW_P                1.5f
 #endif
 
 #ifndef ACRO_LEVEL_MAX_ANGLE
@@ -493,7 +493,7 @@
 #endif
 
 #ifndef  STABILIZE_YAW_P
- # define STABILIZE_YAW_P           4.5f
+ # define STABILIZE_YAW_P           1.0f
 #endif
 
 // RTL Mode
@@ -590,7 +590,7 @@
 
 
 #ifndef RATE_YAW_P
- # define RATE_YAW_P              	0.200f
+ # define RATE_YAW_P              	0.600f
 #endif
 #ifndef RATE_YAW_I
  # define RATE_YAW_I              	0.020f

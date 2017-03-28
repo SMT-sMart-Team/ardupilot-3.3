@@ -126,7 +126,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Range: 0 8000
     // @Increment: 1
     // @User: Standard
-    GSCALAR(rtl_altitude,   "RTL_ALT",     RTL_ALT),
+    GSCALAR(rtl_altitude,   "RTL_ALT",     700),
 
     // @Param: RNGFND_GAIN
     // @DisplayName: Rangefinder gain
@@ -628,7 +628,7 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Description: Converts pilot yaw input into a desired rate of rotation in ACRO, Stabilize and SPORT modes.  Higher values mean faster rate of rotation.
     // @Range: 1 10
     // @User: Standard
-    GSCALAR(acro_yaw_p,                 "ACRO_YAW_P",           ACRO_YAW_P),
+    GSCALAR(acro_yaw_p,                 "ACRO_YAW_P",           1.5),
 
     // @Param: ACRO_BAL_ROLL
     // @DisplayName: Acro Balance Roll

@@ -165,7 +165,7 @@ const AP_Param::GroupInfo NavEKF::var_info[] PROGMEM = {
     // @Increment: 0.1
     // @User: Advanced
     // @Units: meters
-    AP_GROUPINFO("ALT_NOISE",    3, NavEKF, _baroAltNoise, ALT_NOISE_DEFAULT),
+    AP_GROUPINFO("ALT_NOISE",    3, NavEKF, _baroAltNoise, 5),
 
     // @Param: MAG_NOISE
     // @DisplayName: Magnetometer measurement noise (Gauss)
