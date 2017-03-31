@@ -9,5 +9,6 @@ cp ArduCopter.elf APP-new/app_hexa
 make pxf-octa
 cp ArduCopter.elf APP-new/app_octa
 cp readme APP-new/
-tar -cf FW-v0.2.fc APP-new
-echo "package FW done\n========================================="
+export FW_NAME=FW-v0.2-`date +%Y%m%d`.fc
+tar -cf ${FW_NAME} APP-new
+echo "package FW ${FW_NAME} done\n========================================="
