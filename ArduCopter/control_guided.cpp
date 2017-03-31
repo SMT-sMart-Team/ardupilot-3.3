@@ -245,6 +245,15 @@ void Copter::guided_pos_control_run()
         return;
     }
 
+    // AB ZhaoYJ@2017-03-31 for guided with throttle
+#if ENABLE_Z_GUIDED
+    float target_climb_rate = 0;
+    // get pilot desired climb rate
+    target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->control_in);
+    target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+        //
+#endif
+
     // process pilot's yaw input
     float target_yaw_rate = 0;
     if (!failsafe.radio) {
@@ -259,6 +268,10 @@ void Copter::guided_pos_control_run()
     wp_nav.update_wpnav();
 
     // call z-axis position controller (wpnav should have already updated it's alt target)
+    // update altitude target and call position controller
+#if ENABLE_Z_GUIDED
+    pos_control.set_alt_target_from_climb_rate_ff(target_climb_rate, G_Dt, false);
+#endif
     pos_control.update_z_controller();
 
     // call attitude controller

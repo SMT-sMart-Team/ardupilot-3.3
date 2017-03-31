@@ -256,6 +256,15 @@
 // add by ZhaoYJ for new flight mode switch: CH5 (2 pos) + CH6 (3 pos)
 #define SMT_CH5_CH6_SWITCH
 
+// add by ZhaoYJ for new flight mode switch: CHx(semi-auto mode)
+#define SMT_SEMI_AUTO_MODE 
+#ifdef SMT_SEMI_AUTO_MODE
+#define VWP_RADIO_DZ 200 // 200 (1000~2000)
+#define VWP_DIST 50000 // 500m
+#define CONFIRM_TMS 200 // 200ms
+#define ENABLE_Z_GUIDED 1
+#endif
+
 // add by ZhaoYJ for adis16365
 // #define SMT_INS_ADIS16365
 //
