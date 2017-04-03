@@ -648,30 +648,38 @@ void Copter::one_hz_loop()
 
         if(first)
         {
-            first = false;
             // last_mode = control_mode;
             // set mode
             set_mode(GUIDED);
 
-            // if forward
-            if(channel_pitch->radio_in > (channel_pitch->radio_trim + VWP_RADIO_DZ) )
+            // set mode successful
+            if(GUIDED == control_mode)
             {
-                unconfirm_status = IN_FORWARD;
-                confirm_tms_start = hal.scheduler->millis();
-            }
-            // if backward
-            else if(channel_pitch->radio_in < (channel_pitch->radio_trim - VWP_RADIO_DZ) )
-            {
-                unconfirm_status = IN_BACKWARD;
-                confirm_tms_start = hal.scheduler->millis();
+                first = false;
+                // if forward
+                if(channel_pitch->radio_in > (channel_pitch->radio_trim + VWP_RADIO_DZ) )
+                {
+                    unconfirm_status = IN_FORWARD;
+                    confirm_tms_start = hal.scheduler->millis();
+                }
+                // if backward
+                else if(channel_pitch->radio_in < (channel_pitch->radio_trim - VWP_RADIO_DZ) )
+                {
+                    unconfirm_status = IN_BACKWARD;
+                    confirm_tms_start = hal.scheduler->millis();
+                }
+                else
+                {
+                    unconfirm_status = IN_IDLE;
+                    confirm_tms_start = hal.scheduler->millis();
+                }
+
+                // printf("RC8: %d enter GUIDED\n", g.rc_8.radio_in);
             }
             else
             {
-                unconfirm_status = IN_IDLE;
-                confirm_tms_start = hal.scheduler->millis();
+                // printf("RC8: %d set GUIDED but failed\n", g.rc_8.radio_in);
             }
-
-            // printf("RC8: %d enter GUIDED, last_mode: %d\n", g.rc_8.radio_in, last_mode);
         }
         else // GUIDED regular 
         {
@@ -734,17 +742,22 @@ void Copter::one_hz_loop()
                 // forward
                 if(IN_FORWARD == guided_status)
                 {
-                    pos_vector = Vector3f(VWP_DIST, 0, 0);
+                    // pitch radio_in is inverse, so forward will be backward in real
+                    pos_vector = Vector3f(-VWP_DIST, 0, 0);
+                    // printf("RCpitch: %d enter FORWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
                 }
                 // backward
                 else if(IN_BACKWARD == guided_status)
                 {
-                    pos_vector = Vector3f(-VWP_DIST, 0, 0);
+                    // pitch radio_in is inverse, so backward will be forward in real
+                    pos_vector = Vector3f(VWP_DIST, 0, 0);
+                    // printf("RCpitch: %d enter BACKWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
                 }
                 // idle
                 else
                 {
                     pos_vector = Vector3f(0, 0, 0);
+                    // printf("RCpitch: %d enter IDLE, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
                 }
 
                 // update last status
