@@ -32,6 +32,9 @@ void Copter::read_control_switch()
     bool ret = false;
 #ifdef SMT_CH5_CH6_SWITCH
 #define RC5_STATBLIZED 0x7F
+#define RC6_SEMI_HALF_FORWARD 0x6F
+#define RC6_SEMI_HALF_BACKWARD 0x5F
+#define RC6_LOITER 0x4F
 
 #ifdef TEST_PRT
     static uint32_t test_cnt = 0;
@@ -42,32 +45,54 @@ void Copter::read_control_switch()
     }
 #endif
 
-    if(g.rc_5.radio_in < 1100) 
+    static bool first = true;
+
+#define IN_NONE 0
+#define IN_IDLE 1
+#define IN_FORWARD 2
+#define IN_BACKWARD 3
+#define TIME32_SUB(x, y) ((x >= y)?(x - y):(0xFFFFFFFF - y + x))
+#define NON_GUIDED 0xFF
+
+#define GUIDED_FORWARD GUIDED
+#define GUIDED_BACKWARD GUIDED
+
+    uint8_t guided_status = IN_NONE;
+    static uint8_t last_guided_status = IN_NONE;
+
+
+    if(g.rc_5.radio_in < (g.rc_5.radio_min + VWP_RADIO_DZ)) 
     {
         switch_position = RC5_STATBLIZED;
+        last_guided_status = IN_NONE;
     }
-    else if ((g.rc_5.radio_in < 2100) && (g.rc_5.radio_in > 1900))
+    else if ((g.rc_5.radio_in < 2100) && (g.rc_5.radio_in > (g.rc_5.radio_max - VWP_RADIO_DZ)))
     {
-        if(g.rc_6.radio_in < 1100)
+
+        // if forward
+        // guided forward
+        if(g.rc_6.radio_in < (g.rc_6.radio_min + VWP_RADIO_DZ)) // 1100)
         {
-            switch_position = 0;
+            switch_position = RC6_SEMI_HALF_FORWARD;
         }
-        else if ((g.rc_6.radio_in < 1600) && (g.rc_6.radio_in > 1400))
+        // if backward
+        else if((g.rc_6.radio_in < 2100) && (g.rc_6.radio_in > (g.rc_6.radio_max - VWP_RADIO_DZ))) // 1100)
         {
-            switch_position = 1;
+            switch_position = RC6_SEMI_HALF_BACKWARD;
         }
-        else if ((g.rc_6.radio_in < 2100) && (g.rc_6.radio_in > 1900))
+        else // middle, loiter 
         {
-            switch_position = 2;
+            switch_position = RC6_LOITER;
+            // set_mode(LOITER);
+            guided_status = IN_NONE;
+            // clear status
+            last_guided_status = IN_NONE;
         }
-        else 
-        {
-            return;
-        }
+
     }
     else 
     {
-        return;
+        last_guided_status = IN_NONE;
     }
 #else
     if      (g.rc_5.radio_in < 1231) switch_position = 0;
@@ -97,11 +122,76 @@ void Copter::read_control_switch()
             printf("stablized\n");
 #endif
         }
+        else if((RC6_SEMI_HALF_FORWARD == switch_position)
+                || (RC6_SEMI_HALF_BACKWARD == switch_position))
+        {
+
+            if(RC6_SEMI_HALF_FORWARD == switch_position)
+            {
+                // enter guided
+                set_mode(GUIDED_FORWARD);
+                guided_status = IN_FORWARD;
+            }
+            else
+            {
+                // enter guided
+                set_mode(GUIDED_BACKWARD);
+                guided_status = IN_BACKWARD;
+            }
+
+            // handle with VWP when guided state changed 
+            if(guided_status != last_guided_status)
+            {
+                // forward
+                Vector3f pos_vector; 
+                if(IN_FORWARD == guided_status)
+                {
+                    pos_vector = Vector3f(VWP_DIST, 0, 0);
+#ifdef TEST_PRT
+                    printf("RCpitch: %d enter FORWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
+#endif
+                }
+                // backward
+                else if(IN_BACKWARD == guided_status)
+                {
+                    // pitch radio_in is inverse, so backward will be forward in real
+                    pos_vector = Vector3f(-VWP_DIST, 0, 0);
+#ifdef TEST_PRT
+                    printf("RCpitch: %d enter BACKWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
+#endif
+                }
+
+                // update last status
+                last_guided_status = guided_status;
+
+                // set target pos
+                // BODY OFFSET
+                copter.rotate_body_frame_to_NE(pos_vector.x, pos_vector.y);
+
+                // LOCAL_NED OFFSET
+                pos_vector += copter.inertial_nav.get_position();
+
+                // set virtual wp
+                copter.guided_set_destination(pos_vector);
+
+            } // if(guided_status != last_guided_status)
+
+#ifdef TEST_PRT
+            printf("GUIDED\n");
+#endif
+        }
+        else if(switch_position == RC6_LOITER)
+        {
+            ret = set_mode(LOITER);
+#ifdef TEST_PRT
+            printf("LOITER, pos: %d\n", switch_position);
+#endif
+        }
         else
         {
             ret = set_mode(flight_modes[switch_position]);
 #ifdef TEST_PRT
-            printf("GPS: %d\n", flight_modes[switch_position]);
+            printf("GPS: %d, pos: %d\n", flight_modes[switch_position], switch_position);
 #endif
         }
 #else

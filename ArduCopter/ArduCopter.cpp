@@ -586,6 +586,7 @@ void Copter::one_hz_loop()
     g_debug_trigger = g.user_trigger;
 
     // AB ZhaoYJ@2017-02-15 for temply test mag-interfer
+#if 0
 #ifdef SMT_SEMI_AUTO_MODE
     static bool first = true;
 
@@ -756,7 +757,8 @@ void Copter::one_hz_loop()
                 // idle
                 else
                 {
-                    pos_vector = Vector3f(0, 0, 0);
+                    // pos_vector = Vector3f(0, 0, 0);
+                    set_mode(LOITER);
                     // printf("RCpitch: %d enter IDLE, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
                 }
 
@@ -791,6 +793,7 @@ void Copter::one_hz_loop()
         // printf("RC8: %d enter mode: %d\n", g.rc_8.radio_in, last_mode);
     }
 
+#endif
 #endif
 
 
