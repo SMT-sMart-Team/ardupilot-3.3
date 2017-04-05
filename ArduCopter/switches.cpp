@@ -28,7 +28,7 @@ void Copter::read_control_switch()
     uint32_t tnow_ms = millis();
 
     // calculate position of flight mode switch
-    int8_t switch_position;
+    int8_t switch_position = -1;
     bool ret = false;
 #ifdef SMT_CH5_CH6_SWITCH
 #define RC5_STATBLIZED 0x7F
@@ -45,7 +45,6 @@ void Copter::read_control_switch()
     }
 #endif
 
-    static bool first = true;
 
 #define IN_NONE 0
 #define IN_IDLE 1
@@ -92,6 +91,7 @@ void Copter::read_control_switch()
     }
     else 
     {
+        switch_position = -1;
         last_guided_status = IN_NONE;
     }
 #else
@@ -207,7 +207,8 @@ void Copter::read_control_switch()
         }
         else
         {
-            ret = set_mode(flight_modes[switch_position]);
+            // TODO: add other fl mode
+            // ret = set_mode(flight_modes[switch_position]);
 #ifdef TEST_PRT
             if(!ret)
             {
