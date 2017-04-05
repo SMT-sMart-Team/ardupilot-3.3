@@ -531,6 +531,8 @@ AP_InertialSensor_Backend *AP_InertialSensor_ICM20689::detect(AP_InertialSensor 
     hal.util->prt("[OK] ICM20689(8KHz) detected done");
 #elif IMU_SAMPLE_RATE == 1
     hal.util->prt("[OK] ICM20689(1KHz) detected done");
+#else
+    hal.util->prt("[OK] ICM20689 detected done");
 #endif
 
     return sensor;

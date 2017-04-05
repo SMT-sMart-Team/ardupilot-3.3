@@ -251,7 +251,7 @@ void AP_AHRS_NavEKF::update(void)
                 _last_ekf_vel.y = (double)cur_vel.y;
                 _last_ekf_vel.z = (double)cur_vel.z;
                 _last_dcm_vel = _gps.velocity();
-                hal.util->prt("[%d ms]EKF cal gyro & accel start, last_ekf_t: %lu", hal.scheduler->millis(),  _last_ekf_t);
+                // hal.util->prt("[%d ms]EKF cal gyro & accel start, last_ekf_t: %lu", hal.scheduler->millis(),  _last_ekf_t);
             }
 #endif
         }

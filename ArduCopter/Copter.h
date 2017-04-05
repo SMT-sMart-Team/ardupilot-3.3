@@ -254,6 +254,9 @@ private:
     // There are multiple states defined such as STABILIZE, ACRO,
     int8_t control_mode;
 
+    // AB ZhaoYJ@2017-04-05 for semi-auto
+    int8_t semi_dir;
+
     // Structure used to detect changes in the flight mode control switch
     struct {
         int8_t debounced_switch_position;   // currently used switch position

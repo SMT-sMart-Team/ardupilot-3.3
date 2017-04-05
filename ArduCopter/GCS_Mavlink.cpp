@@ -49,7 +49,6 @@ NOINLINE void Copter::send_heartbeat(mavlink_channel_t chan)
     case AUTO:
     case RTL:
     case LOITER:
-    case GUIDED:
     case CIRCLE:
     case POSHOLD:
     case BRAKE:
@@ -57,6 +56,10 @@ NOINLINE void Copter::send_heartbeat(mavlink_channel_t chan)
         // note that MAV_MODE_FLAG_AUTO_ENABLED does not match what
         // APM does in any mode, as that is defined as "system finds its own goal
         // positions", which APM does not currently do
+        break;
+    case GUIDED:
+        // notify semi-auto for GCS
+        custom_mode = semi_dir; 
         break;
     }
 

@@ -49,8 +49,8 @@ void Copter::read_control_switch()
 
 #define IN_NONE 0
 #define IN_IDLE 1
-#define IN_FORWARD 2
-#define IN_BACKWARD 3
+#define IN_FORWARD 0x2F
+#define IN_BACKWARD 0x3F
 #define TIME32_SUB(x, y) ((x >= y)?(x - y):(0xFFFFFFFF - y + x))
 #define NON_GUIDED 0xFF
 
@@ -128,15 +128,20 @@ void Copter::read_control_switch()
 
             if(RC6_SEMI_HALF_FORWARD == switch_position)
             {
-                // enter guided
-                set_mode(GUIDED_FORWARD);
                 guided_status = IN_FORWARD;
             }
             else
             {
-                // enter guided
-                set_mode(GUIDED_BACKWARD);
                 guided_status = IN_BACKWARD;
+            }
+
+            // enter guided
+            if(!set_mode(GUIDED))
+            {
+
+#ifdef TEST_PRT
+                printf("set guided mode error\n" );
+#endif
             }
 
             // handle with VWP when guided state changed 
@@ -147,6 +152,9 @@ void Copter::read_control_switch()
                 if(IN_FORWARD == guided_status)
                 {
                     pos_vector = Vector3f(VWP_DIST, 0, 0);
+
+                    // notify for GCS
+                    semi_dir = IN_FORWARD;
 #ifdef TEST_PRT
                     printf("RCpitch: %d enter FORWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
 #endif
@@ -156,6 +164,9 @@ void Copter::read_control_switch()
                 {
                     // pitch radio_in is inverse, so backward will be forward in real
                     pos_vector = Vector3f(-VWP_DIST, 0, 0);
+
+                    // notify for GCS
+                    semi_dir = IN_BACKWARD;
 #ifdef TEST_PRT
                     printf("RCpitch: %d enter BACKWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
 #endif
@@ -184,14 +195,28 @@ void Copter::read_control_switch()
         {
             ret = set_mode(LOITER);
 #ifdef TEST_PRT
-            printf("LOITER, pos: %d\n", switch_position);
+            if(!ret)
+            {
+                printf("set loiter mode error\n" );
+            }
+            else
+            {
+                printf("LOITER, pos: %d\n", switch_position);
+            }
 #endif
         }
         else
         {
             ret = set_mode(flight_modes[switch_position]);
 #ifdef TEST_PRT
-            printf("GPS: %d, pos: %d\n", flight_modes[switch_position], switch_position);
+            if(!ret)
+            {
+                printf("set mode error\n" );
+            }
+            else
+            {
+                printf("GPS: %d, pos: %d\n", flight_modes[switch_position], switch_position);
+            }
 #endif
         }
 #else
