@@ -4,6 +4,10 @@
 
 extern const AP_HAL::HAL& hal;
 
+// AB ZhaoYJ@2017-04-05 for response pilot throttle when semi-auto, AUTO, RTL...
+// TODO: need strongly test
+#define EN_THROTTLE_IN_AUTO 1
+
 const AP_Param::GroupInfo AC_WPNav::var_info[] PROGMEM = {
     // index 0 was used for the old orientation matrix
 
@@ -601,7 +605,11 @@ void AC_WPNav::advance_wp_target_along_track(float dt)
     }
 
     // recalculate the desired position
+#if EN_THROTTLE_IN_AUTO 
+    _pos_control.set_pos_target_keep_vel_z(_origin + _pos_delta_unit * _track_desired);
+#else
     _pos_control.set_pos_target(_origin + _pos_delta_unit * _track_desired);
+#endif
 
     // check if we've reached the waypoint
     if( !_flags.reached_destination ) {

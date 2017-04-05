@@ -201,6 +201,8 @@ public:
 
     /// set_pos_target in cm from home
     void set_pos_target(const Vector3f& position);
+    // AB ZhaoYJ@2017-04-05 for response pilot throttle when semi-auto, AUTO, RTL...
+    void set_pos_target_keep_vel_z(const Vector3f& position);
 
     /// set_xy_target in cm from home
     void set_xy_target(float x, float y);

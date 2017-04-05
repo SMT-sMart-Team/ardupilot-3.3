@@ -140,6 +140,7 @@ void AC_PosControl::set_alt_target_with_slew(float alt_cm, float dt)
     // do not use z-axis desired velocity feed forward
     _flags.use_desvel_ff_z = false;
     _vel_desired.z = 0.0f;
+    // hal.util->prt("set_alt_target_with_slew");
 
     // adjust desired alt if motors have not hit their limits
     if ((alt_change<0 && !_motors.limit.throttle_lower) || (alt_change>0 && !_motors.limit.throttle_upper)) {
@@ -202,7 +203,9 @@ void AC_PosControl::set_alt_target_from_climb_rate_ff(float climb_rate_cms, floa
     _accel_last_z_cms = min(accel_z_max, _accel_last_z_cms);
 
     float vel_change_limit = _accel_last_z_cms * dt;
+    // hal.util->prt("POSC: cr: %f, min: %f, max: %f, _accel_last_z_cms: %f, vel_change_limit: %f, dt: %f ", climb_rate_cms, _vel_desired.z-vel_change_limit, _vel_desired.z+vel_change_limit, _accel_last_z_cms, vel_change_limit, dt);
     _vel_desired.z = constrain_float(climb_rate_cms, _vel_desired.z-vel_change_limit, _vel_desired.z+vel_change_limit);
+    // hal.util->prt("POSC: constrain _vel_d: %f ", _vel_desired.z);
     _flags.use_desvel_ff_z = true;
 
     // adjust desired alt if motors have not hit their limits
