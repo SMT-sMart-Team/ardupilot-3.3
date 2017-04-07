@@ -57,26 +57,64 @@ void LinuxRCInput_PRU::_timer_tick()
     static uint16_t test_cnt = 0;
     uint8_t rcin_multi_pwm = 1;
 #endif
+#ifdef MULTI_PWM 
     if(!_direct_pwm)
+#endif
     {
-    while (ring_buffer->ring_head != ring_buffer->ring_tail) {
-        if (ring_buffer->ring_tail >= NUM_RING_ENTRIES) {
-            // invalid ring_tail from PRU - ignore RC input
-            return;
+        while (ring_buffer->ring_head != ring_buffer->ring_tail) {
+            if (ring_buffer->ring_tail >= NUM_RING_ENTRIES) {
+                // invalid ring_tail from PRU - ignore RC input
+                return;
+            }
+            if (ring_buffer->buffer[ring_buffer->ring_head].pin_value == 1) {
+                // remember the time we spent in the low state
+                _s0_time = ring_buffer->buffer[ring_buffer->ring_head].delta_t;
+            } else {
+                // the pulse value is the sum of the time spent in the low
+                // and high states
+                _process_rc_pulse(_s0_time, ring_buffer->buffer[ring_buffer->ring_head].delta_t);
+            }
+            // move to the next ring buffer entry
+            ring_buffer->ring_head = (ring_buffer->ring_head + 1) % NUM_RING_ENTRIES;        
         }
-        if (ring_buffer->buffer[ring_buffer->ring_head].pin_value == 1) {
-            // remember the time we spent in the low state
-            _s0_time = ring_buffer->buffer[ring_buffer->ring_head].delta_t;
-        } else {
-            // the pulse value is the sum of the time spent in the low
-            // and high states
-            _process_rc_pulse(_s0_time, ring_buffer->buffer[ring_buffer->ring_head].delta_t);
-        }
-        // move to the next ring buffer entry
-        ring_buffer->ring_head = (ring_buffer->ring_head + 1) % NUM_RING_ENTRIES;        
-    }
     }
 #ifdef MULTI_PWM 
+#if ENABLE_COMMON_RCIN 
+    if(1)
+    {
+        uint8_t chn_num = 0;
+
+        // if we have reached the maximum supported channels then
+        // mark as unsynchronised, so we wait for a wide pulse
+        for (uint8_t i=0; i<MAX_RCIN_NUM; i++) {
+#ifdef SMT_CROP_CONTROL
+            // AB ZhaoYJ for SY crop control: borrow rcin CH1(i=0) for pwm_out CH9
+            // AB ZhaoYJ for inverse-order of rcin: (7~2, 0) -> 0~6
+            //
+            uint16_t width_usec = 0;
+            if(i < 6)
+            {
+                width_usec = ring_buffer->multi_pwm_out[MAX_RCIN_NUM - 1 - i].high;
+            }
+            else if(6 == i)
+            {
+                width_usec = ring_buffer->multi_pwm_out[0].high;
+            }
+
+            // valid pwm
+            if (width_usec < 700 || width_usec > 2300) {
+                // take a reading for the current channel
+                // move to next channel
+                continue;
+            }
+
+            // store rcin for user define
+            // TODO: define these rcin for use
+            // set_pwm_values(i, width_usec);
+            chn_num++;
+        }
+    }
+#else
     else
     {
 
@@ -139,6 +177,7 @@ void LinuxRCInput_PRU::_timer_tick()
 
         }
     }
+#endif
 #endif
 }
 

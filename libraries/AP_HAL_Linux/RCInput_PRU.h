@@ -13,12 +13,16 @@
 // we use 300 ring buffer entries to guarantee that a full 25 byte
 // frame of 12 bits per byte
 //
+// AB ZhaoYJ@2017-04-07 for re-enable multi-pwm 
 // AB ZhaoYJ for multi-pwm to replace ppm-sum @2016-09-13
 // #define MULTI_PWM
 
 #ifdef MULTI_PWM
 #define MAX_RCIN_NUM 8
 #define NUM_RCIN_BUFF 64
+
+// AB ZhaoYJ@2017-04-07 for re-enable multi-pwm 
+#define ENABLE_COMMON_RCIN 0
 #endif
 
 class Linux::LinuxRCInput_PRU : public Linux::LinuxRCInput 
@@ -44,7 +48,7 @@ public:
     volatile struct {
         volatile uint16_t high;
         volatile uint16_t low;
-    }multi_pwm_out[MAX_RCIN_NUM];
+    }multi_rc_in[MAX_RCIN_NUM];
 #endif
     };
     volatile struct ring_buffer *ring_buffer;
