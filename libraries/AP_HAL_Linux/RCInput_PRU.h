@@ -15,7 +15,7 @@
 //
 // AB ZhaoYJ@2017-04-07 for re-enable multi-pwm 
 // AB ZhaoYJ for multi-pwm to replace ppm-sum @2016-09-13
-// #define MULTI_PWM
+#define MULTI_PWM
 
 #ifdef MULTI_PWM
 #define MAX_RCIN_NUM 8
@@ -35,7 +35,7 @@ public:
     void set_direct_pwm(uint8_t v) { _direct_pwm = v; };
 
  private:
-    static const unsigned int NUM_RING_ENTRIES=300;
+    static const unsigned int NUM_RING_ENTRIES=600;
     // shared ring buffer with the PRU which records pin transitions
     struct ring_buffer {
         volatile uint16_t ring_head; // owned by ARM CPU
