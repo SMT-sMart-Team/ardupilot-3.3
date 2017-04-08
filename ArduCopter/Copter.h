@@ -260,6 +260,7 @@ private:
     // AB ZhaoYJ@2017-04-05 for semi-auto
 #define DEF_SPRAYER_PWM 1000
     struct {
+        bool test_mode;
         float sprayer_pwm;
         float pump_pwm;
     }user_pwm;

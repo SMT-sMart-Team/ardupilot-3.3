@@ -331,8 +331,9 @@ void Copter::read_aux_switches()
 #define PUMP_CH    9
     // control sprayer & pump spd
     // need have water in crop
+    // or test mode when disarmed
     crop.read();
-    if(is_sprayer_working && !is_zero(crop.quantity()))
+    if((user_pwm.test_mode && !motors.armed()) || (is_sprayer_working && !is_zero(crop.quantity())))
     {
         hal.rcout->enable_ch(SPRAYER_CH);
         hal.rcout->enable_ch(PUMP_CH);

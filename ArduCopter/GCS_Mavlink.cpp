@@ -1360,12 +1360,22 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             if(!is_zero(packet.param3)
                 && is_equal(packet.param3, 3.0f))
             {
-                // TODO: store these param then output when enable
-                // ...
-                //
                 // printf("do user stuff now: %f-%f\n", packet.param4, packet.param5);
                 copter.user_pwm.sprayer_pwm = packet.param4;
                 copter.user_pwm.pump_pwm = packet.param5;
+
+                // if test mode
+                if(!is_zero(packet.param6)
+                    && is_equal(packet.param6, 5.0f))
+                {
+                    copter.user_pwm.test_mode = true;
+                    // printf("test mode on: %f-%f\n", packet.param4, packet.param5);
+                }
+                else
+                {
+                    // printf("test mode off: %f-%f\n", packet.param4, packet.param5);
+                    copter.user_pwm.test_mode = false;
+                }
                 result = MAV_RESULT_ACCEPTED;
             }
             else

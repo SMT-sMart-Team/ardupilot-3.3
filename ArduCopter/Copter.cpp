@@ -137,6 +137,7 @@ Copter::Copter(void) :
     sensor_health.compass = true;
 
     // initial sprayer pwm
+    user_pwm.test_mode = false;
     user_pwm.sprayer_pwm = DEF_SPRAYER_PWM;
     user_pwm.pump_pwm = DEF_SPRAYER_PWM;
 }
