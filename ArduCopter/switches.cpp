@@ -304,6 +304,43 @@ uint8_t Copter::read_3pos_switch(int16_t radio_in)
 // read_aux_switches - checks aux switch positions and invokes configured actions
 void Copter::read_aux_switches()
 {
+
+    // exit immediately during radio failsafe
+    if (failsafe.radio || failsafe.radio_counter != 0) {
+        return;
+    }
+
+    // check mode & rc7 for sprayer working
+    // first, need to be armed
+    // if GUIDED, then true 
+    // if STABILIZE/ALT_HOLD/LOITER, and rc7 high, then true 
+    // TODO: if AUTO, need to consider more
+    if(((GUIDED == control_mode) 
+            || (((STABILIZE == control_mode) || (ALT_HOLD == control_mode) || (LOITER == control_mode)) && (g.rc_7.radio_in > (g.rc_7.radio_max - 100))))
+            && motors.armed()
+            )
+    {
+        is_sprayer_working = true;
+    }
+    else
+    {
+        is_sprayer_working = false;
+    }
+
+    // control sprayer & pump spd
+    if(is_sprayer_working)
+    {
+#define SPRAYER_CH 8
+#define PUMP_CH    9
+        hal.rcout->enable_ch(SPRAYER_CH);
+        hal.rcout->enable_ch(PUMP_CH);
+        hal.rcout->write(SPRAYER_CH, user_pwm.sprayer_pwm);
+        hal.rcout->write(PUMP_CH, user_pwm.pump_pwm);
+        hal.rcout->set_magic_sync();
+    }
+
+#if ORIG_AUX_SWITCH
+
     uint8_t switch_position;
 
     // exit immediately during radio failsafe
@@ -373,6 +410,8 @@ void Copter::read_aux_switches()
         // invoke the appropriate function
         do_aux_switch_function(g.ch12_option, aux_con.CH12_flag);
     }
+#endif
+
 #endif
 }
 

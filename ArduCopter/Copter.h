@@ -257,6 +257,13 @@ private:
     // AB ZhaoYJ@2017-04-05 for semi-auto
     int8_t semi_dir;
 
+    // AB ZhaoYJ@2017-04-05 for semi-auto
+    struct {
+        float sprayer_pwm;
+        float pump_pwm;
+    }user_pwm;
+    bool is_sprayer_working;
+
     // Structure used to detect changes in the flight mode control switch
     struct {
         int8_t debounced_switch_position;   // currently used switch position

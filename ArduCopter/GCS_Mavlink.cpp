@@ -1355,8 +1355,24 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
 
         case MAV_CMD_DO_SET_SERVO:
-            if (copter.ServoRelayEvents.do_set_servo(packet.param1, packet.param2)) {
+            printf("do set servo now\n");
+            // AB ZhaoYJ@2017-04-08 for controlling sprayer and pump spd
+            if(!is_zero(packet.param3)
+                && is_equal(packet.param3, 3.0f))
+            {
+                // TODO: store these param then output when enable
+                // ...
+                //
+                printf("do user stuff now: %f-%f\n", packet.param4, packet.param5);
+                copter.user_pwm.sprayer_pwm = packet.param4;
+                copter.user_pwm.pump_pwm = packet.param5;
                 result = MAV_RESULT_ACCEPTED;
+            }
+            else
+            {
+                if (copter.ServoRelayEvents.do_set_servo(packet.param1, packet.param2)) {
+                    result = MAV_RESULT_ACCEPTED;
+                }
             }
             break;
 
