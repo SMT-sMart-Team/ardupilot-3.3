@@ -333,7 +333,7 @@ void Copter::read_aux_switches()
     // need have water in crop
     // or test mode when disarmed
     crop.read();
-    if((user_pwm.test_mode && !motors.armed()) || (is_sprayer_working && !is_zero(crop.quantity())))
+    if((user_pwm.test_mode && !motors.armed() && (g.rc_7.radio_in > (g.rc_7.radio_max - 100))) || (is_sprayer_working && !is_zero(crop.quantity())))
     {
         hal.rcout->enable_ch(SPRAYER_CH);
         hal.rcout->enable_ch(PUMP_CH);
