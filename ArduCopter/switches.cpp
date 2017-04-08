@@ -342,8 +342,10 @@ void Copter::read_aux_switches()
     }
     else
     {
-        hal.rcout->disable_ch(SPRAYER_CH);
-        hal.rcout->disable_ch(PUMP_CH);
+        hal.rcout->enable_ch(SPRAYER_CH);
+        hal.rcout->enable_ch(PUMP_CH);
+        hal.rcout->write(SPRAYER_CH, DEF_SPRAYER_PWM);
+        hal.rcout->write(PUMP_CH, DEF_SPRAYER_PWM);
         hal.rcout->set_magic_sync();
     }
 
