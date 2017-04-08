@@ -27,8 +27,9 @@ void Copter::userhook_50Hz()
 #ifdef USERHOOK_MEDIUMLOOP
 void Copter::userhook_MediumLoop()
 {
+    // read crop in switchs.cpp
     // put your 10Hz code here
-    crop.read();
+    // crop.read();
 }
 #endif
 

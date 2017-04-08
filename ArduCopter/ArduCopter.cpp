@@ -544,6 +544,8 @@ void Copter::one_hz_loop()
 #endif
     }
 
+    // DB ZhaoYJ@2017-04-08 for new control in switchs.cpp
+#if 0
     // AB ZhaoYJ@2016-11-21 for temporarily to disable crop_servo when armed but no crop water, but doesnot effect non-armed
     // FIXME: need to seperate CROP_CONTROL CH10
 #define RC10 9 // 10-1
@@ -557,6 +559,7 @@ void Copter::one_hz_loop()
         RC_Channel_aux::disable_aux_channel_one_shot(RC10);
         // hal.util->prt("disable ch10");
     }
+#endif
 
     check_usb_mux();
 

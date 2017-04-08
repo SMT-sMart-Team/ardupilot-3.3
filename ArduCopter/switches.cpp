@@ -327,15 +327,23 @@ void Copter::read_aux_switches()
         is_sprayer_working = false;
     }
 
-    // control sprayer & pump spd
-    if(is_sprayer_working)
-    {
 #define SPRAYER_CH 8
 #define PUMP_CH    9
+    // control sprayer & pump spd
+    // need have water in crop
+    crop.read();
+    if(is_sprayer_working && !is_zero(crop.quantity()))
+    {
         hal.rcout->enable_ch(SPRAYER_CH);
         hal.rcout->enable_ch(PUMP_CH);
         hal.rcout->write(SPRAYER_CH, user_pwm.sprayer_pwm);
         hal.rcout->write(PUMP_CH, user_pwm.pump_pwm);
+        hal.rcout->set_magic_sync();
+    }
+    else
+    {
+        hal.rcout->disable_ch(SPRAYER_CH);
+        hal.rcout->disable_ch(PUMP_CH);
         hal.rcout->set_magic_sync();
     }
 

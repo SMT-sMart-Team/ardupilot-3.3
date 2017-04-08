@@ -1,6 +1,7 @@
 # !bin/bash
 date
 rm -rf APP-new
+rm -f FW-v0.2* 
 mkdir -p APP-new
 make pxf
 cp ArduCopter.elf APP-new/app_quad
