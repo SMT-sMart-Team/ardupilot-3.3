@@ -308,7 +308,12 @@ void Copter::guided_pos_control_run()
     // call attitude controller
     if (auto_yaw_mode == AUTO_YAW_HOLD) {
         // roll & pitch from waypoint controller, yaw rate from pilot
+#if SMOOTH_RATE_AS_ALT_HOLD
+        attitude_control.angle_ef_roll_pitch_rate_ef_yaw_smooth(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate, get_smoothing_gain());
+#else
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
+#endif
+
     }else{
         // roll, pitch from waypoint controller, yaw heading from auto_heading()
         attitude_control.angle_ef_roll_pitch_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), get_auto_heading(), true);

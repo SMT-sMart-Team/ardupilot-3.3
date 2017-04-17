@@ -164,7 +164,12 @@ void Copter::loiter_run()
         wp_nav.update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
 
         // call attitude controller
+
+#if SMOOTH_RATE_AS_ALT_HOLD
+        attitude_control.angle_ef_roll_pitch_rate_ef_yaw_smooth(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate, get_smoothing_gain());
+#else
         attitude_control.angle_ef_roll_pitch_rate_ef_yaw(wp_nav.get_roll(), wp_nav.get_pitch(), target_yaw_rate);
+#endif
 
         // run altitude controller
         if (sonar_enabled && (sonar_alt_health >= SONAR_ALT_HEALTH_MAX)) {

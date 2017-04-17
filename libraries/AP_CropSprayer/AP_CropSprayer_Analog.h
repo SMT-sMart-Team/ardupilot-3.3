@@ -13,7 +13,7 @@
 #define CROPSPRAYER_CAP_DEF 20.0
 
 // 
-#define HAL_GPIO_QUANTITY_DI 9 
+#define HAL_GPIO_QUANTITY_DI 115 // GPIO3_19, mux with PWM6 
 #define HAVE_WATER 1 
 #define NO_WATER 0 
 

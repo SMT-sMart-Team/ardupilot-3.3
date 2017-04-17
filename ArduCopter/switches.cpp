@@ -9,6 +9,12 @@
 // #define TEST_PRT
 #endif
 
+// AB ZhaoYJ@2017-04-14
+// #define SMT_SY_SURVEY_AUTO 1
+
+// AB ZhaoYJ@2017-04-17
+#define SMT_3SW_MODE 1
+
 //Documentation of Aux Switch Flags:
 static union {
     struct {
@@ -35,6 +41,8 @@ void Copter::read_control_switch()
 #define RC6_SEMI_HALF_FORWARD 0x6F
 #define RC6_SEMI_HALF_BACKWARD 0x5F
 #define RC6_LOITER 0x4F
+#define RC6_AUTO 0x3F
+#define RC6_RTL 0x2F
 
 #ifdef TEST_PRT
     static uint32_t test_cnt = 0;
@@ -72,12 +80,46 @@ void Copter::read_control_switch()
         // guided forward
         if(g.rc_6.radio_in < (g.rc_6.radio_min + VWP_RADIO_DZ)) // 1100)
         {
+#if SMT_3SW_MODE
+            // normal switch: auto, rtl
+            if(g.rc_7.radio_in < (g.rc_7.radio_min + VWP_RADIO_DZ)) // 1100)
+            {
+                switch_position = RC6_AUTO;
+            }
+            // SY switch: forward, backward 
+            else if(g.rc_7.radio_in > (g.rc_7.radio_max - VWP_RADIO_DZ)) // 1900)
+            {
+                switch_position = RC6_SEMI_HALF_FORWARD;
+            }
+            else
+            {
+                switch_position = -1;
+            }
+#else
             switch_position = RC6_SEMI_HALF_FORWARD;
+#endif
         }
         // if backward
         else if((g.rc_6.radio_in < 2100) && (g.rc_6.radio_in > (g.rc_6.radio_max - VWP_RADIO_DZ))) // 1100)
         {
+#if SMT_3SW_MODE
+            // normal switch: auto, rtl
+            if(g.rc_7.radio_in < (g.rc_7.radio_min + VWP_RADIO_DZ)) // 1100)
+            {
+                switch_position = RC6_RTL;
+            }
+            // SY switch: auto, rtl
+            else if(g.rc_7.radio_in > (g.rc_7.radio_max - VWP_RADIO_DZ)) // 1900)
+            {
+                switch_position = RC6_SEMI_HALF_BACKWARD;
+            }
+            else
+            {
+                switch_position = -1;
+            }
+#else
             switch_position = RC6_SEMI_HALF_BACKWARD;
+#endif
         }
         else // middle, loiter 
         {
@@ -117,10 +159,24 @@ void Copter::read_control_switch()
 #ifdef SMT_CH5_CH6_SWITCH
         if(RC5_STATBLIZED == switch_position)
         {
+
+#if ALT_HOLD_AS_STB 
+            ret = set_mode(ALT_HOLD);
+#else
             ret = set_mode(STABILIZE);
+#endif
+
 #ifdef TEST_PRT
             printf("stablized\n");
 #endif
+        }
+        else if(RC6_AUTO == switch_position)
+        {
+            set_mode(AUTO);
+        }
+        else if(RC6_RTL == switch_position)
+        {
+            set_mode(RTL);
         }
         else if((RC6_SEMI_HALF_FORWARD == switch_position)
                 || (RC6_SEMI_HALF_BACKWARD == switch_position))
@@ -191,6 +247,7 @@ void Copter::read_control_switch()
             printf("GUIDED\n");
 #endif
         }
+#endif
         else if(switch_position == RC6_LOITER)
         {
             ret = set_mode(LOITER);
@@ -310,13 +367,13 @@ void Copter::read_aux_switches()
         return;
     }
 
-    // check mode & rc7 for sprayer working
+    // check mode & rc8 for sprayer working
     // first, need to be armed
     // if GUIDED, then true 
-    // if STABILIZE/ALT_HOLD/LOITER, and rc7 high, then true 
+    // if STABILIZE/ALT_HOLD/LOITER, and rc8 high, then true 
     // TODO: if AUTO, need to consider more
     if(((GUIDED == control_mode) 
-            || (((STABILIZE == control_mode) || (ALT_HOLD == control_mode) || (LOITER == control_mode)) && (g.rc_7.radio_in > (g.rc_7.radio_max - 100))))
+            || (((STABILIZE == control_mode) || (ALT_HOLD == control_mode) || (LOITER == control_mode)) && (g.rc_8.radio_in > (g.rc_8.radio_max - 100))))
             && motors.armed()
             )
     {
@@ -333,7 +390,7 @@ void Copter::read_aux_switches()
     // need have water in crop
     // or test mode when disarmed
     crop.read();
-    if((user_pwm.test_mode && !motors.armed() && (g.rc_7.radio_in > (g.rc_7.radio_max - 100))) || (is_sprayer_working && !is_zero(crop.quantity())))
+    if((user_pwm.test_mode && !motors.armed() && (g.rc_8.radio_in > (g.rc_8.radio_max - 100))) || (is_sprayer_working && !is_zero(crop.quantity())))
     {
         hal.rcout->enable_ch(SPRAYER_CH);
         hal.rcout->enable_ch(PUMP_CH);
