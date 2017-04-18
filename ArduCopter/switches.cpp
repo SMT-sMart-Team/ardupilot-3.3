@@ -5,9 +5,7 @@
 #define CONTROL_SWITCH_DEBOUNCE_TIME_MS  200
 
 // AB ZhaoYJ@2016-09-20
-#ifdef SMT_CH5_CH6_SWITCH
 // #define TEST_PRT
-#endif
 
 // AB ZhaoYJ@2017-04-14
 // #define SMT_SY_SURVEY_AUTO 1
@@ -36,7 +34,7 @@ void Copter::read_control_switch()
     // calculate position of flight mode switch
     int8_t switch_position = -1;
     bool ret = false;
-#ifdef SMT_CH5_CH6_SWITCH
+
 #define RC5_STATBLIZED 0x7F
 #define RC6_SEMI_HALF_FORWARD 0x6F
 #define RC6_SEMI_HALF_BACKWARD 0x5F
@@ -136,14 +134,6 @@ void Copter::read_control_switch()
         switch_position = -1;
         last_guided_status = IN_NONE;
     }
-#else
-    if      (g.rc_5.radio_in < 1231) switch_position = 0;
-    else if (g.rc_5.radio_in < 1361) switch_position = 1;
-    else if (g.rc_5.radio_in < 1491) switch_position = 2;
-    else if (g.rc_5.radio_in < 1621) switch_position = 3;
-    else if (g.rc_5.radio_in < 1750) switch_position = 4;
-    else switch_position = 5;
-#endif
 
     // store time that switch last moved
     if(control_switch_state.last_switch_position != switch_position) {
@@ -155,8 +145,8 @@ void Copter::read_control_switch()
     bool sufficient_time_elapsed = tnow_ms - control_switch_state.last_edge_time_ms > CONTROL_SWITCH_DEBOUNCE_TIME_MS;
     bool failsafe_disengaged = !failsafe.radio && failsafe.radio_counter == 0;
 
-    if (control_switch_changed && sufficient_time_elapsed && failsafe_disengaged) {
-#ifdef SMT_CH5_CH6_SWITCH
+    if (control_switch_changed && sufficient_time_elapsed && failsafe_disengaged) 
+    {
         if(RC5_STATBLIZED == switch_position)
         {
 
@@ -247,7 +237,6 @@ void Copter::read_control_switch()
             printf("GUIDED\n");
 #endif
         }
-#endif
         else if(switch_position == RC6_LOITER)
         {
             ret = set_mode(LOITER);
@@ -277,9 +266,7 @@ void Copter::read_control_switch()
             }
 #endif
         }
-#else
-        ret = set_mode(flight_modes[switch_position]);
-#endif
+
         // set flight mode and simple mode setting
         if (ret) {
         // if (set_mode(flight_modes[switch_position])) {

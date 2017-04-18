@@ -9,9 +9,9 @@
 
 // tuning - updates parameters based on the ch6 tuning knob's position
 //  should be called at 3.3hz
-//  AB ZhaoYJ@2017-04-17 for using rc_9 to tuning instead of rc_6(ch6)
-// #define TUNING_CH9
-#define TUNING_CH9
+//  AB ZhaoYJ@2017-04-17 for using rc_10 to tuning instead of rc_6(ch6)
+// #define TUNING_CH10
+#define TUNING_CH10
 void Copter::tuning() {
 
     // exit immediately if not tuning of when radio failsafe is invoked so tuning values are not set to zero
@@ -19,16 +19,16 @@ void Copter::tuning() {
         return;
     }
 
-#ifdef TUNING_CH9
+#ifdef TUNING_CH10
 
     // set tuning range and then get new value
-    g.rc_9.set_range(g.radio_tuning_low,g.radio_tuning_high);
-    float tuning_value = (float)g.rc_9.control_in / 1000.0f;
+    g.rc_10.set_range(g.radio_tuning_low,g.radio_tuning_high);
+    float tuning_value = (float)g.rc_10.control_in / 1000.0f;
     // Tuning Value should never be outside the bounds of the specified low and high value
     tuning_value = constrain_float(tuning_value, g.radio_tuning_low/1000.0f, g.radio_tuning_high/1000.0f);
 
 
-    Log_Write_Parameter_Tuning(g.radio_tuning, tuning_value, g.rc_9.control_in, g.radio_tuning_low, g.radio_tuning_high);
+    Log_Write_Parameter_Tuning(g.radio_tuning, tuning_value, g.rc_10.control_in, g.radio_tuning_low, g.radio_tuning_high);
 #else
     // set tuning range and then get new value
     g.rc_6.set_range(g.radio_tuning_low,g.radio_tuning_high);
@@ -112,8 +112,8 @@ void Copter::tuning() {
 
     case TUNING_WP_SPEED:
         // set waypoint navigation horizontal speed to 0 ~ 1000 cm/s
-#ifdef TUNING_CH9
-        wp_nav.set_speed_xy(g.rc_9.control_in);
+#ifdef TUNING_CH10
+        wp_nav.set_speed_xy(g.rc_10.control_in);
 #else
         wp_nav.set_speed_xy(g.rc_6.control_in);
 #endif
@@ -131,8 +131,8 @@ void Copter::tuning() {
 
 #if FRAME_CONFIG == HELI_FRAME
     case TUNING_HELI_EXTERNAL_GYRO:
-#ifdef TUNING_CH9
-        motors.ext_gyro_gain(g.rc_9.control_in);
+#ifdef TUNING_CH10
+        motors.ext_gyro_gain(g.rc_10.control_in);
 #else
         motors.ext_gyro_gain(g.rc_6.control_in);
 #endif
@@ -153,8 +153,8 @@ void Copter::tuning() {
 
     case TUNING_DECLINATION:
         // set declination to +-20degrees
-#ifdef TUNING_CH9
-        compass.set_declination(ToRad((2.0f * g.rc_9.control_in - g.radio_tuning_high)/100.0f), false);     // 2nd parameter is false because we do not want to save to eeprom because this would have a performance impact
+#ifdef TUNING_CH10
+        compass.set_declination(ToRad((2.0f * g.rc_10.control_in - g.radio_tuning_high)/100.0f), false);     // 2nd parameter is false because we do not want to save to eeprom because this would have a performance impact
 #else
         compass.set_declination(ToRad((2.0f * g.rc_6.control_in - g.radio_tuning_high)/100.0f), false);     // 2nd parameter is false because we do not want to save to eeprom because this would have a performance impact
 #endif
@@ -162,8 +162,8 @@ void Copter::tuning() {
 
     case TUNING_CIRCLE_RATE:
         // set circle rate up to approximately 45 deg/sec in either direction
-#ifdef TUNING_CH9
-        circle_nav.set_rate((float)g.rc_9.control_in/25.0f-20.0f);
+#ifdef TUNING_CH10
+        circle_nav.set_rate((float)g.rc_10.control_in/25.0f-20.0f);
 #else
         circle_nav.set_rate((float)g.rc_6.control_in/25.0f-20.0f);
 #endif
@@ -194,8 +194,8 @@ void Copter::tuning() {
 
     case TUNING_RC_FEEL_RP:
         // roll-pitch input smoothing
-#ifdef TUNING_CH9
-        g.rc_feel_rp = g.rc_9.control_in / 10;
+#ifdef TUNING_CH10
+        g.rc_feel_rp = g.rc_10.control_in / 10;
 #else
         g.rc_feel_rp = g.rc_6.control_in / 10;
 #endif

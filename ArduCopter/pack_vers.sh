@@ -13,7 +13,7 @@ export FW_NAME=FW-V${1}-`date +%Y%m%d`.fc
 echo "package ${FW_NAME} start\n"
 
 rm -rf APP-new
-rm -f FW-v* 
+rm -f FW-V* 
 mkdir -p APP-new
 make pxf
 cp ArduCopter.elf APP-new/app_quad
