@@ -98,6 +98,10 @@ AP_CropSprayer::read()
     {
         drivers->read();
     }
+
+    // read spd
+    _spd = (float)hal.rcin->get_common_pwm();
+    // hal.util->prt("_spdf: %f", _spd);
 }
 
 // healthy - returns true if monitor is functioning

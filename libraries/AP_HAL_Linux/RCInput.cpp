@@ -357,4 +357,10 @@ void LinuxRCInput::_process_rc_pulse(uint16_t width_s0, uint16_t width_s1)
     _process_dsm_pulse(width_s0, width_s1);
 }
 
+uint16_t LinuxRCInput::get_common_pwm() 
+{
+    return _common_pwm; 
+}
+
+
 #endif // CONFIG_HAL_BOARD

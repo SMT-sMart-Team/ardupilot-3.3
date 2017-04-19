@@ -1365,13 +1365,15 @@ void GCS_MAVLINK::send_vibration(const AP_InertialSensor &ins, const AP_CropSpra
 #if INS_VIBRATION_CHECK
     Vector3f vibration = ins.get_vibration_levels();
     float crop_quantity = crop.quantity();
+    float pump_spd = crop.get_spd();
 
     mavlink_msg_vibration_send(
         chan,
         hal.scheduler->micros64(),
         // vibration.x,
         crop_quantity,
-        vibration.y,
+        // vibration.y,
+        pump_spd, 
         vibration.z,
         ins.get_accel_clip_count(0),
         ins.get_accel_clip_count(1),

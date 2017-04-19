@@ -58,6 +58,7 @@ public:
 
     /* AB ZhaoYJ@2016-09-13 for direct pwm*/
     virtual void set_direct_pwm(uint8_t v) {};
+    virtual uint16_t get_common_pwm() {return 0; };
 };
 
 #endif // __AP_HAL_RC_INPUT_H__

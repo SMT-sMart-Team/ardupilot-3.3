@@ -22,7 +22,8 @@
 #define NUM_RCIN_BUFF 64
 
 // AB ZhaoYJ@2017-04-07 for re-enable multi-pwm 
-#define ENABLE_COMMON_RCIN 0
+#define ENABLE_COMMON_RCIN 1
+#define COMMON_RCIN_PIN 7
 #endif
 
 class Linux::LinuxRCInput_PRU : public Linux::LinuxRCInput 
@@ -35,6 +36,8 @@ public:
     void set_direct_pwm(uint8_t v) { _direct_pwm = v; };
 
  private:
+
+
     static const unsigned int NUM_RING_ENTRIES=600;
     // shared ring buffer with the PRU which records pin transitions
     struct ring_buffer {
@@ -58,6 +61,7 @@ public:
 
 
     uint8_t _direct_pwm;
+
 };
 
 #endif // __AP_HAL_LINUX_RCINPUT_PRU_H__

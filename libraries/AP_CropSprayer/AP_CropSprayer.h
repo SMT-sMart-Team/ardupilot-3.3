@@ -5,7 +5,8 @@
 #include <AP_Common/AP_Common.h>
 #include <AP_Param/AP_Param.h>
 #include <AP_Math/AP_Math.h>
-
+#include <RC_Channel/RC_Channel.h>
+#include <AP_HAL/AP_HAL.h>
 
 
 #define AP_BATT_CAPACITY_DEFAULT            3300
@@ -46,6 +47,7 @@ public:
     bool healthy() const;
 
     float get_raw(uint8_t instance) const { return state.raw; }
+    float get_spd() const { return _spd; }
     float quantity() const { return state.current_quantity; }
     // float quantity() const { return 0.0;  }
 
@@ -60,6 +62,7 @@ protected:
     AP_Float    _multiplier;
     AP_Float    _offset;
     AP_Int32    _capacity;
+    float       _spd;
 
 private:
     CropSprayer_State state;

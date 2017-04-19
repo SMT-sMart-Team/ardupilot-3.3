@@ -31,11 +31,16 @@ public:
     /* AB ZhaoYJ@2016-09-13 for direct pwm*/
     void set_direct_pwm(uint8_t v) {};
 
+    void set_common_pwm(uint16_t v) { _common_pwm = v; };
+    uint16_t get_common_pwm(); 
+
  protected:
     void _process_rc_pulse(uint16_t width_s0, uint16_t width_s1);
 
  private:
     volatile bool new_rc_input;
+
+    uint16_t _common_pwm;
 
     uint16_t _pwm_values[LINUX_RC_INPUT_NUM_CHANNELS];    
     uint8_t  _num_channels;
