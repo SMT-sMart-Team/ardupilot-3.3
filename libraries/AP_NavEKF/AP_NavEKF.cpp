@@ -118,7 +118,7 @@ static bool ekf_fuse_mag = true;
 
 #define EKF_NO_MAG_ARMED 1
 
-#define EKF_NO_MAG_AT_ALL 1
+#define EKF_NO_MAG_AT_ALL 0
 #endif
 
 extern const AP_HAL::HAL& hal;
