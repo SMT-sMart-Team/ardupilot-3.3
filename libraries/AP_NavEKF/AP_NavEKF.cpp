@@ -117,6 +117,8 @@ static bool ekf_fuse_mag = true;
 #define EKF_CONST_MODE 0
 
 #define EKF_NO_MAG_ARMED 1
+
+#define EKF_NO_MAG_AT_ALL 1
 #endif
 
 extern const AP_HAL::HAL& hal;
@@ -847,7 +849,9 @@ void NavEKF::UpdateFilter()
     static uint32_t lastFuseTime_ms = hal.scheduler->millis();
     // if gps if available, not fusing mag
     // otherwise, fusing mag 5~10s per 30s
+#if !EKF_NO_MAG_AT_ALL 
     if(gpsNotAvailable)
+#endif
     {
 #if TEST_FLOW
         static uint32_t cnt1 = 0;
@@ -882,6 +886,7 @@ void NavEKF::UpdateFilter()
 #endif
         }
     }
+#if !EKF_NO_MAG_AT_ALL 
     else // using GPS vel
     {
 #if EKF_NO_MAG_ARMED
@@ -893,6 +898,7 @@ void NavEKF::UpdateFilter()
         }
 #endif
     }
+#endif
 
 #else
     SelectMagFusion();
