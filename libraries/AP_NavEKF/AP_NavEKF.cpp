@@ -2,7 +2,6 @@
 
 #include <AP_HAL/AP_HAL.h>
 
-#if HAL_CPU_CLASS >= HAL_CPU_CLASS_150
 
 /*
   optionally turn down optimisation for debugging
@@ -5797,4 +5796,3 @@ bool NavEKF::getLastYawResetAngle(float &yawAng)
 }
 
 
-#endif // HAL_CPU_CLASS

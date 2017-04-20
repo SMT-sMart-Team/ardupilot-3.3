@@ -189,6 +189,8 @@ struct PACKED log_GPS {
     int32_t  altitude;
     uint32_t ground_speed;
     int32_t  ground_course;
+    float    vel_x;
+    float    vel_y;
     float    vel_z;
     uint8_t  used;
 };
@@ -650,7 +652,7 @@ Format characters in the format string for binary log messages
     { LOG_PARAMETER_MSG, sizeof(log_Parameter), \
       "PARM", "QNf",        "TimeUS,Name,Value" },    \
     { LOG_GPS_MSG, sizeof(log_GPS), \
-      "GPS",  "QBIHBcLLeeEefB", "TimeUS,Status,GMS,GWk,NSats,HDop,Lat,Lng,RAlt,Alt,Spd,GCrs,VZ,U" }, \
+      "GPS",  "QBIHBcLLeeEefffB", "TimeUS,Status,GMS,GWk,NSats,HDop,Lat,Lng,RAlt,Alt,Spd,GCrs,VX,VY,VZ,U" }, \
     { LOG_IMU_MSG, sizeof(log_IMU), \
       "IMU",  "QffffffIIfBBfff",     "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,ErrG,ErrA,Temp,GyHlt,AcHlt,dg,dgd,dw" }, \
     { LOG_MESSAGE_MSG, sizeof(log_Message), \
