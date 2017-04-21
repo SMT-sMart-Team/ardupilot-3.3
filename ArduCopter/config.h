@@ -738,6 +738,7 @@
     MASK_LOG_COMPASS | \
     MASK_LOG_CAMERA | \
     MASK_LOG_WHEN_DISARMED | \
+    MASK_LOG_PID | \
     MASK_LOG_MOTBATT
 #endif
 
