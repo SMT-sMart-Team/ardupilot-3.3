@@ -150,11 +150,15 @@ void Copter::read_control_switch()
         if(RC5_STATBLIZED == switch_position)
         {
 
-#if ALT_HOLD_AS_STB 
-            ret = set_mode(ALT_HOLD);
-#else
-            ret = set_mode(STABILIZE);
-#endif
+            if(!g.user_trigger)
+            {
+                ret = set_mode(ALT_HOLD);
+            }
+            else
+            {
+                // just for self-test
+                ret = set_mode(STABILIZE);
+            }
 
 #ifdef TEST_PRT
             printf("stablized\n");
