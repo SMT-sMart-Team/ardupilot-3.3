@@ -486,7 +486,8 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Units: Centi-degrees
     // @Range: 1000 8000
     // @User: Advanced
-    ASCALAR(angle_max, "ANGLE_MAX",                 DEFAULT_ANGLE_MAX),
+    // ASCALAR(angle_max, "ANGLE_MAX",                 DEFAULT_ANGLE_MAX),
+    ASCALAR(angle_max, "ANGLE_MAX",                 1500),
 
     // @Param: RC_FEEL_RP
     // @DisplayName: RC Feel Roll/Pitch

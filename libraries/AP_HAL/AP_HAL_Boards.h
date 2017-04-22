@@ -334,6 +334,7 @@
 // AB ZhaoYJ@2017-04-12 for alt-hold to stb
 #define ALT_HOLD_AS_STB 1
 #define SMOOTH_RATE_AS_ALT_HOLD 0
+#define THR_ZERO_AS_STB 1
 
 #elif CONFIG_HAL_BOARD_SUBTYPE == HAL_BOARD_SUBTYPE_LINUX_BEBOP
 #define HAL_BOARD_LOG_DIRECTORY "/data/ftp/internal_000/APM/logs"

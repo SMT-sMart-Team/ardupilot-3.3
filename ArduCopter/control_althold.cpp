@@ -38,6 +38,18 @@ void Copter::althold_run()
     AltHoldModeState althold_state;
     float takeoff_climb_rate = 0.0f;
 
+#if THR_ZERO_AS_STB
+    // if not armed or throttle at zero, set throttle to zero and exit immediately
+    if(!motors.armed() || ap.throttle_zero) {
+        attitude_control.set_throttle_out_unstabilized(0,true,g.throttle_filt);
+        // slow start if landed
+        if (ap.land_complete) {
+            motors.slow_start(true);
+        }
+        return;
+    }
+#endif
+
     // apply SIMPLE mode transform to pilot inputs
     update_simple_mode();
 
