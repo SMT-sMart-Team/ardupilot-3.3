@@ -1361,8 +1361,10 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 && is_equal(packet.param3, 3.0f))
             {
                 // printf("do user stuff now: %f-%f\n", packet.param4, packet.param5);
-                copter.user_pwm.sprayer_pwm = packet.param4;
-                copter.user_pwm.pump_pwm = packet.param5;
+                // copter.user_pwm.sprayer_pwm = packet.param4;
+                // copter.user_pwm.pump_pwm = packet.param5;
+                copter.g.sprayer_spd = packet.param4;
+                copter.g.pump_spd = packet.param5;
 
                 // if test mode
                 if(!is_zero(packet.param6)

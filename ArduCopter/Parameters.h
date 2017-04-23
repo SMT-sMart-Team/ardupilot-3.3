@@ -202,11 +202,16 @@ public:
         k_param_gcs3,
         k_param_gcs_pid_mask,    // 126
 
+        // AB ZhaoYJ@2017-04-23 for storing sprayer&pump spd
+        k_param_sprayer_spd,
+        k_param_pump_spd,
+
         //
         // 135 : reserved for Solo until features merged with master
         //
         k_param_rtl_speed_cms = 135,
         k_param_fs_batt_curr_rtl, // 136
+
 
         //
         // 140: Sensor parameters
@@ -438,6 +443,9 @@ public:
     AP_Int8         fs_ekf_action;
     AP_Float        fs_ekf_thresh;
     AP_Int16        gcs_pid_mask;
+
+    AP_Float        sprayer_spd;
+    AP_Float        pump_spd;
 
 #if FRAME_CONFIG ==     HELI_FRAME
     // Heli

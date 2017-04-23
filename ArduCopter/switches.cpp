@@ -385,8 +385,8 @@ void Copter::read_aux_switches()
     {
         hal.rcout->enable_ch(SPRAYER_CH);
         hal.rcout->enable_ch(PUMP_CH);
-        hal.rcout->write(SPRAYER_CH, user_pwm.sprayer_pwm);
-        hal.rcout->write(PUMP_CH, user_pwm.pump_pwm);
+        hal.rcout->write(SPRAYER_CH, g.sprayer_spd);
+        hal.rcout->write(PUMP_CH, g.pump_spd);
         hal.rcout->set_magic_sync();
     }
     else

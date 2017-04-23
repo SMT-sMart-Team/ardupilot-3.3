@@ -119,6 +119,20 @@ const AP_Param::Info Copter::var_info[] PROGMEM = {
     // @Bitmask: 0:Roll,1:Pitch,2:Yaw
     GSCALAR(gcs_pid_mask,           "GCS_PID_MASK",     0),
 
+    // @Param: sprayer_spd
+    // @DisplayName: 
+    // @Description: 
+    // @Range: 
+    // @User: Standard
+    GSCALAR(sprayer_spd, "SPRAYER_SPD", 1000),
+
+    // @Param: pump_spd
+    // @DisplayName: 
+    // @Description: 
+    // @Range: 
+    // @User: Standard
+    GSCALAR(pump_spd, "PUMP_SPD", 1000),
+
     // @Param: RTL_ALT
     // @DisplayName: RTL Altitude
     // @Description: The minimum altitude the model will move to before Returning to Launch.  Set to zero to return at current altitude.
