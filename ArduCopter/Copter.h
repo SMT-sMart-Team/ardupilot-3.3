@@ -267,6 +267,10 @@ private:
     }user_pwm;
     bool is_sprayer_working;
 
+    // AB ZhaoYJ@2017-04-28 for guide VWP
+    Vector3f fvwp_vector;
+    Vector3f bvwp_vector;
+
     // Structure used to detect changes in the flight mode control switch
     struct {
         int8_t debounced_switch_position;   // currently used switch position

@@ -13,6 +13,9 @@
 // AB ZhaoYJ@2017-04-17
 #define SMT_3SW_MODE 1
 
+// AB ZhaoYJ@2017-05-02
+#define SMT_NEW_GUIDE 0
+
 //Documentation of Aux Switch Flags:
 static union {
     struct {
@@ -208,6 +211,16 @@ void Copter::read_control_switch()
 #ifdef TEST_PRT
                     printf("RCpitch: %d enter FORWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
 #endif
+                    // set target pos
+                    // BODY OFFSET
+                    copter.rotate_body_frame_to_NE(pos_vector.x, pos_vector.y);
+
+                    // LOCAL_NED OFFSET
+                    pos_vector += copter.inertial_nav.get_position();
+
+#if SMT_NEW_GUIDE 
+                    pos_vector = copter.fvwp_vector;
+#endif
                 }
                 // backward
                 else if(IN_BACKWARD == guided_status)
@@ -220,17 +233,20 @@ void Copter::read_control_switch()
 #ifdef TEST_PRT
                     printf("RCpitch: %d enter BACKWARD, last_status: %d\n", channel_pitch->radio_in, last_guided_status);
 #endif
+
+                    // set target pos
+                    // BODY OFFSET
+                    copter.rotate_body_frame_to_NE(pos_vector.x, pos_vector.y);
+
+                    // LOCAL_NED OFFSET
+                    pos_vector += copter.inertial_nav.get_position();
+#if SMT_NEW_GUIDE 
+                    pos_vector = copter.bvwp_vector;
+#endif
                 }
 
                 // update last status
                 last_guided_status = guided_status;
-
-                // set target pos
-                // BODY OFFSET
-                copter.rotate_body_frame_to_NE(pos_vector.x, pos_vector.y);
-
-                // LOCAL_NED OFFSET
-                pos_vector += copter.inertial_nav.get_position();
 
                 // set virtual wp
                 copter.guided_set_destination(pos_vector);
@@ -364,7 +380,7 @@ void Copter::read_aux_switches()
     // if STABILIZE/ALT_HOLD/LOITER, and rc8 high, then true 
     // TODO: if AUTO, need to consider more
     if(((GUIDED == control_mode) 
-            || (((STABILIZE == control_mode) || (ALT_HOLD == control_mode) || (LOITER == control_mode)) && (g.rc_8.radio_in > (g.rc_8.radio_max - 100))))
+            || (((STABILIZE == control_mode) || (ALT_HOLD == control_mode) || (LOITER == control_mode) || (AUTO == control_mode)) && (g.rc_8.radio_in > (g.rc_8.radio_max - 100))))
             && motors.armed()
             )
     {

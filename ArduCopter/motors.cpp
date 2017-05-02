@@ -161,6 +161,14 @@ bool Copter::init_arm_motors(bool arming_from_gcs)
 
     initial_armed_bearing = ahrs.yaw_sensor;
 
+    // AB ZhaoYJ@2017-04-28 for guide VWP
+    copter.fvwp_vector = Vector3f(VWP_DIST, 0, 0);
+    copter.rotate_body_frame_to_NE(copter.fvwp_vector.x, copter.fvwp_vector.y);
+    copter.fvwp_vector += copter.inertial_nav.get_position();
+    copter.bvwp_vector = Vector3f(-VWP_DIST, 0, 0);
+    copter.rotate_body_frame_to_NE(copter.bvwp_vector.x, copter.bvwp_vector.y);
+    copter.bvwp_vector += copter.inertial_nav.get_position();
+
     if (ap.home_state == HOME_UNSET) {
         // Reset EKF altitude if home hasn't been set yet (we use EKF altitude as substitute for alt above home)
         ahrs.get_NavEKF().resetHeightDatum();

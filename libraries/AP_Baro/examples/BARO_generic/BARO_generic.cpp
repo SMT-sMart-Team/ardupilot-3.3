@@ -74,7 +74,7 @@ void loop()
         counter = 0;
         barometer.update();
         float alt = barometer.get_altitude();
-#if 0
+#if 1
         if (!barometer.healthy()) {
             hal.console->println("not healthy");
             return;
