@@ -28,6 +28,9 @@ extern const AP_HAL::HAL& hal;
 #define TOSHIBA_LED_PWM2    0x03    // pwm2 register
 #define TOSHIBA_LED_ENABLE  0x04    // enable register
 
+// AB ZhaoYJ@2017-05-04 for debugging kernel hang
+#define DBG_KERNEL_HANG 0
+
 bool ToshibaLED_I2C::hw_init()
 {
     // get pointer to i2c bus semaphore
@@ -70,7 +73,11 @@ bool ToshibaLED_I2C::hw_set_rgb(uint8_t red, uint8_t green, uint8_t blue)
 
     // update the red value
     uint8_t val[3] = { (uint8_t)(blue>>4), (uint8_t)(green>>4), (uint8_t)(red>>4) };
+#if DBG_KERNEL_HANG 
+    bool success = true; // (hal.i2c->writeRegisters(TOSHIBA_LED_ADDRESS, TOSHIBA_LED_PWM0, 3, val) == 0);
+#else
     bool success = (hal.i2c->writeRegisters(TOSHIBA_LED_ADDRESS, TOSHIBA_LED_PWM0, 3, val) == 0);
+#endif
 
     // give back i2c semaphore
     i2c_sem->give();
