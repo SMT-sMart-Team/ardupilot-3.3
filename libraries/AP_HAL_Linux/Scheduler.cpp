@@ -41,7 +41,6 @@ extern const AP_HAL::HAL& hal;
 
 
 
-#define DISABLE_RT 0
 
 LinuxScheduler::LinuxScheduler()
 {}
@@ -192,11 +191,10 @@ void LinuxScheduler::init(void* machtnichts)
     if (geteuid() != 0) {
         printf("WARNING: running as non-root. Will not use realtime scheduling\n");
     }
-#if !DISABLE_RT
+
     for (iter = table; iter->ctx; iter++)
         _create_realtime_thread(iter->ctx, iter->rtprio, iter->name,
                                 iter->start_routine);
-#endif
 }
 #endif
 
@@ -403,15 +401,6 @@ void *LinuxScheduler::_rcin_thread(void *arg)
     while (true) {
         sched->_microsleep(APM_LINUX_RCIN_PERIOD);
         ((LinuxRCInput *)hal.rcin)->_timer_tick();
-#define TEST_ALIVE 1
-#if TEST_ALIVE
-        static int32_t cnt = 0;
-        if(cnt%200 == 0)
-        {
-            hal.util->prt("[%d ms] enter rcin_thread!", hal.scheduler->millis());
-        }
-        cnt++;
-#endif
     }
     return NULL;
 }
