@@ -328,7 +328,7 @@
 #define EKF_CALC_ACCEL_USE 0
 #define EKF_CALC_GYRO_USE 0
 #define EKF_CALC_GYRO_ACCEL_LPF 0
-#define LOG_EKF_GYRO_ACCEL 1
+#define LOG_EKF_GYRO_ACCEL 0
 #endif
 
 // AB ZhaoYJ@2017-04-12 for alt-hold to stb
