@@ -5,6 +5,8 @@
 
 extern const AP_HAL::HAL& hal;
 
+#define ACC_XY_FF_DISABLE 1
+
 const AP_Param::GroupInfo AC_PosControl::var_info[] PROGMEM = {
     // 0 was used for HOVER
 
@@ -895,8 +897,17 @@ void AC_PosControl::rate_to_accel_xy(float dt, float ekfNavVelGainScaler)
     }
 
     // combine feed forward accel with PID output from velocity error and scale PID output to compensate for optical flow measurement induced EKF noise
+#if ACC_XY_FF_DISABLE 
+    _accel_target.x = (vel_xy_p.x + vel_xy_i.x) * ekfNavVelGainScaler;
+    _accel_target.y = (vel_xy_p.y + vel_xy_i.y) * ekfNavVelGainScaler;
+#else
     _accel_target.x = _accel_feedforward.x + (vel_xy_p.x + vel_xy_i.x) * ekfNavVelGainScaler;
     _accel_target.y = _accel_feedforward.y + (vel_xy_p.y + vel_xy_i.y) * ekfNavVelGainScaler;
+#endif
+
+    //  for log pid info
+    _vel_pi.x = (vel_xy_p.x + vel_xy_i.x)*ekfNavVelGainScaler;
+    _vel_pi.y = (vel_xy_p.y + vel_xy_i.y)*ekfNavVelGainScaler;
 
     // scale desired acceleration if it's beyond acceptable limit
     // To-Do: move this check down to the accel_to_lean_angle method?

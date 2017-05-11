@@ -263,6 +263,10 @@ struct PACKED log_Nav_Tuning {
     float    vel_y;
     float    desired_accel_x;
     float    desired_accel_y;
+    float    accFF_x;
+    float    accFF_y;
+    float    velPI_x;
+    float    velPI_y;
 };
 
 // Write an Nav Tuning packet
@@ -271,6 +275,8 @@ void Copter::Log_Write_Nav_Tuning()
     const Vector3f &pos_target = pos_control.get_pos_target();
     const Vector3f &vel_target = pos_control.get_vel_target();
     const Vector3f &accel_target = pos_control.get_accel_target();
+    const Vector3f &vel_pi = pos_control.get_vel_pi();
+    const Vector3f &accel_ff = pos_control.get_accel_ff();
     const Vector3f &position = inertial_nav.get_position();
     const Vector3f &velocity = inertial_nav.get_velocity();
 
@@ -286,8 +292,13 @@ void Copter::Log_Write_Nav_Tuning()
         vel_x           : velocity.x,
         vel_y           : velocity.y,
         desired_accel_x : accel_target.x,
-        desired_accel_y : accel_target.y
+        desired_accel_y : accel_target.y,
+        accFF_x         : accel_ff.x,
+        accFF_y         : accel_ff.y,
+        velPI_x         : vel_pi.x,
+        velPI_y         : vel_pi.y
     };
+
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
@@ -694,7 +705,7 @@ const struct LogStructure Copter::log_structure[] PROGMEM = {
     { LOG_OPTFLOW_MSG, sizeof(log_Optflow),       
       "OF",   "QBffff",   "TimeUS,Qual,flowX,flowY,bodyX,bodyY" },
     { LOG_NAV_TUNING_MSG, sizeof(log_Nav_Tuning),       
-      "NTUN", "Qffffffffff", "TimeUS,DPosX,DPosY,PosX,PosY,DVelX,DVelY,VelX,VelY,DAccX,DAccY" },
+      "NTUN", "Qffffffffffffff", "TimeUS,DPosX,DPosY,PosX,PosY,DVelX,DVelY,VelX,VelY,DAccX,DAccY,AccXFF,AccYFF,VelXPI,VelYPI" },
     { LOG_CONTROL_TUNING_MSG, sizeof(log_Control_Tuning),
       "CTUN", "Qhhfffecchh", "TimeUS,ThrIn,AngBst,ThrOut,DAlt,Alt,BarAlt,DSAlt,SAlt,DCRt,CRt" },
     { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 

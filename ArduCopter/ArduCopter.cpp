@@ -460,13 +460,6 @@ void Copter::full_rate_logging_loop()
         DataFlash.Log_Write_IMU(ins);
 #endif
     }
-    if (should_log(MASK_LOG_IMU_FAST) || should_log(MASK_LOG_IMU_RAW)) {
-#if LOG_EKF_GYRO_ACCEL 
-        DataFlash.Log_Write_IMU(ins, ahrs);
-#else
-        DataFlash.Log_Write_IMU(ins);
-#endif
-    }
 
     static uint8_t cnt = 0;
     if(cnt&0x1)
